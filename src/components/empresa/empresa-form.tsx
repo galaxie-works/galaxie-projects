@@ -233,7 +233,7 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
                 Como você cobra cada serviço. Vem preenchido em todo orçamento novo.
               </FrameDescription>
             </FrameHeader>
-            <FramePanel>
+            <FramePanel className={servicos.length > 0 ? 'p-0' : undefined}>
               <PrecosServicos servicos={servicos} precos={precos} onChange={setPrecos} />
             </FramePanel>
             {rodape}

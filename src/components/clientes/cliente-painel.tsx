@@ -117,12 +117,7 @@ function ListaObras({
             <ItemContent className={compacta ? 'min-w-0 basis-full' : 'min-w-0'}>
               <ItemTitle className="truncate">{p.nome}</ItemTitle>
               <ItemDescription className="flex flex-wrap items-center gap-2 text-xs tabular-nums">
-                {atrasado && (
-                  <>
-                    <span className="text-destructive font-medium">Atrasado</span>
-                    <span aria-hidden className="bg-muted-foreground/40 size-1 shrink-0 rounded-full" />
-                  </>
-                )}
+                {atrasado && <Badge variant="destructive-light">Atrasado</Badge>}
                 <span>Prazo {formatarData(p.data_prazo)}</span>
                 {p.orcamento_total ? (
                   <>

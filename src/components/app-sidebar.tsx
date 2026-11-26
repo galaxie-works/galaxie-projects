@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import {
   ArrowLeftIcon,
   BriefcaseBusinessIcon,
@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/client'
 import { iniciais } from '@/lib/formato'
 import { STATUS_PROJETO_LABEL, type Projeto, type StatusProjeto } from '@/types'
 import { IconTile } from '@/components/reui/icon-tile'
+import { MenuTema } from '@/components/tema/menu-tema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,6 +55,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 
 // Cor do ponto de status (identidade do status, via tokens semânticos).
@@ -90,6 +92,12 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  // No celular o menu é uma gaveta: ao tocar num link, ela fecha sozinha.
+  function fecharSeLink(evento: MouseEvent<HTMLDivElement>) {
+    if (isMobile && (evento.target as HTMLElement).closest('a')) setOpenMobile(false)
+  }
 
   const projetosFiltrados = useMemo(
     () => (filtro === 'todos' ? projetos : projetos.filter((p) => p.status === filtro)),
@@ -104,6 +112,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 
   return (
     <Sidebar>
+      <div className="contents" onClick={fecharSeLink}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -233,10 +242,14 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                   <DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link href="/empresa" />}>
+                <DropdownMenuItem
+                  render={<Link href="/empresa" />}
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
                   <Building2Icon />
                   Dados da empresa
                 </DropdownMenuItem>
+                <MenuTema />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={sair}>
                   <LogOutIcon />
@@ -247,6 +260,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      </div>
       <SidebarRail />
     </Sidebar>
   )

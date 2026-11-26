@@ -9,6 +9,7 @@ import { totalOrcamento, type AreaOrcamento, type TabelaPrecos } from '@/lib/orc
 import { salvarOrcamento } from '@/components/orcamento/dados'
 import { OrcamentoEditor } from '@/components/orcamento/orcamento-editor'
 import { OrcamentoResumo } from '@/components/orcamento/orcamento-resumo'
+import { Frame, FramePanel } from '@/components/reui/frame'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -58,24 +59,30 @@ export function OrcamentoAba({
       />
       <OrcamentoResumo areas={areas} />
       {alterado && (
-        <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-full border bg-background/95 py-2 pr-2 pl-4 shadow-sm backdrop-blur animate-in fade-in duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]">
-          <span className="text-sm text-muted-foreground">Alterações não salvas</span>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={salvando}
-              onClick={() => onAreasChange(JSON.parse(salvas))}
-            >
-              Descartar
-            </Button>
-            <Button type="button" size="sm" onClick={salvar} disabled={salvando}>
-              {salvando && <Spinner data-icon="inline-start" />}
-              Salvar orçamento
-            </Button>
-          </div>
-        </div>
+        <Frame
+          spacing="sm"
+          variant="inverse"
+          className="sticky bottom-4 z-10 animate-in fade-in duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        >
+          <FramePanel className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground">Alterações não salvas</span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={salvando}
+                onClick={() => onAreasChange(JSON.parse(salvas))}
+              >
+                Descartar
+              </Button>
+              <Button type="button" size="sm" onClick={salvar} disabled={salvando}>
+                {salvando && <Spinner data-icon="inline-start" />}
+                Salvar orçamento
+              </Button>
+            </div>
+          </FramePanel>
+        </Frame>
       )}
     </div>
   )
