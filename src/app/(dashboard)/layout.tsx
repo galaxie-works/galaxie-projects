@@ -27,6 +27,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('empresa_id', empresa.id)
     .order('created_at', { ascending: false })
 
+  const { data: clientes } = await supabase
+    .from('clientes')
+    .select('id, nome')
+    .eq('empresa_id', empresa.id)
+
   const lista = (projetos as Projeto[]) ?? []
   const sidebarAberta = (await cookies()).get('sidebar_state')?.value !== 'false'
 
@@ -34,7 +39,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <SidebarProvider defaultOpen={sidebarAberta}>
       <AppSidebar empresaNome={empresa.nome} email={user.email ?? ''} projetos={lista} />
       <SidebarInset className="min-w-0">
-        <AppHeader projetos={lista.map(({ id, nome }) => ({ id, nome }))} />
+        <AppHeader
+          projetos={lista.map(({ id, nome }) => ({ id, nome }))}
+          clientes={clientes ?? []}
+        />
         <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       </SidebarInset>
     </SidebarProvider>
