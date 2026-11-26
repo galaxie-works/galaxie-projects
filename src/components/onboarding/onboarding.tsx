@@ -52,7 +52,7 @@ const ETAPAS = [
   { rotulo: 'Revisão', titulo: 'Revisão', descricao: 'Confira e ajuste antes de concluir.' },
 ]
 
-export function Onboarding() {
+export function Onboarding({ userId }: { userId: string }) {
   const router = useRouter()
   const rotuloId = useId()
   const tituloRef = useRef<HTMLDivElement>(null)
@@ -66,17 +66,17 @@ export function Onboarding() {
 
   // Rascunho local: recarregar a página não perde o que já foi preenchido.
   useEffect(() => {
-    const salvo = lerRascunho()
+    const salvo = lerRascunho(userId)
     if (salvo) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage só existe no cliente
       setRascunho({ ...salvo, etapa: Math.min(salvo.etapa, etapaMaximaLiberada(salvo)) })
     }
     setCarregado(true)
-  }, [])
+  }, [userId])
 
   useEffect(() => {
-    if (carregado) salvarRascunho(rascunho)
-  }, [rascunho, carregado])
+    if (carregado) salvarRascunho(userId, rascunho)
+  }, [rascunho, carregado, userId])
 
   const { etapa } = rascunho
   const maxLiberada = etapaMaximaLiberada(rascunho)
@@ -149,13 +149,20 @@ export function Onboarding() {
         }))
       )
       if (error) {
+        // Desfaz a empresa para não deixar um cadastro pela metade: senão a
+        // página redirecionaria para o app e a equipe se perderia.
+        const { error: erroDesfazer } = await supabase
+          .from('empresas')
+          .delete()
+          .eq('id', empresaId.current)
+        if (!erroDesfazer) empresaId.current = null
         setSalvando(false)
         setErroSalvar(error.message)
         return
       }
     }
 
-    apagarRascunho()
+    apagarRascunho(userId)
     router.push('/projetos')
     router.refresh()
   }

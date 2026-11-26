@@ -18,5 +18,5 @@ export default async function OnboardingPage() {
 
   if (empresa) redirect('/projetos')
 
-  return <Onboarding />
+  return <Onboarding userId={user.id} />
 }

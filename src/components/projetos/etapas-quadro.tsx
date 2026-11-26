@@ -90,6 +90,18 @@ export function EtapasQuadro({ projetoId, etapas, onEtapasChange, equipe, hoje }
     )
     const falha = resultados.find((r) => r.error)
     if (falha) {
+      // Desfaz as atualizações que entraram, para o banco voltar ao estado
+      // anterior junto com a tela.
+      await Promise.all(
+        alteradas
+          .filter((_, i) => !resultados[i].error)
+          .map((e) => {
+            const antes = anteriores.get(e.id)
+            return antes
+              ? supabase.from('etapas').update({ status: antes.status, ordem: antes.ordem }).eq('id', e.id)
+              : Promise.resolve()
+          })
+      )
       onEtapasChange(etapas)
       toast.error('Não foi possível mover a etapa', { description: falha.error?.message })
       return

@@ -29,11 +29,15 @@ export const RASCUNHO_INICIAL: Rascunho = {
 
 export const TOTAL_ETAPAS = 5
 
-const CHAVE = 'galaxie:onboarding:rascunho'
+// Um rascunho por conta: outra pessoa entrando no mesmo navegador não herda
+// os dados de quem não terminou.
+const PREFIXO = 'galaxie:onboarding:rascunho'
+const chave = (userId: string) => `${PREFIXO}:${userId}`
 
-export function lerRascunho(): Rascunho | null {
+export function lerRascunho(userId: string): Rascunho | null {
   try {
-    const bruto = window.localStorage.getItem(CHAVE)
+    window.localStorage.removeItem(PREFIXO) // versão antiga, sem conta
+    const bruto = window.localStorage.getItem(chave(userId))
     if (!bruto) return null
     const dados = JSON.parse(bruto) as Partial<Rascunho>
     return { ...RASCUNHO_INICIAL, ...dados }
@@ -42,17 +46,17 @@ export function lerRascunho(): Rascunho | null {
   }
 }
 
-export function salvarRascunho(r: Rascunho) {
+export function salvarRascunho(userId: string, r: Rascunho) {
   try {
-    window.localStorage.setItem(CHAVE, JSON.stringify(r))
+    window.localStorage.setItem(chave(userId), JSON.stringify(r))
   } catch {
     // modo privado ou armazenamento cheio: segue sem rascunho
   }
 }
 
-export function apagarRascunho() {
+export function apagarRascunho(userId: string) {
   try {
-    window.localStorage.removeItem(CHAVE)
+    window.localStorage.removeItem(chave(userId))
   } catch {
     // idem
   }
