@@ -13,11 +13,13 @@ import {
   PlusIcon,
   UsersIcon,
   HardHatIcon,
+  SettingsIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { iniciais } from '@/lib/formato'
 import { STATUS_PROJETO_LABEL, type Projeto, type StatusProjeto } from '@/types'
+import { AssistenteVoz } from '@/components/assistente/assistente-voz'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -80,6 +82,7 @@ const NAVEGACAO = [
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
+  { href: '/ajustes', rotulo: 'Ajustes', icone: SettingsIcon },
 ]
 
 type Props = {
@@ -271,6 +274,7 @@ const SECOES: Record<string, string> = {
   clientes: 'Clientes',
   equipe: 'Equipe',
   empresa: 'Empresa',
+  ajustes: 'Ajustes',
 }
 
 type Camada = { id: string; nome: string }
@@ -278,7 +282,17 @@ type Camada = { id: string; nome: string }
 // Cabeçalho fino do conteúdo. Navegação em camadas: em telas de detalhe
 // aparece a seta de voltar, que desce uma camada (como no app do Claude no
 // celular). No celular a camada atual vira o título; no computador fica a trilha.
-export function AppHeader({ projetos, clientes }: { projetos: Camada[]; clientes: Camada[] }) {
+export function AppHeader({
+  projetos,
+  clientes,
+  assistenteConfigurado,
+  empresaId,
+}: {
+  projetos: Camada[]
+  clientes: Camada[]
+  assistenteConfigurado: boolean
+  empresaId: string
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const [secao, sub] = pathname.split('/').filter(Boolean)
@@ -336,6 +350,7 @@ export function AppHeader({ projetos, clientes }: { projetos: Camada[]; clientes
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      <AssistenteVoz configurado={assistenteConfigurado} empresaId={empresaId} />
     </header>
   )
 }
