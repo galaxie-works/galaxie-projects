@@ -97,6 +97,9 @@ export async function POST(request: Request) {
     const corpo: RespostaAssistente = { resposta, acoes: ctx.acoes }
     return NextResponse.json(corpo)
   } catch (e) {
-    return erro(502, { erro: mensagemErroProvedor(e) })
+    // O que já foi gravado antes do erro precisa chegar na tela (atualizar a
+    // lista, avisar), senão o usuário repete o pedido e duplica o registro.
+    const feitas = ctx.acoes.length ? ' O que já tinha sido feito antes do erro foi mantido.' : ''
+    return erro(502, { erro: mensagemErroProvedor(e) + feitas, acoes: ctx.acoes })
   }
 }

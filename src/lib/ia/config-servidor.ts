@@ -64,8 +64,10 @@ export async function configPublica(
 export async function configComChave(
   supabase: SupabaseClient,
   empresaId: string,
+  { mesmoDesligado = false }: { mesmoDesligado?: boolean } = {},
 ): Promise<{ provedor: ProvedorIA; modelo: string; chave: string } | null> {
   const linha = await lerLinha(supabase, empresaId)
-  if (!linha || !linha.ativo || !ehProvedor(linha.provedor)) return null
+  if (!linha || !ehProvedor(linha.provedor)) return null
+  if (!linha.ativo && !mesmoDesligado) return null
   return { provedor: linha.provedor, modelo: linha.modelo, chave: decifrar(linha.chave_cifrada) }
 }

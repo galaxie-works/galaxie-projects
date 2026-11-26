@@ -38,7 +38,7 @@ export async function salvarConfigIA(dados: {
   const chaveNova = dados.chave?.trim()
   let chave = chaveNova
   if (!chave) {
-    const atual = await configComChave(sessao.supabase, sessao.empresaId).catch(() => null)
+    const atual = await configComChave(sessao.supabase, sessao.empresaId, { mesmoDesligado: true }).catch(() => null)
     if (!atual) return { ok: false, erro: 'Cole a chave de API.' }
     if (atual.provedor !== dados.provedor) {
       return { ok: false, erro: `Cole a chave de API da ${PROVEDORES[dados.provedor].nome}.` }

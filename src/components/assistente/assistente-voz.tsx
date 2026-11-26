@@ -51,10 +51,14 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
   const [rascunho, setRascunho] = useState('')
   const [pensando, setPensando] = useState(false)
   // O servidor pode dizer que falta configuração mesmo com a prop true (ex.:
-  // chave removida em outra aba). Guarda o valor da prop naquele momento,
-  // para liberar de novo quando a prop mudar.
-  const [recusadoCom, setRecusadoCom] = useState<boolean | null>(null)
-  const semConfig = !configurado || recusadoCom === configurado
+  // chave removida em outra aba). A recusa vale até a prop mudar.
+  const [recusado, setRecusado] = useState(false)
+  const [configuradoAntes, setConfiguradoAntes] = useState(configurado)
+  if (configuradoAntes !== configurado) {
+    setConfiguradoAntes(configurado)
+    setRecusado(false)
+  }
+  const semConfig = !configurado || recusado
   const [exclusoes, setExclusoes] = useState<Excluir[]>([])
   const fim = useRef<HTMLDivElement>(null)
 
@@ -117,8 +121,9 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
         | ErroAssistente
       if (!r.ok || 'erro' in corpo) {
         const e = corpo as ErroAssistente
-        if (e.semConfiguracao) setRecusadoCom(configurado)
+        if (e.semConfiguracao) setRecusado(true)
         setMensagens((m) => [...m, { papel: 'assistente', texto: e.erro ?? 'Algo deu errado.' }])
+        if (e.acoes?.length) await aplicar(e.acoes)
         router.refresh()
         return
       }
