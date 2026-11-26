@@ -18,12 +18,23 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { CampoData } from '@/components/projetos/campo-data'
 import { CampoMoeda } from '@/components/projetos/campo-moeda'
+import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
+import { OrcamentoEditor } from '@/components/orcamento/orcamento-editor'
+import { OrcamentoResumo } from '@/components/orcamento/orcamento-resumo'
+import { salvarOrcamento } from '@/components/orcamento/dados'
+import { formatarMoeda } from '@/lib/formato'
+import {
+  limparOrcamento,
+  totalOrcamento,
+  type AreaOrcamento,
+  type TabelaPrecos,
+} from '@/lib/orcamento'
 
 const ITENS_STATUS = (Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][]).map(
   ([value, label]) => ({ value, label })
@@ -38,6 +49,13 @@ type Props = {
   /** Chamado após salvar uma edição (ex.: fechar o Dialog). */
   onSalvo?: () => void
   onCancelar?: () => void
+  /**
+   * Novo projeto com áreas e medidas: o orçamento sai das medidas e dos
+   * preços dos serviços da empresa.
+   */
+  orcamento?: { servicosEmpresa: string[]; precos: TabelaPrecos }
+  /** Edição de projeto cujo total vem das áreas (aba Orçamento). */
+  totalCalculado?: boolean
 }
 
 type Erros = { nome?: string; cliente?: string; prazo?: string }
@@ -49,6 +67,8 @@ export function ProjetoForm({
   projeto,
   onSalvo,
   onCancelar,
+  orcamento: configOrcamento,
+  totalCalculado = false,
 }: Props) {
   const router = useRouter()
   const editando = Boolean(projeto)
@@ -63,6 +83,9 @@ export function ProjetoForm({
   const [orcamento, setOrcamento] = useState<number | null>(
     projeto?.orcamento_total != null ? Number(projeto.orcamento_total) : null
   )
+  const [areas, setAreas] = useState<AreaOrcamento[]>([])
+  const temItens = limparOrcamento(areas).some((a) => a.itens.length > 0)
+  const totalAreas = totalOrcamento(areas)
   const [erros, setErros] = useState<Erros>({})
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -88,7 +111,8 @@ export function ProjetoForm({
       status,
       data_inicio: dataInicio || null,
       data_prazo: dataPrazo || null,
-      orcamento_total: orcamento ?? 0,
+      // Quando o total vem das áreas, quem atualiza é a aba Orçamento.
+      ...(totalCalculado ? {} : { orcamento_total: temItens ? totalAreas : (orcamento ?? 0) }),
     }
 
     if (projeto) {
@@ -110,18 +134,28 @@ export function ProjetoForm({
       .select('id')
       .single()
 
-    setSalvando(false)
     if (error || !data) {
+      setSalvando(false)
       setErroGeral(error?.message ?? 'Erro ao salvar projeto.')
       return
     }
+    if (configOrcamento && limparOrcamento(areas).length > 0) {
+      const { erro } = await salvarOrcamento(supabase, {
+        projetoId: data.id,
+        empresaId,
+        areas,
+        precos: configOrcamento.precos,
+      })
+      if (erro) toast.error('O projeto foi criado, mas as áreas não foram salvas', { description: erro })
+    }
+    setSalvando(false)
     toast.success('Projeto criado')
     router.push(`/projetos/${data.id}`)
     router.refresh()
   }
 
   if (clientes.length === 0) {
-    return (
+    const vazio = (
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -138,10 +172,16 @@ export function ProjetoForm({
         </EmptyContent>
       </Empty>
     )
+    return configOrcamento ? (
+      <Frame spacing="default">
+        <FramePanel>{vazio}</FramePanel>
+      </Frame>
+    ) : (
+      vazio
+    )
   }
 
-  return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+  const camposForm = (
       <FieldGroup>
         <Field data-invalid={Boolean(erros.nome) || undefined}>
           <FieldLabel htmlFor="projeto-nome">Nome do projeto</FieldLabel>
@@ -206,7 +246,28 @@ export function ProjetoForm({
 
         <Field>
           <FieldLabel htmlFor="projeto-orcamento">Orçamento total</FieldLabel>
-          <CampoMoeda id="projeto-orcamento" valor={orcamento} onChange={setOrcamento} />
+          {temItens || totalCalculado ? (
+            <p id="projeto-orcamento" className="text-sm text-muted-foreground">
+              {temItens ? (
+                <>
+                  <span className="font-medium text-foreground tabular-nums">{formatarMoeda(totalAreas)}</span>{' '}
+                  calculado pelas áreas e medidas.
+                </>
+              ) : (
+                <>
+                  <span className="font-medium text-foreground tabular-nums">
+                    {formatarMoeda(Number(projeto?.orcamento_total ?? 0))}
+                  </span>{' '}
+                  calculado pelas áreas. Mude na aba Orçamento.
+                </>
+              )}
+            </p>
+          ) : (
+            <CampoMoeda id="projeto-orcamento" valor={orcamento} onChange={setOrcamento} />
+          )}
+          {configOrcamento && !temItens && (
+            <FieldDescription>Ou monte o orçamento por área logo abaixo.</FieldDescription>
+          )}
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -226,7 +287,10 @@ export function ProjetoForm({
           </Field>
         </div>
       </FieldGroup>
+  )
 
+  const rodape = (
+    <>
       {erroGeral && (
         <Alert variant="destructive" role="alert">
           <AlertDescription>{erroGeral}</AlertDescription>
@@ -248,6 +312,35 @@ export function ProjetoForm({
           {editando ? 'Salvar alterações' : 'Criar projeto'}
         </Button>
       </div>
+    </>
+  )
+
+  if (!configOrcamento) {
+    return (
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+        {camposForm}
+        {rodape}
+      </form>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+      <Frame spacing="default">
+        <FrameHeader>
+          <FrameTitle>Dados do projeto</FrameTitle>
+          <FrameDescription>Cliente, status e prazos da obra.</FrameDescription>
+        </FrameHeader>
+        <FramePanel>{camposForm}</FramePanel>
+      </Frame>
+      <OrcamentoEditor
+        areas={areas}
+        onChange={setAreas}
+        servicosEmpresa={configOrcamento.servicosEmpresa}
+        precos={configOrcamento.precos}
+      />
+      <OrcamentoResumo areas={areas} />
+      {rodape}
     </form>
   )
 }

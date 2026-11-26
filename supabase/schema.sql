@@ -103,6 +103,59 @@ create table if not exists public.compras (
   created_at timestamptz not null default now()
 );
 
+
+-- ----------------------------------------------------------------------------
+-- PREÇOS DOS SERVIÇOS — tabela de preços da empresa: para cada serviço que
+-- ela faz (ids de src/lib/servicos.ts), a unidade de cobrança e o valor.
+-- Unidades: m2 (metro quadrado), ml (metro linear), un (unidade/peça),
+-- m3 (metro cúbico), vb (verba / preço fechado), dia (diária).
+-- ----------------------------------------------------------------------------
+create table if not exists public.precos_servicos (
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  servico_id text not null,
+  unidade text not null default 'm2'
+    check (unidade in ('m2', 'ml', 'un', 'm3', 'vb', 'dia')),
+  preco numeric(14, 2) not null default 0 check (preco >= 0),
+  updated_at timestamptz not null default now(),
+  primary key (empresa_id, servico_id)
+);
+
+-- ----------------------------------------------------------------------------
+-- ÁREAS DO PROJETO — partes da obra medidas separadamente
+-- (ex.: Garagem, Área da piscina, Escada do deck).
+-- ----------------------------------------------------------------------------
+create table if not exists public.projeto_areas (
+  id uuid primary key default gen_random_uuid(),
+  projeto_id uuid not null references public.projetos (id) on delete cascade,
+  nome text not null,
+  observacao text,
+  ordem int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- ----------------------------------------------------------------------------
+-- ITENS DO ORÇAMENTO — um serviço medido numa área. O preço unitário é
+-- copiado da tabela de preços no momento do orçamento, para que mudar o
+-- preço depois não altere orçamentos já feitos. `memoria_calculo` guarda a
+-- conta digitada ou ditada (ex.: "5,2 x 3,4 + 2 x 1,5").
+-- ----------------------------------------------------------------------------
+create table if not exists public.projeto_itens (
+  id uuid primary key default gen_random_uuid(),
+  area_id uuid not null references public.projeto_areas (id) on delete cascade,
+  projeto_id uuid not null references public.projetos (id) on delete cascade,
+  servico_id text,
+  descricao text,
+  unidade text not null default 'm2'
+    check (unidade in ('m2', 'ml', 'un', 'm3', 'vb', 'dia')),
+  quantidade numeric(14, 3) not null default 0 check (quantidade >= 0),
+  memoria_calculo text,
+  preco_unitario numeric(14, 2) not null default 0 check (preco_unitario >= 0),
+  total numeric(16, 2) generated always as (round(quantidade * preco_unitario, 2)) stored,
+  ordem int not null default 0,
+  created_at timestamptz not null default now(),
+  check (servico_id is not null or descricao is not null)
+);
+
 -- ============================================================================
 -- ROW LEVEL SECURITY
 -- Cada usuário só vê/edita os dados da própria empresa (owner_id = auth.uid())
@@ -114,6 +167,9 @@ alter table public.clientes enable row level security;
 alter table public.projetos enable row level security;
 alter table public.etapas enable row level security;
 alter table public.compras enable row level security;
+alter table public.precos_servicos enable row level security;
+alter table public.projeto_areas enable row level security;
+alter table public.projeto_itens enable row level security;
 
 -- Projetos novos do Supabase não dão mais acesso automático às tabelas do
 -- schema public para a API. Sem este GRANT, toda leitura e escrita do app
@@ -122,7 +178,8 @@ alter table public.compras enable row level security;
 -- continua sem acesso.
 grant select, insert, update, delete on
   public.empresas, public.equipe, public.clientes,
-  public.projetos, public.etapas, public.compras
+  public.projetos, public.etapas, public.compras,
+  public.precos_servicos, public.projeto_areas, public.projeto_itens
 to authenticated;
 
 drop policy if exists "empresas_select_own" on public.empresas;
@@ -196,6 +253,122 @@ create policy "compras_all_own" on public.compras
     )
   );
 
+drop policy if exists "precos_servicos_all_own" on public.precos_servicos;
+create policy "precos_servicos_all_own" on public.precos_servicos
+  for all using (
+    empresa_id in (select id from public.empresas where owner_id = auth.uid())
+  ) with check (
+    empresa_id in (select id from public.empresas where owner_id = auth.uid())
+  );
+
+drop policy if exists "projeto_areas_all_own" on public.projeto_areas;
+create policy "projeto_areas_all_own" on public.projeto_areas
+  for all using (
+    projeto_id in (
+      select p.id from public.projetos p
+      join public.empresas e on e.id = p.empresa_id
+      where e.owner_id = auth.uid()
+    )
+  ) with check (
+    projeto_id in (
+      select p.id from public.projetos p
+      join public.empresas e on e.id = p.empresa_id
+      where e.owner_id = auth.uid()
+    )
+  );
+
+drop policy if exists "projeto_itens_all_own" on public.projeto_itens;
+create policy "projeto_itens_all_own" on public.projeto_itens
+  for all using (
+    projeto_id in (
+      select p.id from public.projetos p
+      join public.empresas e on e.id = p.empresa_id
+      where e.owner_id = auth.uid()
+    )
+  ) with check (
+    projeto_id in (
+      select p.id from public.projetos p
+      join public.empresas e on e.id = p.empresa_id
+      where e.owner_id = auth.uid()
+    )
+  );
+
+-- ============================================================================
+-- salvar_orcamento: grava de uma vez as áreas e itens de um projeto
+-- (substitui os anteriores) e atualiza projetos.orcamento_total com a soma.
+-- Uma chamada só, em transação: serve para a tela e, depois, para o
+-- assistente por voz/IA montar o orçamento a partir de uma fala.
+--
+-- p_areas: [{ "nome": "Garagem", "observacao": null, "itens": [
+--   { "servico_id": "ceramica-porcelanato", "descricao": null, "unidade": "m2",
+--     "quantidade": 71.11, "memoria_calculo": null, "preco_unitario": 140 } ] }]
+--
+-- Roda com as permissões de quem chama (security invoker), então o RLS
+-- acima continua valendo.
+-- ============================================================================
+create or replace function public.salvar_orcamento(p_projeto_id uuid, p_areas jsonb)
+returns numeric
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_area jsonb;
+  v_area_ordem bigint;
+  v_area_id uuid;
+  v_total numeric;
+  v_tinha_itens boolean;
+begin
+  if not exists (select 1 from public.projetos where id = p_projeto_id) then
+    raise exception 'Projeto não encontrado';
+  end if;
+
+  v_tinha_itens := exists (select 1 from public.projeto_itens where projeto_id = p_projeto_id);
+  delete from public.projeto_areas where projeto_id = p_projeto_id;
+
+  for v_area, v_area_ordem in
+    select value, ordinality from jsonb_array_elements(coalesce(p_areas, '[]'::jsonb)) with ordinality
+  loop
+    insert into public.projeto_areas (projeto_id, nome, observacao, ordem)
+    values (
+      p_projeto_id,
+      coalesce(nullif(trim(v_area ->> 'nome'), ''), 'Área ' || v_area_ordem),
+      nullif(trim(v_area ->> 'observacao'), ''),
+      v_area_ordem
+    )
+    returning id into v_area_id;
+
+    insert into public.projeto_itens
+      (area_id, projeto_id, servico_id, descricao, unidade, quantidade, memoria_calculo, preco_unitario, ordem)
+    select
+      v_area_id,
+      p_projeto_id,
+      nullif(item ->> 'servico_id', ''),
+      nullif(trim(item ->> 'descricao'), ''),
+      coalesce(nullif(item ->> 'unidade', ''), 'm2'),
+      coalesce((item ->> 'quantidade')::numeric, 0),
+      nullif(trim(item ->> 'memoria_calculo'), ''),
+      coalesce((item ->> 'preco_unitario')::numeric, 0),
+      ordem
+    from jsonb_array_elements(coalesce(v_area -> 'itens', '[]'::jsonb)) with ordinality as t(item, ordem);
+  end loop;
+
+  select coalesce(sum(total), 0) into v_total
+  from public.projeto_itens where projeto_id = p_projeto_id;
+
+  -- Projeto que nunca teve itens mantém o valor digitado à mão; se tinha
+  -- e todos foram removidos, o total calculado vai a zero.
+  if v_tinha_itens or exists (select 1 from public.projeto_itens where projeto_id = p_projeto_id) then
+    update public.projetos set orcamento_total = v_total where id = p_projeto_id;
+  end if;
+
+  return v_total;
+end;
+$$;
+
+revoke all on function public.salvar_orcamento(uuid, jsonb) from public, anon;
+grant execute on function public.salvar_orcamento(uuid, jsonb) to authenticated;
+
 -- ============================================================================
 -- Índices úteis
 -- ============================================================================
@@ -205,3 +378,6 @@ create index if not exists idx_projetos_empresa on public.projetos (empresa_id);
 create index if not exists idx_projetos_cliente on public.projetos (cliente_id);
 create index if not exists idx_etapas_projeto on public.etapas (projeto_id);
 create index if not exists idx_compras_projeto on public.compras (projeto_id);
+create index if not exists idx_projeto_areas_projeto on public.projeto_areas (projeto_id);
+create index if not exists idx_projeto_itens_area on public.projeto_itens (area_id);
+create index if not exists idx_projeto_itens_projeto on public.projeto_itens (projeto_id);
