@@ -17,7 +17,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { formatarData } from '@/lib/formato'
+import { formatarDataHora } from '@/lib/formato'
 import type { TipoAtividade } from '@/types'
 import { ICONE_ATIVIDADE } from './icones-atividade'
 
@@ -58,7 +58,7 @@ export function ClienteLinhaDoTempo({ eventos }: { eventos: EventoCliente[] }) {
         <TimelineItem key={e.id} step={i + 1}>
           <TimelineHeader>
             <TimelineSeparator />
-            <TimelineDate dateTime={e.quando}>{formatarData(e.quando)}</TimelineDate>
+            <TimelineDate dateTime={e.quando}>{formatarDataHora(e.quando)}</TimelineDate>
             <TimelineTitle>
               {e.href ? (
                 <Link href={e.href} className="hover:underline">

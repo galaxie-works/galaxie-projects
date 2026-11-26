@@ -21,3 +21,16 @@ export function iniciais(nome: string): string {
     .map((p) => p[0]?.toUpperCase())
     .join('')
 }
+
+// Data de um timestamp (timestamptz) no fuso de Brasília, para um contato às
+// 23h não aparecer como o dia seguinte.
+export function formatarDataHora(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  if (iso.length <= 10) return formatarData(iso)
+  return new Date(iso).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'America/Sao_Paulo',
+  })
+}

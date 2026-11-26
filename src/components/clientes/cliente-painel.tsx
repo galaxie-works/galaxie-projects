@@ -27,7 +27,7 @@ import { formatarTelefone } from './telefone'
 import { ClienteLinhaDoTempo, type EventoCliente } from './cliente-linha-do-tempo'
 import { ClienteRelacionamento } from './cliente-relacionamento'
 import { RegistrarAtividade } from './registrar-atividade'
-import { formatarData, formatarMoeda, iniciais } from '@/lib/formato'
+import { formatarData, formatarDataHora, formatarMoeda, iniciais } from '@/lib/formato'
 import { faseDoCliente, faseAutomatica, linkWhatsApp, numerosDoCliente, situacaoFollowup } from '@/lib/crm'
 import {
   VARIANTE_FASE_CLIENTE,
@@ -270,7 +270,7 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
             followup === 'atrasado'
               ? 'Atrasado'
               : ultimoContato
-                ? `Último contato ${formatarData(ultimoContato)}`
+                ? `Último contato ${formatarDataHora(ultimoContato)}`
                 : 'Nenhum contato registrado'
           }
           alerta={followup === 'atrasado'}
@@ -354,7 +354,7 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
                   <Dado rotulo="E-mail" valor={c.email} />
                   <Dado rotulo="Endereço" valor={c.endereco} />
                   <Dado rotulo="Origem" valor={c.origem} />
-                  <Dado rotulo="Cliente desde" valor={formatarData(c.created_at)} />
+                  <Dado rotulo="Cliente desde" valor={formatarDataHora(c.created_at)} />
                 </dl>
               </FramePanel>
             </Frame>

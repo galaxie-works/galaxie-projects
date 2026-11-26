@@ -32,7 +32,7 @@ export function RegistrarAtividade({ clienteId, empresaId, disponivel }: Props) 
 
   async function salvar() {
     const conteudo = texto.trim()
-    if (!conteudo) return
+    if (!conteudo || salvando) return
     setSalvando(true)
     const { error } = await createClient()
       .from('atividades')
