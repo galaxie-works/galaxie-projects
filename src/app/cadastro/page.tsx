@@ -41,6 +41,13 @@ export default function CadastroPage() {
       setErro(error.message)
       return
     }
+    // E-mail já cadastrado: o Supabase não acusa erro (para não revelar quem
+    // tem conta) e não manda e-mail nenhum, só devolve o usuário sem
+    // identidades. Sem este aviso a pessoa fica esperando um link que não vem.
+    if (data.user && data.user.identities?.length === 0) {
+      setErro('Este e-mail já tem conta. Entre com sua senha na tela de login.')
+      return
+    }
     if (data.session) {
       router.push('/onboarding')
       router.refresh()
