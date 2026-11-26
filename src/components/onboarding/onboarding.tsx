@@ -2,13 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, ChevronRightIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import {
   Stepper,
   StepperContent,
+  StepperIndicator,
   StepperItem,
   StepperNav,
   StepperPanel,
@@ -180,37 +180,12 @@ export function Onboarding({ userId }: { userId: string }) {
           className="@container flex flex-col gap-6"
           aria-labelledby={rotuloId}
         >
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-6">
               <p id={rotuloId} className="text-sm font-medium">
                 Configuração inicial
               </p>
-              <StepperNav className="order-last hidden flex-wrap gap-y-2.5 @md:flex @xl:order-none @xl:w-auto @xl:flex-1 @xl:justify-center">
-                {ETAPAS.map((item, index) => {
-                  const step = index + 1
-                  return (
-                    <StepperItem
-                      key={item.rotulo}
-                      step={step}
-                      disabled={step > maxLiberada}
-                      className="not-last:flex-none"
-                    >
-                      <StepperTrigger className="-mx-1.5 -my-1.25 px-1.5 py-1.25">
-                        <StepperTitle className="whitespace-nowrap text-muted-foreground data-[state=active]:text-foreground">
-                          {item.rotulo}
-                        </StepperTitle>
-                        {step < etapa && <span className="sr-only">, concluída</span>}
-                      </StepperTrigger>
-                      {step < ETAPAS.length && (
-                        <ChevronRightIcon
-                          aria-hidden="true"
-                          className="mx-1.5 size-3.5 text-ring/50 group-data-[state=completed]/step:text-ring"
-                        />
-                      )}
-                    </StepperItem>
-                  )
-                })}
-              </StepperNav>
+              {/* Lido como "Etapa 3 de 5". */}
               <p className="flex gap-1.5 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
                 <span>Etapa</span>
                 <span>
@@ -220,17 +195,33 @@ export function Onboarding({ userId }: { userId: string }) {
                 </span>
               </p>
             </div>
-            <div aria-hidden="true" className="flex h-1 gap-1">
-              {ETAPAS.map((item, index) => (
-                <span
-                  key={item.rotulo}
-                  className={cn(
-                    'flex-1 rounded-full transition-colors',
-                    index < etapa ? 'bg-foreground' : 'bg-ring/20'
-                  )}
-                />
-              ))}
-            </div>
+            {/* Barra segmentada (c-stepper-12): cada segmento é o próprio
+                StepperIndicator da etapa. Os nomes aparecem a partir de 28rem;
+                abaixo disso ficam só para leitores de tela e o título do card
+                diz onde se está. */}
+            <StepperNav className="gap-1">
+              {ETAPAS.map((item, index) => {
+                const step = index + 1
+                return (
+                  <StepperItem
+                    key={item.rotulo}
+                    step={step}
+                    disabled={step > maxLiberada}
+                    className="flex-1"
+                  >
+                    <StepperTrigger className="w-full flex-col items-start gap-2 rounded-sm">
+                      <StepperIndicator className="h-1 w-full bg-ring/20">
+                        <span className="sr-only">{step}</span>
+                      </StepperIndicator>
+                      <StepperTitle className="sr-only text-xs whitespace-nowrap text-muted-foreground data-[state=active]:text-foreground data-[state=completed]:text-foreground @md:not-sr-only">
+                        {item.rotulo}
+                      </StepperTitle>
+                      {step < etapa && <span className="sr-only">, concluída</span>}
+                    </StepperTrigger>
+                  </StepperItem>
+                )
+              })}
+            </StepperNav>
           </div>
 
           <Card>
