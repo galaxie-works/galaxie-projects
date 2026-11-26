@@ -14,7 +14,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { faseDoCliente, hojeISO, numerosDoCliente } from '@/lib/crm'
-import type { Cliente, Projeto } from '@/types'
+import type { Cliente, Negocio, Projeto } from '@/types'
 
 export default async function ClientesPage() {
   const supabase = await createClient()
@@ -30,23 +30,32 @@ export default async function ClientesPage() {
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
-  const { data: clientes, error } = await supabase
-    .from('clientes')
-    .select('*, projetos(status, orcamento_total)')
-    .eq('empresa_id', empresa.id)
-    .order('created_at', { ascending: false })
-  if (error) throw new Error(error.message)
+  // Com negócios (fase 2 do CRM); se a tabela ainda não existe, sem eles.
+  const consulta = (campos: string) =>
+    supabase
+      .from('clientes')
+      .select(campos)
+      .eq('empresa_id', empresa.id)
+      .order('created_at', { ascending: false })
+  let resposta = await consulta('*, projetos(status, orcamento_total), negocios(fase)')
+  if (resposta.error) resposta = await consulta('*, projetos(status, orcamento_total)')
+  if (resposta.error) throw new Error(resposta.error.message)
 
-  type ComObras = Cliente & { projetos: Pick<Projeto, 'status' | 'orcamento_total'>[] | null }
-  const lista: ClienteLinha[] = ((clientes as ComObras[]) ?? []).map(({ projetos, ...c }) => {
-    const obras = projetos ?? []
-    return {
-      ...c,
-      fase: faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras),
-      contratado: numerosDoCliente(obras).contratado,
-      totalProjetos: obras.length,
+  type ComObras = Cliente & {
+    projetos: Pick<Projeto, 'status' | 'orcamento_total'>[] | null
+    negocios?: Pick<Negocio, 'fase'>[] | null
+  }
+  const lista: ClienteLinha[] = ((resposta.data as unknown as ComObras[]) ?? []).map(
+    ({ projetos, negocios, ...c }) => {
+      const obras = projetos ?? []
+      return {
+        ...c,
+        fase: faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras, negocios ?? []),
+        contratado: numerosDoCliente(obras).contratado,
+        totalProjetos: obras.filter((o) => o.status !== 'cancelado').length,
+      }
     }
-  })
+  )
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">

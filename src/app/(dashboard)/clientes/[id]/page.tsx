@@ -1,8 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ClientePainel } from '@/components/clientes/cliente-painel'
-import { hojeISO } from '@/lib/crm'
-import type { Atividade, Cliente, MembroEquipe, Projeto } from '@/types'
+import { agoraMs, hojeISO } from '@/lib/crm'
+import { SELECT_NEGOCIO } from '@/lib/negocios'
+import type { Atividade, Cliente, MembroEquipe, Negocio, Projeto } from '@/types'
 
 export default async function ClienteDetalhePage({
   params,
@@ -19,7 +20,7 @@ export default async function ClienteDetalhePage({
   const { data: cliente } = await supabase.from('clientes').select('*').eq('id', id).maybeSingle()
   if (!cliente) notFound()
 
-  const [{ data: projetos, error }, atividadesRes, { data: equipe }] = await Promise.all([
+  const [{ data: projetos, error }, atividadesRes, { data: equipe }, negociosRes] = await Promise.all([
     supabase.from('projetos').select('*').eq('cliente_id', id).order('created_at', { ascending: false }),
     supabase
       .from('atividades')
@@ -28,6 +29,7 @@ export default async function ClienteDetalhePage({
       .order('ocorreu_em', { ascending: false })
       .limit(100),
     supabase.from('equipe').select('id, nome').order('nome'),
+    supabase.from('negocios').select(SELECT_NEGOCIO).eq('cliente_id', id).order('created_at', { ascending: false }),
   ])
   if (error) throw new Error(error.message)
 
@@ -46,6 +48,8 @@ export default async function ClienteDetalhePage({
       equipe={(equipe as Pick<MembroEquipe, 'id' | 'nome'>[] | null) ?? []}
       crmDisponivel={crmDisponivel}
       hoje={hojeISO()}
+      negocios={negociosRes.error ? null : ((negociosRes.data as unknown as Negocio[]) ?? [])}
+      agora={agoraMs()}
     />
   )
 }

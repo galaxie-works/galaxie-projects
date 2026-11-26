@@ -7,6 +7,7 @@ import {
   ArrowLeftIcon,
   BriefcaseBusinessIcon,
   Building2Icon,
+  FunnelIcon,
   ChevronsUpDownIcon,
   FolderKanbanIcon,
   LogOutIcon,
@@ -66,19 +67,21 @@ const PONTO_STATUS: Record<StatusProjeto, string> = {
   em_execucao: 'bg-primary',
   pausado: 'bg-warning',
   completo: 'bg-success',
+  cancelado: 'bg-destructive',
 }
 
 type FiltroStatus = StatusProjeto | 'todos'
 
 const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
   { value: 'todos', label: 'Todos os status' },
-  ...(Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][]).map(
-    ([value, label]) => ({ value, label })
-  ),
+  ...(Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][])
+    .filter(([value]) => value !== 'cancelado')
+    .map(([value, label]) => ({ value, label })),
 ]
 
 const NAVEGACAO = [
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
+  { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
@@ -271,6 +274,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 
 const SECOES: Record<string, string> = {
   projetos: 'Projetos',
+  funil: 'Funil',
   clientes: 'Clientes',
   equipe: 'Equipe',
   empresa: 'Empresa',
