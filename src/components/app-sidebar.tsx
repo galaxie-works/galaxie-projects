@@ -12,11 +12,13 @@ import {
   PlusIcon,
   UsersIcon,
   HardHatIcon,
+  SettingsIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { iniciais } from '@/lib/formato'
 import { STATUS_PROJETO_LABEL, type Projeto, type StatusProjeto } from '@/types'
+import { AssistenteVoz } from '@/components/assistente/assistente-voz'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -78,6 +80,7 @@ const NAVEGACAO = [
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
+  { href: '/ajustes', rotulo: 'Ajustes', icone: SettingsIcon },
 ]
 
 type Props = {
@@ -269,10 +272,19 @@ const SECOES: Record<string, string> = {
   clientes: 'Clientes',
   equipe: 'Equipe',
   empresa: 'Empresa',
+  ajustes: 'Ajustes',
 }
 
 // Cabeçalho fino do conteúdo: botão da sidebar + trilha de navegação.
-export function AppHeader({ projetos }: { projetos: Pick<Projeto, 'id' | 'nome'>[] }) {
+export function AppHeader({
+  projetos,
+  assistenteConfigurado,
+  empresaId,
+}: {
+  projetos: Pick<Projeto, 'id' | 'nome'>[]
+  assistenteConfigurado: boolean
+  empresaId: string
+}) {
   const pathname = usePathname()
   const [secao, sub] = pathname.split('/').filter(Boolean)
 
@@ -308,6 +320,7 @@ export function AppHeader({ projetos }: { projetos: Pick<Projeto, 'id' | 'nome'>
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      <AssistenteVoz configurado={assistenteConfigurado} empresaId={empresaId} />
     </header>
   )
 }

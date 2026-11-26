@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -30,11 +30,17 @@ import { OrcamentoResumo } from '@/components/orcamento/orcamento-resumo'
 import { salvarOrcamento } from '@/components/orcamento/dados'
 import { formatarMoeda } from '@/lib/formato'
 import {
+  LISTA_UNIDADES,
   limparOrcamento,
+  novaArea,
+  novoItem,
   totalOrcamento,
   type AreaOrcamento,
   type TabelaPrecos,
+  type Unidade,
 } from '@/lib/orcamento'
+import { SERVICOS_POR_ID } from '@/lib/servicos'
+import { useFormularioAssistente } from '@/components/assistente/formulario-assistente'
 
 const ITENS_STATUS = (Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][]).map(
   ([value, label]) => ({ value, label })
@@ -91,6 +97,138 @@ export function ProjetoForm({
   const [salvando, setSalvando] = useState(false)
 
   const itensCliente = clientes.map((c) => ({ value: c.id, label: c.nome }))
+  const formRef = useRef<HTMLFormElement>(null)
+
+  // O assistente de IA preenche este formulário por voz, inclusive as áreas
+  // e medidas do orçamento. Os preços saem da tabela da empresa.
+  const servicosOrcamento = configOrcamento?.servicosEmpresa ?? []
+  const unidades = LISTA_UNIDADES.map((u) => u.value)
+  useFormularioAssistente({
+    id: editando ? 'projeto-editar' : 'projeto-novo',
+    titulo: editando ? 'Editar projeto' : 'Novo projeto',
+    descricao:
+      'Dados da obra' +
+      (configOrcamento ? ' e orçamento por áreas (cômodos) com medidas por serviço' : ''),
+    campos: [
+      { nome: 'nome', descricao: 'Nome do projeto/obra', esquema: { type: 'string' } },
+      {
+        nome: 'cliente_id',
+        descricao:
+          'Cliente da obra. Opções (id = nome): ' + clientes.map((c) => `${c.id} = ${c.nome}`).join('; '),
+        esquema: { type: 'string', enum: clientes.map((c) => c.id) },
+      },
+      {
+        nome: 'status',
+        descricao: 'Status do projeto',
+        esquema: { type: 'string', enum: Object.keys(STATUS_PROJETO_LABEL) },
+      },
+      { nome: 'data_inicio', descricao: 'Início, AAAA-MM-DD', esquema: { type: 'string' } },
+      { nome: 'data_prazo', descricao: 'Prazo final, AAAA-MM-DD', esquema: { type: 'string' } },
+      ...(totalCalculado
+        ? []
+        : [
+            {
+              nome: 'orcamento_total',
+              descricao: configOrcamento
+                ? 'Valor total em reais. Só use se não houver áreas; com áreas o total é calculado.'
+                : 'Valor total em reais',
+              esquema: { type: 'number' },
+            },
+          ]),
+      ...(configOrcamento && servicosOrcamento.length
+        ? [
+            {
+              nome: 'areas',
+              descricao:
+                'Orçamento por área (cômodo). Mande a lista COMPLETA de áreas (substitui a atual). ' +
+                'Cada item é um serviço com quantidade; o preço vem da tabela da empresa. ' +
+                'Serviços (id = nome): ' +
+                servicosOrcamento.map((id) => `${id} = ${SERVICOS_POR_ID[id]?.servico.nome ?? id}`).join('; '),
+              esquema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    nome: { type: 'string', description: 'Nome da área, ex. Sala, Cozinha' },
+                    itens: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          servico_id: { type: 'string', enum: servicosOrcamento },
+                          quantidade: { type: 'number' },
+                          unidade: { type: 'string', enum: unidades, description: 'm2, ml (metro linear), un...' },
+                          memoria_calculo: { type: 'string', description: 'Conta falada, ex. 4 x 3,5' },
+                        },
+                        required: ['servico_id', 'quantidade'],
+                      },
+                    },
+                  },
+                  required: ['nome'],
+                },
+              },
+            },
+          ]
+        : []),
+    ],
+    valores: () => ({
+      nome,
+      cliente_id: clienteId,
+      status,
+      data_inicio: dataInicio,
+      data_prazo: dataPrazo,
+      ...(totalCalculado ? {} : { orcamento_total: orcamento }),
+      ...(configOrcamento
+        ? {
+            areas: areas.map((a) => ({
+              nome: a.nome,
+              itens: a.itens.map((i) => ({
+                servico_id: i.servico_id,
+                quantidade: i.quantidade,
+                unidade: i.unidade,
+                memoria_calculo: i.memoria_calculo,
+              })),
+            })),
+          }
+        : {}),
+    }),
+    preencher: (v) => {
+      const texto = (x: unknown) => (typeof x === 'string' ? x : undefined)
+      const data = (x: unknown) => (typeof x === 'string' && /^\d{4}-\d{2}-\d{2}/.test(x) ? x.slice(0, 10) : undefined)
+      if (texto(v.nome) !== undefined) setNome(texto(v.nome)!)
+      if (typeof v.cliente_id === 'string' && clientes.some((c) => c.id === v.cliente_id)) setClienteId(v.cliente_id)
+      if (typeof v.status === 'string' && v.status in STATUS_PROJETO_LABEL) setStatus(v.status as StatusProjeto)
+      if (data(v.data_inicio)) setDataInicio(data(v.data_inicio)!)
+      if (data(v.data_prazo)) setDataPrazo(data(v.data_prazo)!)
+      if (typeof v.orcamento_total === 'number' && !totalCalculado) setOrcamento(v.orcamento_total)
+      if (configOrcamento && Array.isArray(v.areas)) {
+        const permitidos = new Set(servicosOrcamento)
+        setAreas(
+          v.areas
+            .filter((a): a is Record<string, unknown> => !!a && typeof a === 'object')
+            .map((a) => {
+              const area = novaArea(String(a.nome ?? '').trim() || 'Área')
+              const itens = Array.isArray(a.itens) ? a.itens : []
+              area.itens = itens
+                .filter((i): i is Record<string, unknown> => !!i && typeof i === 'object')
+                .filter((i) => typeof i.servico_id === 'string' && permitidos.has(i.servico_id))
+                .map((i) => {
+                  const item = novoItem(i.servico_id as string, configOrcamento.precos)
+                  const qtd = Number(i.quantidade)
+                  if (Number.isFinite(qtd) && qtd > 0) item.quantidade = Math.round(qtd * 1000) / 1000
+                  if (typeof i.unidade === 'string' && unidades.includes(i.unidade as Unidade)) {
+                    item.unidade = i.unidade as Unidade
+                  }
+                  if (typeof i.memoria_calculo === 'string') item.memoria_calculo = i.memoria_calculo
+                  return item
+                })
+              return area
+            }),
+        )
+      }
+    },
+    salvar: () => formRef.current?.requestSubmit(),
+  })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -317,7 +455,7 @@ export function ProjetoForm({
 
   if (!configOrcamento) {
     return (
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
         {camposForm}
         {rodape}
       </form>
@@ -325,7 +463,7 @@ export function ProjetoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+    <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
       <Frame spacing="default">
         <FrameHeader>
           <FrameTitle>Dados do projeto</FrameTitle>
