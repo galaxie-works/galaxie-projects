@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Frame, FrameHeader, FramePanel } from '@/components/reui/frame'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function CarregandoNovoProjeto() {
@@ -8,20 +8,20 @@ export default function CarregandoNovoProjeto() {
       role="status"
       aria-label="Carregando formulário"
     >
-      <Card>
-        <CardHeader>
+      <Frame spacing="default">
+        <FrameHeader>
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-4 w-56" />
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        </FrameHeader>
+        <FramePanel className="flex flex-col gap-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="flex flex-col gap-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-full" />
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </FramePanel>
+      </Frame>
     </div>
   )
 }

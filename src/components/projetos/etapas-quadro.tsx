@@ -214,9 +214,11 @@ export function EtapasQuadro({ projetoId, etapas, onEtapasChange, equipe, hoje }
                 <FramePanel>
                   <KanbanColumnContent value={status} className="flex min-h-24 flex-col gap-2">
                     {quadro[status].length === 0 && (
-                      <p className="py-6 text-center text-xs text-muted-foreground">
-                        Arraste uma etapa para cá
-                      </p>
+                      <Empty className="border">
+                        <EmptyHeader>
+                          <EmptyDescription>Arraste uma etapa para cá</EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     )}
                     {quadro[status].map((etapa) => (
                       <CartaoEtapa
@@ -266,17 +268,12 @@ function CartaoEtapa({
                 {etapa.equipe?.nome ?? 'Sem responsável'}
               </span>
               {etapa.data_prazo && (
-                <span
-                  className={
-                    atrasada
-                      ? 'flex items-center gap-1 font-medium text-destructive tabular-nums'
-                      : 'flex items-center gap-1 tabular-nums'
-                  }
-                >
+                <span className="flex items-center gap-1 tabular-nums">
                   <CalendarIcon aria-hidden className="size-3" />
                   {formatarData(etapa.data_prazo)}
                 </span>
               )}
+              {atrasada && <Badge variant="destructive-light">Atrasada</Badge>}
             </ItemDescription>
           </ItemContent>
           <ItemActions>
