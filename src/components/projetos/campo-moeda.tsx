@@ -22,10 +22,11 @@ export function CampoMoeda({ id, valor, onChange, invalido, placeholder = 'R$ 0,
       locale="pt-BR"
       format={{ style: 'currency', currency: 'BRL' }}
     >
-      <NumberFieldGroup className="w-full">
+      <NumberFieldGroup className="w-full" aria-invalid={invalido || undefined}>
         <NumberFieldInput
           className="text-left tabular-nums"
           placeholder={placeholder}
+          // No grupo é o visual de erro; no input, o que o leitor de tela lê.
           aria-invalid={invalido || undefined}
         />
       </NumberFieldGroup>
