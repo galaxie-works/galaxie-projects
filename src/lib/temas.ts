@@ -15,15 +15,9 @@ export const TEMAS = [
 export type TemaSlug = (typeof TEMAS)[number]['slug']
 
 export const TEMA_PADRAO: TemaSlug = 'claude'
-export const TEMA_STORAGE_KEY = 'galaxie-tema'
+// Cookie lido no layout raiz para já renderizar o <html> com o tema certo.
+export const TEMA_COOKIE = 'galaxie-tema'
 
 export function temaValido(valor: string | null | undefined): valor is TemaSlug {
   return TEMAS.some((t) => t.slug === valor)
 }
-
-// Roda no <head> antes da pintura, para não piscar o tema padrão ao recarregar.
-export const SCRIPT_TEMA = `(function(){try{var t=localStorage.getItem(${JSON.stringify(
-  TEMA_STORAGE_KEY
-)});var ok=${JSON.stringify(TEMAS.map((t) => t.slug))};if(t&&t!==${JSON.stringify(
-  TEMA_PADRAO
-)}&&ok.indexOf(t)>-1)document.documentElement.setAttribute('data-theme',t)}catch(e){}})()`

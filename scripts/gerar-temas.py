@@ -4,7 +4,6 @@ Uso: python3 scripts/gerar-temas.py
 Para adicionar um tema: inclua uma linha em TEMAS aqui e em src/lib/temas.ts.
 """
 import json
-import re
 import urllib.request
 from pathlib import Path
 
@@ -22,16 +21,11 @@ TEMAS = [
     ('typewriter', 'Typewriter', 'https://tweakcn.com/r/themes/cmt5ycr4z000004k3cd3gem4w'),
 ]
 
-# Família -> variável do next/font carregada em src/app/layout.tsx.
-FONTES = [
-    ('Geist Mono', 'geist-mono'), ('Geist', 'geist'), ('Outfit', 'outfit'),
-    ('Montserrat', 'montserrat'), ('Space Mono', 'space-mono'), ('Lora', 'lora'),
-    ('Courier Prime', 'courier-prime'), ('Cormorant Garamond', 'cormorant-garamond'),
-    ('EB Garamond', 'eb-garamond'), ('Inter', 'inter'),
-]
-
-# destructive-foreground fica com o app: o ReUI usa como texto sobre fundo claro.
-IGNORAR = {'spacing', 'letter-spacing', 'destructive-foreground'}
+# Os temas trocam só as cores: raio, sombras, fontes e espaçamento ficam os do ReUI
+# (globals.css). destructive-foreground também fica com o app, porque o ReUI usa
+# essa cor como texto sobre fundo claro.
+IGNORAR_PREFIXOS = ('radius', 'shadow', 'font', 'tracking', 'letter-spacing', 'spacing')
+IGNORAR = {'destructive-foreground'}
 
 
 # O "alpha" do tweakcn não tem modo escuro (o dark é cópia do light). Escuro derivado
@@ -74,19 +68,11 @@ def baixar(origem):
         return json.load(r)
 
 
-def fontes(valor):
-    for nome, var in FONTES:
-        valor = re.sub(r"""(['"]?)%s\1(?=\s*(,|$))""" % re.escape(nome), f'var(--font-{var})', valor)
-    return ' '.join(valor.split())
-
-
 def bloco(seletor, variaveis):
     linhas = [seletor + ' {']
     for k, v in variaveis.items():
-        if k in IGNORAR:
+        if k in IGNORAR or k.startswith(IGNORAR_PREFIXOS):
             continue
-        if k.startswith('font'):
-            v = fontes(v)
         linhas.append(f'  --{k}: {v};')
     linhas.append('}')
     return '\n'.join(linhas)

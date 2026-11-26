@@ -1,19 +1,17 @@
 'use client'
 
-import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import { MonitorIcon, MoonIcon, PaletteIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { cn } from '@/lib/utils'
 import { TEMAS, temaValido } from '@/lib/temas'
 import { useTemaCor } from '@/components/tema/tema-provider'
 import {
   DropdownMenuGroup,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const MODOS = [
@@ -22,36 +20,10 @@ const MODOS = [
   { value: 'system', rotulo: 'Sistema', icone: MonitorIcon },
 ]
 
-// Opção redonda numa linha, com o nome no tooltip. Item de menu de verdade:
-// navega pelas setas e não fecha o menu ao escolher.
-function Opcao({
-  value,
-  rotulo,
-  className,
-  children,
-}: {
-  value: string
-  rotulo: string
-  className?: string
-  children?: React.ReactNode
-}) {
+function Opcao({ value, rotulo, children }: { value: string; rotulo: string; children: React.ReactNode }) {
   return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <MenuPrimitive.RadioItem
-            value={value}
-            closeOnClick={false}
-            aria-label={rotulo}
-            className={cn(
-              'flex size-7 shrink-0 cursor-default items-center justify-center rounded-full outline-hidden transition-colors select-none',
-              'ring-offset-2 ring-offset-popover data-highlighted:bg-accent data-checked:ring-2 data-checked:ring-foreground/60',
-              "[&_svg:not([class*='size-'])]:size-4",
-              className
-            )}
-          />
-        }
-      >
+      <TooltipTrigger render={<TabsTrigger value={value} aria-label={rotulo} className="h-7 flex-1" />}>
         {children}
       </TooltipTrigger>
       <TooltipContent side="bottom">{rotulo}</TooltipContent>
@@ -59,7 +31,8 @@ function Opcao({
   )
 }
 
-// Submenu "Tema" do menu do usuário: cores dos temas lado a lado e modo claro/escuro.
+// Submenu "Tema" do menu do usuário, no padrão do ReUI (c-dropdown-menu-14):
+// Tabs com as cores lado a lado e Tabs com claro/escuro/sistema, nome no tooltip.
 export function MenuTema() {
   const { tema, setTema } = useTemaCor()
   const { theme: modo, setTheme: setModo } = useTheme()
@@ -70,41 +43,41 @@ export function MenuTema() {
         <PaletteIcon />
         Tema
       </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent className="w-auto min-w-0">
+      <DropdownMenuSubContent className="w-64">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Cor</DropdownMenuLabel>
-          <MenuPrimitive.RadioGroup
+          <Tabs
             value={tema}
             onValueChange={(v) => {
               if (temaValido(v)) setTema(v)
             }}
-            className="flex items-center gap-1.5 px-1.5 pb-1.5"
+            className="px-1 pb-1.5"
           >
-            {TEMAS.map((t) => (
-              <Opcao key={t.slug} value={t.slug} rotulo={`${t.cor} · ${t.nome}`}>
-                <span
-                  aria-hidden
-                  data-theme={t.slug}
-                  className="size-5 rounded-full border border-foreground/10 bg-primary"
-                />
-              </Opcao>
-            ))}
-          </MenuPrimitive.RadioGroup>
+            <TabsList className="w-full">
+              {TEMAS.map((t) => (
+                <Opcao key={t.slug} value={t.slug} rotulo={`${t.cor} · ${t.nome}`}>
+                  {/* Amostra: o próprio data-theme pinta a bolinha com a cor do tema. */}
+                  <span
+                    aria-hidden
+                    data-theme={t.slug}
+                    className="size-4 rounded-full border border-foreground/10 bg-primary"
+                  />
+                </Opcao>
+              ))}
+            </TabsList>
+          </Tabs>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuLabel>Aparência</DropdownMenuLabel>
-          <MenuPrimitive.RadioGroup
-            value={modo ?? 'system'}
-            onValueChange={(v) => setModo(String(v))}
-            className="flex items-center gap-1.5 px-1.5 pb-1.5"
-          >
-            {MODOS.map(({ value, rotulo, icone: Icone }) => (
-              <Opcao key={value} value={value} rotulo={rotulo}>
-                <Icone />
-              </Opcao>
-            ))}
-          </MenuPrimitive.RadioGroup>
+          <Tabs value={modo ?? 'system'} onValueChange={(v) => setModo(String(v))} className="px-1 pb-1.5">
+            <TabsList className="w-full">
+              {MODOS.map(({ value, rotulo, icone: Icone }) => (
+                <Opcao key={value} value={value} rotulo={rotulo}>
+                  <Icone aria-hidden />
+                </Opcao>
+              ))}
+            </TabsList>
+          </Tabs>
         </DropdownMenuGroup>
       </DropdownMenuSubContent>
     </DropdownMenuSub>
