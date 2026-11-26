@@ -392,9 +392,13 @@ export function encontrarServicosNoTexto(texto: string): string[] {
       let algumDaCategoria = false
       for (const servico of categoria.servicos) {
         const termos = [servico.nome, ...(servico.sinonimos ?? [])]
-          .flatMap((t) => [t, t.split('(')[0]])
+          .flatMap((t) => {
+            const semParenteses = t.split('(')[0]
+            // "Pintura externa e fachada" também casa "pintura externa" e "fachada"
+            return [t, semParenteses, ...semParenteses.split(/,| e /)]
+          })
           .map(normalizar)
-          .filter((t) => t.length >= 3)
+          .filter((t) => t.length >= 4)
         if (termos.some((t) => alvo.includes(` ${t} `) || alvo.includes(` ${t}s `))) {
           achados.add(servico.id)
           algumDaCategoria = true
@@ -406,4 +410,55 @@ export function encontrarServicosNoTexto(texto: string): string[] {
     }
   }
   return [...achados]
+}
+
+/**
+ * Aplica um comando de voz (ou texto) à seleção atual de serviços.
+ * Entende trechos de adição e de remoção na mesma frase:
+ *   "adiciona pintura externa e tira granilite"
+ *   "não faço mais fulget, mas agora faço drywall"
+ * Trechos sem verbo de remoção são tratados como adição.
+ */
+const GATILHOS_REMOCAO = [
+  'tira', 'tirar', 'tire', 'remove', 'remover', 'remova', 'exclui', 'excluir',
+  'apaga', 'apagar', 'desmarca', 'desmarcar', 'sem', 'nao faco', 'nao faco mais',
+  'parei de fazer', 'nao trabalho com',
+]
+const GATILHOS_ADICAO = [
+  'adiciona', 'adicionar', 'adicione', 'coloca', 'colocar', 'inclui', 'incluir',
+  'marca', 'marcar', 'faco', 'agora faco', 'tambem faco', 'trabalho com', 'mas',
+]
+
+export function aplicarComandoDeVoz(
+  selecionados: string[],
+  texto: string
+): { selecionados: string[]; adicionados: string[]; removidos: string[] } {
+  const norm = normalizar(texto)
+  // Quebra a frase nos gatilhos, mantendo qual gatilho abriu cada trecho.
+  const gatilhos = [...GATILHOS_REMOCAO.map((g) => ({ g, remover: true })), ...GATILHOS_ADICAO.map((g) => ({ g, remover: false }))]
+    .sort((a, b) => b.g.length - a.g.length)
+  const padrao = new RegExp(`\\b(${gatilhos.map((x) => x.g).join('|')})\\b`, 'g')
+  const trechos: { texto: string; remover: boolean }[] = []
+  let ultimo = 0
+  let removerAtual = false
+  for (const m of norm.matchAll(padrao)) {
+    trechos.push({ texto: norm.slice(ultimo, m.index), remover: removerAtual })
+    removerAtual = gatilhos.find((x) => x.g === m[1])!.remover
+    ultimo = (m.index ?? 0) + m[0].length
+  }
+  trechos.push({ texto: norm.slice(ultimo), remover: removerAtual })
+
+  const resultado = new Set(selecionados)
+  const adicionados: string[] = []
+  const removidos: string[] = []
+  for (const t of trechos) {
+    for (const id of encontrarServicosNoTexto(t.texto)) {
+      if (t.remover && resultado.delete(id)) removidos.push(id)
+      if (!t.remover && !resultado.has(id)) {
+        resultado.add(id)
+        adicionados.push(id)
+      }
+    }
+  }
+  return { selecionados: [...resultado], adicionados, removidos }
 }
