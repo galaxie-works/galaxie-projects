@@ -317,11 +317,13 @@ declare
   v_area_ordem bigint;
   v_area_id uuid;
   v_total numeric;
+  v_tinha_itens boolean;
 begin
   if not exists (select 1 from public.projetos where id = p_projeto_id) then
     raise exception 'Projeto não encontrado';
   end if;
 
+  v_tinha_itens := exists (select 1 from public.projeto_itens where projeto_id = p_projeto_id);
   delete from public.projeto_areas where projeto_id = p_projeto_id;
 
   for v_area, v_area_ordem in
@@ -354,8 +356,9 @@ begin
   select coalesce(sum(total), 0) into v_total
   from public.projeto_itens where projeto_id = p_projeto_id;
 
-  -- Sem itens, o orçamento continua sendo o valor digitado à mão.
-  if exists (select 1 from public.projeto_itens where projeto_id = p_projeto_id) then
+  -- Projeto que nunca teve itens mantém o valor digitado à mão; se tinha
+  -- e todos foram removidos, o total calculado vai a zero.
+  if v_tinha_itens or exists (select 1 from public.projeto_itens where projeto_id = p_projeto_id) then
     update public.projetos set orcamento_total = v_total where id = p_projeto_id;
   end if;
 

@@ -435,7 +435,8 @@ function ItemLinha({
       ...item,
       servico_id: servicoId,
       unidade: preco?.unidade ?? base.unidade,
-      preco_unitario: preco?.preco ?? item.preco_unitario,
+      // Serviço sem preço na tabela começa em zero, não herda o do anterior.
+      preco_unitario: preco?.preco ?? 0,
     })
   }
 

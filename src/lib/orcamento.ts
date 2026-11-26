@@ -125,8 +125,15 @@ export function novaArea(nome = ''): AreaOrcamento {
 
 const arred = (v: number, casas = 2) => Math.round(v * 10 ** casas) / 10 ** casas
 
+/**
+ * Quantidade (3 casas) × preço (2 casas) com arredondamento "meio para
+ * cima" em centavos, feito em inteiros para bater com o round(numeric, 2)
+ * do Postgres (0,5 × R$ 2,01 = R$ 1,01, não R$ 1,00).
+ */
 export function totalItem(item: ItemOrcamento): number {
-  return arred(item.quantidade * item.preco_unitario)
+  const milesimos = Math.round(item.quantidade * 1000)
+  const centavos = Math.round(item.preco_unitario * 100)
+  return Math.floor((milesimos * centavos + 500) / 1000) / 100
 }
 
 export function totalArea(area: AreaOrcamento): number {
