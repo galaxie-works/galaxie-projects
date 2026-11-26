@@ -358,7 +358,9 @@ export async function executarFerramenta(
 
   if (nome === 'buscar') {
     const limite = Math.min(Math.max(Number(args.limite) || 20, 1), 50)
-    let q = supabase.from(tabela).select(colunasSelect(tabela)).limit(limite)
+    // Projetos já vêm com o nome do cliente, para a IA montar a tabela sem outra busca.
+    const select = tabela === 'projetos' ? `${colunasSelect(tabela)}, clientes(nome)` : colunasSelect(tabela)
+    let q = supabase.from(tabela).select(select).limit(limite)
     if (espec.daEmpresa) q = q.eq('empresa_id', empresaId)
     if (typeof args.texto === 'string' && args.texto.trim()) {
       q = q.ilike(espec.colunaTexto, `%${args.texto.trim().replace(/[%_]/g, '')}%`)

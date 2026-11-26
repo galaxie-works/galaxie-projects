@@ -1,9 +1,11 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
+import { Progress } from '@/components/ui/progress'
 
 // O bloco de código da ReUI é pesado (Shiki): só carrega quando aparece um.
 const BlocoCodigo = dynamic(() => import('./bloco-codigo'), {
@@ -46,7 +48,24 @@ const componentes: Components = {
   th: ({ className, ...p }) => (
     <th className={cn('px-3 py-2 text-left font-medium whitespace-nowrap text-muted-foreground', className)} {...p} />
   ),
-  td: ({ className, ...p }) => <td className={cn('border-t px-3 py-2 align-top whitespace-nowrap tabular-nums', className)} {...p} />,
+  td: ({ className, children, ...p }) => (
+    <td className={cn('border-t px-3 py-2 align-middle whitespace-nowrap tabular-nums', className)} {...p}>
+      {celulaPercentual(children) ?? children}
+    </td>
+  ),
+}
+
+/** Célula só com "65%" vira barra de progresso, como na página do cliente. */
+function celulaPercentual(children: ReactNode) {
+  const texto = Array.isArray(children) ? children.join('') : children
+  const m = typeof texto === 'string' ? texto.trim().match(/^(\d{1,3})\s?%$/) : null
+  if (!m) return null
+  const valor = Math.min(Number(m[1]), 100)
+  return (
+    <Progress value={valor} aria-label={`${valor}% concluído`} className="w-28 flex-nowrap items-center gap-2">
+      <span className="order-last w-9 shrink-0 text-end text-xs text-muted-foreground tabular-nums">{valor}%</span>
+    </Progress>
+  )
 }
 
 export function Markdown({ texto }: { texto: string }) {
