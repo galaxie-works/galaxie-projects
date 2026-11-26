@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ClientePainel } from '@/components/clientes/cliente-painel'
 import { hojeISO } from '@/lib/crm'
-import type { Atividade, Cliente, MembroEquipe, Projeto } from '@/types'
+import type { Atividade, Cliente, MembroEquipe, Projeto, TarefaAgenda } from '@/types'
 
 export default async function ClienteDetalhePage({
   params,
@@ -19,7 +19,7 @@ export default async function ClienteDetalhePage({
   const { data: cliente } = await supabase.from('clientes').select('*').eq('id', id).maybeSingle()
   if (!cliente) notFound()
 
-  const [{ data: projetos, error }, atividadesRes, { data: equipe }] = await Promise.all([
+  const [{ data: projetos, error }, atividadesRes, { data: equipe }, tarefasRes] = await Promise.all([
     supabase.from('projetos').select('*').eq('cliente_id', id).order('created_at', { ascending: false }),
     supabase
       .from('atividades')
@@ -28,6 +28,14 @@ export default async function ClienteDetalhePage({
       .order('ocorreu_em', { ascending: false })
       .limit(100),
     supabase.from('equipe').select('id, nome').order('nome'),
+    // Tarefas abertas (frente B). Erra enquanto o SQL da agenda não rodou.
+    supabase
+      .from('atividades')
+      .select('*, equipe(nome)')
+      .eq('cliente_id', id)
+      .not('previsto_para', 'is', null)
+      .is('concluida_em', null)
+      .order('previsto_para'),
   ])
   if (error) throw new Error(error.message)
 
@@ -37,6 +45,8 @@ export default async function ClienteDetalhePage({
   // a tela funciona, só sem salvar os campos novos.
   const crmDisponivel = 'fase_manual' in c && !atividadesRes.error
   const atividades = crmDisponivel ? ((atividadesRes.data as Atividade[]) ?? []) : []
+  const agendaDisponivel = crmDisponivel && !tarefasRes.error
+  const tarefas = agendaDisponivel ? ((tarefasRes.data as TarefaAgenda[]) ?? []) : []
 
   return (
     <ClientePainel
@@ -45,6 +55,8 @@ export default async function ClienteDetalhePage({
       atividades={atividades}
       equipe={(equipe as Pick<MembroEquipe, 'id' | 'nome'>[] | null) ?? []}
       crmDisponivel={crmDisponivel}
+      agendaDisponivel={agendaDisponivel}
+      tarefas={tarefas}
       hoje={hojeISO()}
     />
   )

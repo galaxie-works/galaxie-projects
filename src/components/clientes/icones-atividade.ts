@@ -1,4 +1,6 @@
 import {
+  BotIcon,
+  ListTodoIcon,
   CalendarCheckIcon,
   MailIcon,
   MessageCircleIcon,
@@ -18,4 +20,6 @@ export const ICONE_ATIVIDADE: Record<TipoAtividade, typeof StickyNoteIcon> = {
   reuniao: UsersIcon,
   email: MailIcon,
   audio: MicIcon,
+  tarefa: ListTodoIcon,
+  sistema: BotIcon,
 }

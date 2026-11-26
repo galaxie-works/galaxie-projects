@@ -182,7 +182,16 @@ export const ORIGENS_CLIENTE = [
   'Outro',
 ] as const
 
-export type TipoAtividade = 'nota' | 'ligacao' | 'whatsapp' | 'visita' | 'reuniao' | 'email' | 'audio'
+export type TipoAtividade =
+  | 'nota'
+  | 'ligacao'
+  | 'whatsapp'
+  | 'visita'
+  | 'reuniao'
+  | 'email'
+  | 'audio'
+  | 'tarefa'
+  | 'sistema'
 
 export const TIPO_ATIVIDADE_LABEL: Record<TipoAtividade, string> = {
   nota: 'Nota',
@@ -192,6 +201,8 @@ export const TIPO_ATIVIDADE_LABEL: Record<TipoAtividade, string> = {
   reuniao: 'Reunião',
   email: 'E-mail',
   audio: 'Áudio',
+  tarefa: 'Tarefa',
+  sistema: 'Sistema',
 }
 
 export interface Atividade {
@@ -204,5 +215,16 @@ export interface Atividade {
   responsavel_id: string | null
   ocorreu_em: string
   created_at: string
+  /** Agenda (frente B): prazo do próximo passo. Nulo = contato já feito. */
+  previsto_para?: string | null
+  concluida_em?: string | null
+  resultado?: string | null
+  negocio_id?: string | null
   equipe?: { nome: string } | null
+}
+
+/** Atividade com prazo (tarefa / próximo passo), com o nome do cliente. */
+export type TarefaAgenda = Atividade & {
+  previsto_para: string
+  clientes?: { nome: string; telefone: string | null } | null
 }
