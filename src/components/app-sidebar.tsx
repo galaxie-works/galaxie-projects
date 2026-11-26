@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Fragment, useMemo, useState, type MouseEvent } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import {
+  ArrowLeftIcon,
   BriefcaseBusinessIcon,
   Building2Icon,
   ChevronsUpDownIcon,
@@ -22,6 +23,7 @@ import { AssistenteVoz } from '@/components/assistente/assistente-voz'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -275,18 +277,32 @@ const SECOES: Record<string, string> = {
   ajustes: 'Ajustes',
 }
 
-// Cabeçalho fino do conteúdo: botão da sidebar + trilha de navegação.
+type Camada = { id: string; nome: string }
+
+// Cabeçalho fino do conteúdo. Navegação em camadas: em telas de detalhe
+// aparece a seta de voltar, que desce uma camada (como no app do Claude no
+// celular). No celular a camada atual vira o título; no computador fica a trilha.
 export function AppHeader({
   projetos,
+  clientes,
   assistenteConfigurado,
   empresaId,
 }: {
-  projetos: Pick<Projeto, 'id' | 'nome'>[]
+  projetos: Camada[]
+  clientes: Camada[]
   assistenteConfigurado: boolean
   empresaId: string
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [secao, sub] = pathname.split('/').filter(Boolean)
+
+  // Quantas telas foram vistas nesta sessão do app: com mais de uma, voltar
+  // usa o histórico (mantém filtro e rolagem da tela anterior).
+  const telasVistas = useRef(0)
+  useEffect(() => {
+    telasVistas.current += 1
+  }, [pathname])
 
   const trilha: { rotulo: string; href?: string }[] = []
   if (secao && SECOES[secao]) {
@@ -294,17 +310,31 @@ export function AppHeader({
     if (sub === 'novo') {
       trilha.push({ rotulo: secao === 'projetos' ? 'Novo projeto' : 'Novo cadastro' })
     } else if (sub) {
-      const nome =
-        secao === 'projetos' ? projetos.find((p) => p.id === sub)?.nome : undefined
-      trilha.push({ rotulo: nome ?? 'Detalhes' })
+      const lista = secao === 'projetos' ? projetos : secao === 'clientes' ? clientes : []
+      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? 'Detalhes' })
     }
+  }
+  const emCamada = Boolean(sub) && Boolean(SECOES[secao ?? ''])
+  const atual = trilha.at(-1)?.rotulo
+
+  function voltar() {
+    if (telasVistas.current > 1) router.back()
+    else router.push(`/${secao}`)
   }
 
   return (
     <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="my-auto h-4" />
-      <Breadcrumb className="min-w-0">
+      {emCamada ? (
+        <Button variant="ghost" size="icon-sm" className="-ml-1.5" onClick={voltar} aria-label="Voltar">
+          <ArrowLeftIcon />
+        </Button>
+      ) : null}
+      <SidebarTrigger className={cn('-ml-1', emCamada && 'max-md:hidden')} />
+      <Separator orientation="vertical" className={cn('my-auto h-4', emCamada && 'max-md:hidden')} />
+      {emCamada && atual && (
+        <span className="min-w-0 truncate text-sm font-medium md:hidden">{atual}</span>
+      )}
+      <Breadcrumb className={cn('min-w-0', emCamada && 'max-md:hidden')}>
         <BreadcrumbList className="flex-nowrap">
           {trilha.map((item, i) => (
             <Fragment key={`${item.rotulo}-${i}`}>

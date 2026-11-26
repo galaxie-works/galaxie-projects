@@ -13,7 +13,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import type { Cliente } from '@/types'
+import { faseDoCliente, hojeISO, numerosDoCliente } from '@/lib/crm'
+import type { Cliente, Projeto } from '@/types'
 
 export default async function ClientesPage() {
   const supabase = await createClient()
@@ -31,14 +32,21 @@ export default async function ClientesPage() {
 
   const { data: clientes, error } = await supabase
     .from('clientes')
-    .select('*, projetos(count)')
+    .select('*, projetos(status, orcamento_total)')
     .eq('empresa_id', empresa.id)
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
 
-  const lista: ClienteLinha[] = (
-    (clientes as (Cliente & { projetos: { count: number }[] | null })[]) ?? []
-  ).map(({ projetos, ...c }) => ({ ...c, totalProjetos: projetos?.[0]?.count ?? 0 }))
+  type ComObras = Cliente & { projetos: Pick<Projeto, 'status' | 'orcamento_total'>[] | null }
+  const lista: ClienteLinha[] = ((clientes as ComObras[]) ?? []).map(({ projetos, ...c }) => {
+    const obras = projetos ?? []
+    return {
+      ...c,
+      fase: faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras),
+      contratado: numerosDoCliente(obras).contratado,
+      totalProjetos: obras.length,
+    }
+  })
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -78,7 +86,7 @@ export default async function ClientesPage() {
           </FramePanel>
         </Frame>
       ) : (
-        <ClientesTabela clientes={lista} />
+        <ClientesTabela clientes={lista} hoje={hojeISO()} />
       )}
     </div>
   )

@@ -86,7 +86,8 @@ pertence ao usuário logado (`auth.uid()`). Isso está todo definido em
    já serve).
 2. No painel, vá em **SQL Editor** → cole o conteúdo inteiro de
    `supabase/schema.sql` → **Run**. Isso cria todas as tabelas, políticas
-   de segurança e índices.
+   de segurança e índices. Num banco que já existe, dá para rodar só o
+   arquivo novo de `supabase/migracoes/` (ex.: `2026-11-26-cliente-360.sql`).
 3. Em **Authentication → Providers → Email**, se quiser testar rápido
    sem precisar confirmar e-mail, desative "Confirm email" (em
    **Authentication → Settings**). Em produção, o ideal é deixar

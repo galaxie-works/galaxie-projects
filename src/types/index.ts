@@ -44,6 +44,14 @@ export interface Cliente {
   telefone: string | null
   endereco: string | null
   created_at: string
+  // CRM (fase 1)
+  fase_manual: FaseCliente | null
+  temperatura: TemperaturaCliente | null
+  origem: string | null
+  responsavel_id: string | null
+  tags: string[]
+  proximo_followup_em: string | null
+  observacoes: string | null
 }
 
 export interface Projeto {
@@ -130,4 +138,71 @@ export interface ProjetoItem {
   total: number
   ordem: number
   created_at: string
+}
+
+// ---------------------------------------------------------------------------
+// CRM: fase do cliente, temperatura, atividades e resumo do painel
+// ---------------------------------------------------------------------------
+
+export type FaseCliente = 'lead' | 'prospect' | 'proposta' | 'cliente' | 'pos_venda' | 'inativo'
+
+export const FASES_CLIENTE: FaseCliente[] = [
+  'lead',
+  'prospect',
+  'proposta',
+  'cliente',
+  'pos_venda',
+  'inativo',
+]
+
+export const FASE_CLIENTE_LABEL: Record<FaseCliente, string> = {
+  lead: 'Lead',
+  prospect: 'Prospect',
+  proposta: 'Proposta',
+  cliente: 'Cliente',
+  pos_venda: 'Pós-venda',
+  inativo: 'Inativo',
+}
+
+export type TemperaturaCliente = 'frio' | 'morno' | 'quente'
+
+export const TEMPERATURA_LABEL: Record<TemperaturaCliente, string> = {
+  frio: 'Frio',
+  morno: 'Morno',
+  quente: 'Quente',
+}
+
+export const ORIGENS_CLIENTE = [
+  'Indicação',
+  'Instagram',
+  'Google',
+  'Site',
+  'Loja',
+  'Arquiteto',
+  'Outro',
+] as const
+
+export type TipoAtividade = 'nota' | 'ligacao' | 'whatsapp' | 'visita' | 'reuniao' | 'email' | 'audio'
+
+export const TIPO_ATIVIDADE_LABEL: Record<TipoAtividade, string> = {
+  nota: 'Nota',
+  ligacao: 'Ligação',
+  whatsapp: 'WhatsApp',
+  visita: 'Visita',
+  reuniao: 'Reunião',
+  email: 'E-mail',
+  audio: 'Áudio',
+}
+
+export interface Atividade {
+  id: string
+  empresa_id: string
+  cliente_id: string
+  projeto_id: string | null
+  tipo: TipoAtividade
+  texto: string
+  responsavel_id: string | null
+  ocorreu_em: string
+  created_at: string
+  equipe?: { nome: string } | null
 }

@@ -9,7 +9,7 @@ import {
   type SortingState,
   useTable,
 } from '@tanstack/react-table'
-import { Building2Icon, SearchIcon, UserIcon, UsersIcon } from 'lucide-react'
+import { Building2Icon, FlameIcon, SearchIcon, SignpostIcon, UserIcon, UsersIcon } from 'lucide-react'
 import {
   DataGrid,
   DataGridContainer,
@@ -32,14 +32,48 @@ import { Badge } from '@/components/reui/badge'
 import { Frame, FrameFooter, FrameHeader, FramePanel } from '@/components/reui/frame'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { iniciais } from '@/lib/formato'
-import type { Cliente } from '@/types'
+import { formatarData, formatarMoeda, iniciais } from '@/lib/formato'
+import { situacaoFollowup } from '@/lib/crm'
+import { VARIANTE_FASE_CLIENTE, VARIANTE_TEMPERATURA } from '@/lib/status'
+import {
+  FASE_CLIENTE_LABEL,
+  FASES_CLIENTE,
+  TEMPERATURA_LABEL,
+  type Cliente,
+  type FaseCliente,
+  type TemperaturaCliente,
+} from '@/types'
 import { formatarTelefone } from './telefone'
 import { ROTULOS_FILTROS, ROTULOS_GRID, ROTULOS_OPERADORES } from '@/lib/rotulos-tabela'
 
-export type ClienteLinha = Cliente & { totalProjetos: number }
+export type ClienteLinha = Cliente & {
+  fase: FaseCliente
+  contratado: number
+  totalProjetos: number
+}
 
 const CAMPOS_FILTRO: FilterField[] = [
+  {
+    id: 'fase',
+    label: 'Fase',
+    type: 'select',
+    defaultOperator: 'is_any_of',
+    searchable: false,
+    icon: <SignpostIcon />,
+    options: FASES_CLIENTE.map((f) => ({ value: f, label: FASE_CLIENTE_LABEL[f] })),
+  },
+  {
+    id: 'temperatura',
+    label: 'Temperatura',
+    type: 'select',
+    defaultOperator: 'is_any_of',
+    searchable: false,
+    icon: <FlameIcon />,
+    options: (Object.keys(TEMPERATURA_LABEL) as TemperaturaCliente[]).map((t) => ({
+      value: t,
+      label: TEMPERATURA_LABEL[t],
+    })),
+  },
   {
     id: 'tipo',
     label: 'Tipo',
@@ -113,7 +147,7 @@ function casaBusca(cliente: ClienteLinha, busca: string): boolean {
   return digitosBusca.length >= 3 && texto.replace(/\D/g, '').includes(digitosBusca)
 }
 
-export function ClientesTabela({ clientes }: { clientes: ClienteLinha[] }) {
+export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; hoje: string }) {
   const router = useRouter()
   const [busca, setBusca] = useState('')
   const [query, setQuery] = useState<FilterQuery>(() => createFilterQuery())
@@ -153,25 +187,35 @@ export function ClientesTabela({ clientes }: { clientes: ClienteLinha[] }) {
             </div>
           )
         },
-        size: 240,
+        size: 220,
         enableSorting: true,
       },
       {
-        id: 'tipo',
-        accessorKey: 'tipo',
-        header: ({ column }) => <DataGridColumnHeader title="Tipo" column={column} />,
-        cell: ({ row }) => <Badge variant="outline">{row.original.tipo}</Badge>,
-        size: 80,
-        enableSorting: true,
-      },
-      {
-        id: 'documento',
-        accessorFn: (c) => (c.tipo === 'PF' ? c.cpf : c.cnpj) ?? '',
-        header: ({ column }) => <DataGridColumnHeader title="Documento" column={column} />,
-        cell: ({ getValue }) => (
-          <span className="text-muted-foreground tabular-nums">{(getValue() as string) || '—'}</span>
+        id: 'fase',
+        // Ordena pela ordem do funil, não pelo nome da fase.
+        accessorFn: (c) => FASES_CLIENTE.indexOf(c.fase),
+        header: ({ column }) => <DataGridColumnHeader title="Fase" column={column} />,
+        cell: ({ row }) => (
+          <Badge variant={VARIANTE_FASE_CLIENTE[row.original.fase]}>
+            {FASE_CLIENTE_LABEL[row.original.fase]}
+          </Badge>
         ),
-        size: 170,
+        size: 110,
+        enableSorting: true,
+      },
+      {
+        id: 'temperatura',
+        accessorKey: 'temperatura',
+        header: ({ column }) => <DataGridColumnHeader title="Temperatura" column={column} />,
+        cell: ({ row }) => {
+          const t = row.original.temperatura
+          return t ? (
+            <Badge variant={VARIANTE_TEMPERATURA[t]}>{TEMPERATURA_LABEL[t]}</Badge>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )
+        },
+        size: 110,
         enableSorting: false,
       },
       {
@@ -183,25 +227,50 @@ export function ClientesTabela({ clientes }: { clientes: ClienteLinha[] }) {
             {formatarTelefone(row.original.telefone) || '—'}
           </span>
         ),
-        size: 160,
+        size: 150,
         enableSorting: false,
       },
       {
-        id: 'email',
-        accessorKey: 'email',
-        header: ({ column }) => <DataGridColumnHeader title="E-mail" column={column} />,
-        cell: ({ row }) => (
-          <span className="text-muted-foreground block truncate">{row.original.email || '—'}</span>
-        ),
-        size: 220,
+        id: 'followup',
+        accessorFn: (c) => c.proximo_followup_em ?? '',
+        header: ({ column }) => <DataGridColumnHeader title="Próximo follow-up" column={column} />,
+        cell: ({ row }) => {
+          const data = row.original.proximo_followup_em ?? null
+          const situacao = situacaoFollowup(data, hoje)
+          if (situacao === 'sem') return <span className="text-muted-foreground">—</span>
+          return (
+            <span
+              className={
+                situacao === 'atrasado'
+                  ? 'text-destructive whitespace-nowrap font-medium tabular-nums'
+                  : 'whitespace-nowrap tabular-nums'
+              }
+            >
+              {situacao === 'hoje' ? 'Hoje' : formatarData(data)}
+            </span>
+          )
+        },
+        size: 140,
         enableSorting: true,
+      },
+      {
+        id: 'contratado',
+        accessorKey: 'contratado',
+        header: ({ column }) => <DataGridColumnHeader title="Contratado" column={column} />,
+        cell: ({ row }) => formatarMoeda(row.original.contratado),
+        size: 130,
+        enableSorting: true,
+        meta: {
+          headerClassName: 'text-end [&>div]:justify-end',
+          cellClassName: 'text-end tabular-nums whitespace-nowrap',
+        },
       },
       {
         id: 'totalProjetos',
         accessorKey: 'totalProjetos',
-        header: ({ column }) => <DataGridColumnHeader title="Projetos" column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Obras" column={column} />,
         cell: ({ row }) => row.original.totalProjetos,
-        size: 100,
+        size: 80,
         enableSorting: true,
         meta: {
           headerClassName: 'text-end [&>div]:justify-end',
@@ -209,7 +278,7 @@ export function ClientesTabela({ clientes }: { clientes: ClienteLinha[] }) {
         },
       },
     ],
-    []
+    [hoje]
   )
 
   const table = useTable({
