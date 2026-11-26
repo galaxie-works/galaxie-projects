@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Building2Icon, CircleAlertIcon, UserIcon } from 'lucide-react'
@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { TipoCliente } from '@/types'
+import { useFormularioAssistente } from '@/components/assistente/formulario-assistente'
 import { CampoComVoz } from './campo-com-voz'
 import { documentoCompleto, mascararCnpj, mascararCpf } from './documento'
 
@@ -39,6 +40,37 @@ export function ClienteForm({ empresaId }: { empresaId: string }) {
   const [tentouSalvar, setTentouSalvar] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
+
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useFormularioAssistente({
+    id: 'cliente-novo',
+    titulo: 'Novo cliente',
+    descricao: 'Cadastro de cliente pessoa física ou jurídica',
+    campos: [
+      { nome: 'tipo', descricao: 'PF (pessoa física) ou PJ (empresa)', esquema: { type: 'string', enum: ['PF', 'PJ'] } },
+      { nome: 'nome', descricao: 'Nome completo (PF) ou nome fantasia (PJ)', esquema: { type: 'string' } },
+      { nome: 'cpf', descricao: 'CPF, só dígitos ou 000.000.000-00', esquema: { type: 'string' } },
+      { nome: 'cnpj', descricao: 'CNPJ, só dígitos ou 00.000.000/0000-00', esquema: { type: 'string' } },
+      { nome: 'razao_social', descricao: 'Razão social (só PJ)', esquema: { type: 'string' } },
+      { nome: 'telefone', descricao: 'Telefone em E.164, ex. +5511987654321', esquema: { type: 'string' } },
+      { nome: 'email', descricao: 'E-mail', esquema: { type: 'string' } },
+      { nome: 'endereco', descricao: 'Endereço da obra', esquema: { type: 'string' } },
+    ],
+    valores: () => ({ tipo, nome, cpf, cnpj, razao_social: razaoSocial, telefone, email, endereco }),
+    preencher: (v) => {
+      const texto = (x: unknown) => (typeof x === 'string' ? x : undefined)
+      if (v.tipo === 'PF' || v.tipo === 'PJ') setTipo(v.tipo)
+      if (texto(v.nome) !== undefined) setNome(texto(v.nome)!)
+      if (texto(v.cpf) !== undefined) setCpf(mascararCpf(texto(v.cpf)!))
+      if (texto(v.cnpj) !== undefined) setCnpj(mascararCnpj(texto(v.cnpj)!))
+      if (texto(v.razao_social) !== undefined) setRazaoSocial(texto(v.razao_social)!)
+      if (texto(v.telefone) !== undefined) setTelefone(texto(v.telefone)!)
+      if (texto(v.email) !== undefined) setEmail(texto(v.email)!)
+      if (texto(v.endereco) !== undefined) setEndereco(texto(v.endereco)!)
+    },
+    salvar: () => formRef.current?.requestSubmit(),
+  })
 
   const documento = tipo === 'PF' ? cpf : cnpj
   const erroNome = tentouSalvar && !nome.trim() ? 'Informe o nome do cliente.' : null
@@ -81,7 +113,7 @@ export function ClienteForm({ empresaId }: { empresaId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form ref={formRef} onSubmit={handleSubmit} noValidate>
       <Frame spacing="default">
         <FramePanel>
           <FieldGroup>
