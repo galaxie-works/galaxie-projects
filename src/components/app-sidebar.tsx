@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState, type MouseEvent } from 'react'
 import {
   BriefcaseBusinessIcon,
   Building2Icon,
@@ -52,6 +52,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 
 // Cor do ponto de status (identidade do status, via tokens semânticos).
@@ -88,6 +89,12 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  // No celular o menu é uma gaveta: ao tocar num link, ela fecha sozinha.
+  function fecharSeLink(evento: MouseEvent<HTMLDivElement>) {
+    if (isMobile && (evento.target as HTMLElement).closest('a')) setOpenMobile(false)
+  }
 
   const projetosFiltrados = useMemo(
     () => (filtro === 'todos' ? projetos : projetos.filter((p) => p.status === filtro)),
@@ -102,6 +109,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 
   return (
     <Sidebar>
+      <div className="contents" onClick={fecharSeLink}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -231,7 +239,10 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                   <DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link href="/empresa" />}>
+                <DropdownMenuItem
+                  render={<Link href="/empresa" />}
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
                   <Building2Icon />
                   Dados da empresa
                 </DropdownMenuItem>
@@ -245,6 +256,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      </div>
       <SidebarRail />
     </Sidebar>
   )
