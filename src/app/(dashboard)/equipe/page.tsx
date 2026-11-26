@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import EquipeManager from '@/components/EquipeManager'
+import { EquipeManager } from '@/components/equipe/equipe-manager'
 import type { MembroEquipe } from '@/types'
 
 export default async function EquipePage() {
@@ -17,19 +17,18 @@ export default async function EquipePage() {
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
-  const { data: equipe } = await supabase
+  const { data: equipe, error } = await supabase
     .from('equipe')
     .select('*')
     .eq('empresa_id', empresa.id)
     .order('created_at')
+  if (error) throw new Error(error.message)
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold">Equipe</h1>
-      <EquipeManager
-        empresaId={empresa.id}
-        equipeInicial={(equipe as MembroEquipe[]) ?? []}
-      />
+    <div className="flex flex-col gap-6 p-4 md:p-6">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+        <EquipeManager empresaId={empresa.id} equipeInicial={(equipe as MembroEquipe[]) ?? []} />
+      </div>
     </div>
   )
 }

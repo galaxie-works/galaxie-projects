@@ -1,6 +1,18 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { PlusIcon, UsersIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { ClientesTabela, type ClienteLinha } from '@/components/clientes/clientes-tabela'
+import { Frame, FramePanel } from '@/components/reui/frame'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import type { Cliente } from '@/types'
 
 export default async function ClientesPage() {
@@ -17,50 +29,56 @@ export default async function ClientesPage() {
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
-  const { data: clientes } = await supabase
+  const { data: clientes, error } = await supabase
     .from('clientes')
-    .select('*')
+    .select('*, projetos(count)')
     .eq('empresa_id', empresa.id)
     .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
 
-  const lista = (clientes as Cliente[]) ?? []
+  const lista: ClienteLinha[] = (
+    (clientes as (Cliente & { projetos: { count: number }[] | null })[]) ?? []
+  ).map(({ projetos, ...c }) => ({ ...c, totalProjetos: projetos?.[0]?.count ?? 0 }))
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Clientes</h1>
-        <Link
-          href="/clientes/novo"
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-        >
-          + Novo cliente
-        </Link>
-      </div>
+    <div className="flex flex-col gap-6 p-4 md:p-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-semibold tracking-tight">Clientes</h1>
+          <p className="text-muted-foreground text-sm">
+            Pessoas e empresas para quem você trabalha.
+          </p>
+        </div>
+        <Button nativeButton={false} render={<Link href="/clientes/novo" />}>
+          <PlusIcon data-icon="inline-start" />
+          Novo cliente
+        </Button>
+      </header>
 
       {lista.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted">
-          Nenhum cliente cadastrado ainda.
-        </div>
+        <Frame spacing="default">
+          <FramePanel>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <UsersIcon />
+                </EmptyMedia>
+                <EmptyTitle>Nenhum cliente ainda</EmptyTitle>
+                <EmptyDescription>
+                  Cadastre o primeiro cliente para abrir projetos para ele.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button nativeButton={false} render={<Link href="/clientes/novo" />}>
+                  <PlusIcon data-icon="inline-start" />
+                  Novo cliente
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </FramePanel>
+        </Frame>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {lista.map((c) => (
-            <Link
-              key={c.id}
-              href={`/clientes/${c.id}`}
-              className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-accent"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{c.nome}</span>
-                <span className="rounded-full bg-border px-2 py-0.5 text-xs text-muted">
-                  {c.tipo}
-                </span>
-              </div>
-              <p className="mt-1 truncate text-sm text-muted">
-                {c.tipo === 'PJ' ? c.razao_social : c.email || c.telefone || '—'}
-              </p>
-            </Link>
-          ))}
-        </div>
+        <ClientesTabela clientes={lista} />
       )}
     </div>
   )

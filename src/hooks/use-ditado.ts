@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 // Ditado por voz (Web Speech API, pt-BR). Funciona em Chrome/Edge/Android;
 // onde não há suporte, `suportado` é false e a UI esconde o microfone.
@@ -34,6 +34,8 @@ function obterConstrutor(): SpeechRecognitionConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
 }
 
+const semAssinatura = () => () => {}
+
 export interface OpcoesDitado {
   /** Chamado a cada atualização com o texto ditado até agora nesta sessão. */
   onParcial?: (texto: string) => void
@@ -44,17 +46,22 @@ export interface OpcoesDitado {
 }
 
 export function useDitado({ onParcial, onFinal, continuo = false }: OpcoesDitado = {}) {
-  const [suportado, setSuportado] = useState(false)
+  const suportado = useSyncExternalStore(
+    semAssinatura,
+    () => obterConstrutor() !== null,
+    () => false,
+  )
   const [ouvindo, setOuvindo] = useState(false)
   const reconhecimento = useRef<SpeechRecognitionLike | null>(null)
   const texto = useRef('')
   const callbacks = useRef({ onParcial, onFinal })
-  callbacks.current = { onParcial, onFinal }
+  useEffect(() => {
+    callbacks.current = { onParcial, onFinal }
+  })
 
   useEffect(() => {
     const Ctor = obterConstrutor()
     if (!Ctor) return
-    setSuportado(true)
     const r = new Ctor()
     r.lang = 'pt-BR'
     r.continuous = continuo

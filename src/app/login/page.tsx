@@ -4,10 +4,22 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Alert, AlertDescription } from '@/components/reui/alert'
+import { Marca } from '@/components/onboarding/marca'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
@@ -17,6 +29,7 @@ export default function LoginPage() {
     e.preventDefault()
     setErro(null)
     setCarregando(true)
+    const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: senha,
@@ -35,52 +48,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground text-xl font-semibold">
-            G
-          </div>
-          <h1 className="text-xl font-semibold">Entrar no Galaxie Obras</h1>
-          <p className="mt-1 text-sm text-muted">
-            Gestão de obras, clientes e equipe
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="email"
-            required
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[15px] outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-          />
-          <input
-            type="password"
-            required
-            placeholder="Senha"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[15px] outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-          />
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
-          <button
-            type="submit"
-            disabled={carregando}
-            className="w-full rounded-xl bg-accent px-4 py-2.5 text-[15px] font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {carregando ? 'Entrando…' : 'Entrar'}
-          </button>
-        </form>
-
-        <p className="mt-5 text-center text-sm text-muted">
-          Ainda não tem conta?{' '}
-          <Link href="/cadastro" className="font-medium text-accent">
-            Criar conta
-          </Link>
-        </p>
-      </div>
-    </div>
+    <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-10">
+      <Marca />
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="tracking-tight">Entrar</CardTitle>
+          <CardDescription>Acompanhe suas obras, clientes e equipe.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email">E-mail</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@empresa.com.br"
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="senha">Senha</FieldLabel>
+                <Input
+                  id="senha"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                />
+              </Field>
+              {erro && (
+                <Alert variant="destructive">
+                  <AlertDescription>{erro}</AlertDescription>
+                </Alert>
+              )}
+              <Field>
+                <Button type="submit" disabled={carregando}>
+                  {carregando && <Spinner data-icon="inline-start" />}
+                  {carregando ? 'Entrando…' : 'Entrar'}
+                </Button>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+      <p className="text-sm text-muted-foreground">
+        Ainda não tem conta?{' '}
+        <Link href="/cadastro" className="font-medium text-foreground underline-offset-4 hover:underline">
+          Criar conta
+        </Link>
+      </p>
+    </main>
   )
 }
