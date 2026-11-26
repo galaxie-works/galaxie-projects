@@ -17,6 +17,7 @@ import { ItemGroup } from '@/components/ui/item'
 import { hojeISO } from '@/lib/crm'
 import {
   diaDe,
+  diaValido,
   inicioDaSemana,
   inicioDoDia,
   rotuloDia,
@@ -25,7 +26,6 @@ import {
 } from '@/lib/agenda'
 import type { MembroEquipe, TarefaAgenda } from '@/types'
 
-const DIA_VALIDO = /^\d{4}-\d{2}-\d{2}$/
 const SELECAO = '*, equipe(nome), clientes(nome, telefone)'
 
 export default async function AgendaPage({
@@ -48,7 +48,7 @@ export default async function AgendaPage({
   if (!empresa) redirect('/onboarding')
 
   const hoje = hojeISO()
-  const dia = params.dia && DIA_VALIDO.test(params.dia) ? params.dia : hoje
+  const dia = diaValido(params.dia) ? params.dia : hoje
   const modo: ModoAgenda = params.modo === 'semana' ? 'semana' : 'dia'
   const responsavel = params.resp ?? TODOS
 

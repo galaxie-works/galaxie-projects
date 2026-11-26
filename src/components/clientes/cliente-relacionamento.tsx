@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { BotaoVoz } from '@/components/voz/botao-voz'
 import { VARIANTE_FASE_CLIENTE } from '@/lib/status'
+import { formatarData } from '@/lib/formato'
 import {
   FASE_CLIENTE_LABEL,
   FASES_CLIENTE,
@@ -34,11 +35,13 @@ type Props = {
   equipe: Pick<MembroEquipe, 'id' | 'nome'>[]
   /** false quando as colunas novas ainda não existem no banco. */
   disponivel: boolean
+  /** Com a agenda ativa, o follow-up vem das tarefas e não é editado aqui. */
+  agendaDisponivel?: boolean
 }
 
 // Campos de relacionamento: fase (automática ou ajustada), temperatura,
 // origem, responsável, próximo follow-up e observações.
-export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponivel }: Props) {
+export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponivel, agendaDisponivel }: Props) {
   const router = useRouter()
   const [fase, setFase] = useState<string>(cliente.fase_manual ?? AUTOMATICA)
   const [temperatura, setTemperatura] = useState<TemperaturaCliente | ''>(cliente.temperatura ?? '')
@@ -67,7 +70,7 @@ export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponiv
         temperatura: temperatura || null,
         origem: origem || null,
         responsavel_id: responsavel === NINGUEM ? null : responsavel,
-        proximo_followup_em: followup || null,
+        ...(agendaDisponivel ? {} : { proximo_followup_em: followup || null }),
         observacoes: observacoes.trim() || null,
       })
       .eq('id', cliente.id)
@@ -156,7 +159,16 @@ export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponiv
 
         <Field>
           <FieldLabel htmlFor="cliente-followup">Próximo follow-up</FieldLabel>
-          <CampoData id="cliente-followup" valor={followup} onChange={setFollowup} placeholder="Sem data" />
+          {agendaDisponivel ? (
+            <>
+              <p id="cliente-followup" className="text-sm">
+                {cliente.proximo_followup_em ? formatarData(cliente.proximo_followup_em) : 'Sem data'}
+              </p>
+              <FieldDescription>Segue a tarefa aberta mais próxima. Agende em Próximos passos.</FieldDescription>
+            </>
+          ) : (
+            <CampoData id="cliente-followup" valor={followup} onChange={setFollowup} placeholder="Sem data" />
+          )}
         </Field>
       </div>
 

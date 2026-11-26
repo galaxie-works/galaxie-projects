@@ -24,9 +24,10 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
-import { montarPrevisto } from '@/lib/agenda'
+import { diaValido, montarPrevisto } from '@/lib/agenda'
 import type { MembroEquipe } from '@/types'
 import {
+  SEM_RESPONSAVEL,
   CamposProximoPasso,
   linhaProximoPasso,
   proximoPassoVazio,
@@ -90,6 +91,10 @@ function FormTarefa({
       setErro('Escolha o cliente.')
       return
     }
+    if (!diaValido(passo.dia)) {
+      toast.error('Escolha o dia da tarefa.')
+      return
+    }
     setSalvando(true)
     const { error } = await createClient()
       .from('atividades')
@@ -124,7 +129,7 @@ function FormTarefa({
                 const c = v as ClienteOpcao | null
                 setEscolhido(c)
                 setErro(null)
-                if (c?.responsavel_id) setPasso((p) => ({ ...p, responsavel: c.responsavel_id as string }))
+                setPasso((p) => ({ ...p, responsavel: c?.responsavel_id ?? SEM_RESPONSAVEL }))
               }}
               itemToStringLabel={(c) => (c as ClienteOpcao).nome}
               isItemEqualToValue={(a, b) => (a as ClienteOpcao).id === (b as ClienteOpcao).id}

@@ -395,6 +395,7 @@ export function ClientePainel({
                   faseCalculada={faseAutomatica(obras)}
                   equipe={equipe}
                   disponivel={crmDisponivel}
+                  agendaDisponivel={agendaDisponivel}
                 />
               </FramePanel>
             </Frame>

@@ -114,7 +114,13 @@ export function CamposProximoPasso({ idBase, valor, onChange, equipe, hoje, disa
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem_minmax(0,1fr)]">
         <Field>
           <FieldLabel htmlFor={`${idBase}-dia`}>Dia</FieldLabel>
-          <CampoData id={`${idBase}-dia`} valor={valor.dia} onChange={(dia) => set({ dia })} />
+          <CampoData
+            id={`${idBase}-dia`}
+            valor={valor.dia}
+            onChange={(dia) => set({ dia })}
+            invalido={!valor.dia}
+            placeholder="Escolha o dia"
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor={`${idBase}-hora`}>Hora</FieldLabel>

@@ -470,8 +470,22 @@ create index if not exists idx_atividades_agenda
   on public.atividades (empresa_id, previsto_para)
   where previsto_para is not null and concluida_em is null;
 
+-- Follow-ups marcados à mão antes da agenda (campo do Cliente 360) viram
+-- tarefas, para o gatilho abaixo não apagá-los. Só para clientes sem tarefa
+-- aberta, então rodar de novo não duplica.
+insert into public.atividades (empresa_id, cliente_id, tipo, texto, responsavel_id, previsto_para)
+select c.empresa_id, c.id, 'tarefa', 'Follow-up', c.responsavel_id,
+       (c.proximo_followup_em::text || ' 09:00 America/Sao_Paulo')::timestamptz
+from public.clientes c
+where c.proximo_followup_em is not null
+  and not exists (
+    select 1 from public.atividades a
+    where a.cliente_id = c.id and a.previsto_para is not null and a.concluida_em is null
+  );
+
 -- Próximo follow-up do cliente = data da tarefa aberta mais próxima
 -- (no fuso de Brasília). Sem tarefa aberta, fica sem data.
+-- Só roda quando a linha é (ou era) uma tarefa: registrar uma nota não mexe.
 create or replace function public.atualizar_followup_cliente()
 returns trigger
 language plpgsql
@@ -481,6 +495,13 @@ as $$
 declare
   alvo uuid;
 begin
+  if not coalesce(
+    (tg_op <> 'INSERT' and old.previsto_para is not null)
+    or (tg_op <> 'DELETE' and new.previsto_para is not null),
+    false
+  ) then
+    return null;
+  end if;
   foreach alvo in array array[
     case when tg_op <> 'INSERT' then old.cliente_id end,
     case when tg_op <> 'DELETE' then new.cliente_id end

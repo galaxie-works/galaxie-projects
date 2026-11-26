@@ -31,6 +31,14 @@ export function inicioDoDia(dia: string): string {
   return new Date(`${dia}T00:00:00${DESLOCAMENTO}`).toISOString()
 }
 
+/** true se 'YYYY-MM-DD' é uma data de calendário que existe (ex.: não 2026-02-31). */
+export function diaValido(dia: string | null | undefined): dia is string {
+  if (!dia || !/^\d{4}-\d{2}-\d{2}$/.test(dia)) return false
+  const [a, m, d] = dia.split('-').map(Number)
+  const data = new Date(Date.UTC(a, m - 1, d))
+  return data.getUTCFullYear() === a && data.getUTCMonth() === m - 1 && data.getUTCDate() === d
+}
+
 /** Soma dias a 'YYYY-MM-DD' sem passar por fuso. */
 export function somarDias(dia: string, dias: number): string {
   const [a, m, d] = dia.split('-').map(Number)

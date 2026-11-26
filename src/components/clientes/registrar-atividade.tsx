@@ -17,7 +17,7 @@ import {
   proximoPassoVazio,
   type ProximoPasso,
 } from '@/components/agenda/campos-proximo-passo'
-import { montarPrevisto, rotuloDia } from '@/lib/agenda'
+import { diaValido, montarPrevisto, rotuloDia } from '@/lib/agenda'
 import { TIPO_ATIVIDADE_LABEL, type MembroEquipe, type TipoAtividade } from '@/types'
 import { ICONE_ATIVIDADE } from './icones-atividade'
 
@@ -55,7 +55,8 @@ export function RegistrarAtividade({
   const [passo, setPasso] = useState<ProximoPasso>(() => proximoPassoVazio(hoje, responsavelPadrao))
 
   const conteudo = texto.trim()
-  const podeSalvar = disponivel && !salvando && (Boolean(conteudo) || agendar)
+  const podeSalvar =
+    disponivel && !salvando && (Boolean(conteudo) || agendar) && (!agendar || diaValido(passo.dia))
 
   async function salvar() {
     if (!podeSalvar) return
