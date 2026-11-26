@@ -36,9 +36,11 @@ type Props = {
   projeto: Projeto
   clientes: Cliente[]
   atrasado: boolean
+  /** O total vem das áreas e medidas (aba Orçamento). */
+  totalCalculado?: boolean
 }
 
-export function ProjetoCabecalho({ projeto, clientes, atrasado }: Props) {
+export function ProjetoCabecalho({ projeto, clientes, atrasado, totalCalculado = false }: Props) {
   const router = useRouter()
   const [status, setStatus] = useState<StatusProjeto>(projeto.status)
   const [editando, setEditando] = useState(false)
@@ -141,6 +143,7 @@ export function ProjetoCabecalho({ projeto, clientes, atrasado }: Props) {
             empresaId={projeto.empresa_id}
             clientes={clientes}
             projeto={{ ...projeto, status }}
+            totalCalculado={totalCalculado}
             onSalvo={() => setEditando(false)}
             onCancelar={() => setEditando(false)}
           />

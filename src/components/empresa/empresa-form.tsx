@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2Icon, HammerIcon } from 'lucide-react'
+import { Building2Icon, HammerIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { mascararCnpj } from '@/components/clientes/documento'
@@ -15,6 +15,7 @@ import {
   FramePanel,
   FrameTitle,
 } from '@/components/reui/frame'
+import { PrecosServicos } from '@/components/orcamento/precos-servicos'
 import { ServicosPicker } from '@/components/servicos/servicos-picker'
 import { BotaoVoz } from '@/components/voz/botao-voz'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { TabelaPrecos } from '@/lib/orcamento'
 import type { Empresa } from '@/types'
 
 // Texto longo com ditado: a fala é acrescentada ao que já estava escrito.
@@ -64,7 +66,7 @@ function TextoComVoz({
   )
 }
 
-export function EmpresaForm({ empresa }: { empresa: Empresa }) {
+export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empresa; precos: TabelaPrecos }) {
   const router = useRouter()
   const supabase = createClient()
   const [nome, setNome] = useState(empresa.nome)
@@ -72,6 +74,7 @@ export function EmpresaForm({ empresa }: { empresa: Empresa }) {
   const [descricao, setDescricao] = useState(empresa.descricao ?? '')
   const [modoOperacao, setModoOperacao] = useState(empresa.modo_operacao ?? '')
   const [servicos, setServicos] = useState<string[]>(empresa.servicos ?? [])
+  const [precos, setPrecos] = useState<TabelaPrecos>(precosIniciais)
   const [tentou, setTentou] = useState(false)
   const [salvando, setSalvando] = useState(false)
 
@@ -92,9 +95,22 @@ export function EmpresaForm({ empresa }: { empresa: Empresa }) {
         servicos,
       })
       .eq('id', empresa.id)
+    const linhasPreco = Object.entries(precos)
+      .filter(([id]) => servicos.includes(id))
+      .map(([servico_id, p]) => ({
+        empresa_id: empresa.id,
+        servico_id,
+        unidade: p.unidade,
+        preco: p.preco,
+        updated_at: new Date().toISOString(),
+      }))
+    const { error: erroPrecos } =
+      !error && linhasPreco.length > 0
+        ? await supabase.from('precos_servicos').upsert(linhasPreco)
+        : { error: null }
     setSalvando(false)
-    if (error) {
-      toast.error('Não foi possível salvar', { description: error.message })
+    if (error || erroPrecos) {
+      toast.error('Não foi possível salvar', { description: (error ?? erroPrecos)?.message })
       return
     }
     toast.success('Alterações salvas')
@@ -130,6 +146,10 @@ export function EmpresaForm({ empresa }: { empresa: Empresa }) {
                 {servicos.length}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="precos" className="flex-none md:flex-1">
+            <TagIcon />
+            Preços
           </TabsTrigger>
         </TabsList>
 
@@ -200,6 +220,21 @@ export function EmpresaForm({ empresa }: { empresa: Empresa }) {
             </FrameHeader>
             <FramePanel>
               <ServicosPicker value={servicos} onChange={setServicos} />
+            </FramePanel>
+            {rodape}
+          </Frame>
+        </TabsContent>
+
+        <TabsContent value="precos" className="min-w-0">
+          <Frame spacing="default">
+            <FrameHeader>
+              <FrameTitle>Preços dos serviços</FrameTitle>
+              <FrameDescription>
+                Como você cobra cada serviço. Vem preenchido em todo orçamento novo.
+              </FrameDescription>
+            </FrameHeader>
+            <FramePanel className={servicos.length > 0 ? 'p-0' : undefined}>
+              <PrecosServicos servicos={servicos} precos={precos} onChange={setPrecos} />
             </FramePanel>
             {rodape}
           </Frame>
