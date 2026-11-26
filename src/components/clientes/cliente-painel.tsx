@@ -27,6 +27,8 @@ import { formatarTelefone } from './telefone'
 import { ClienteLinhaDoTempo, type EventoCliente } from './cliente-linha-do-tempo'
 import { ClienteRelacionamento } from './cliente-relacionamento'
 import { RegistrarAtividade } from './registrar-atividade'
+import { PosVendaPainel } from '@/components/pos-venda/pos-venda-painel'
+import { pendentesPosVenda } from '@/lib/pos-venda'
 import { formatarData, formatarDataHora, formatarMoeda, iniciais } from '@/lib/formato'
 import { faseDoCliente, faseAutomatica, linkWhatsApp, numerosDoCliente, situacaoFollowup } from '@/lib/crm'
 import {
@@ -43,6 +45,7 @@ import {
   type Atividade,
   type Cliente,
   type MembroEquipe,
+  type PosVenda,
   type Projeto,
 } from '@/types'
 
@@ -153,13 +156,30 @@ type Props = {
   equipe: Pick<MembroEquipe, 'id' | 'nome'>[]
   /** false antes de rodar o SQL do Cliente 360 (colunas e tabela novas). */
   crmDisponivel: boolean
+  posVenda: PosVenda[]
+  /** false antes de rodar o SQL do pós-venda. */
+  posVendaDisponivel: boolean
+  linkGoogle: string | null
+  indicadoPor: { id: string; nome: string } | null
   /** 'YYYY-MM-DD' calculado no servidor. */
   hoje: string
 }
 
 // Painel do cliente (Cliente 360): cabeçalho com fase e ações, números,
 // e abas Resumo (linha do tempo + obras), Obras e Dados.
-export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDisponivel, hoje }: Props) {
+export function ClientePainel({
+  cliente: c,
+  obras,
+  atividades,
+  equipe,
+  crmDisponivel,
+  posVenda,
+  posVendaDisponivel,
+  linkGoogle,
+  indicadoPor,
+  hoje,
+}: Props) {
+  const pendentesPv = pendentesPosVenda(posVenda)
   const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras)
   const numeros = numerosDoCliente(obras)
   const followup = situacaoFollowup(c.proximo_followup_em ?? null, hoje)
@@ -280,6 +300,12 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
               Obras
               <span className="text-xs text-muted-foreground tabular-nums">{obras.length}</span>
             </TabsTrigger>
+            <TabsTrigger value="pos-venda">
+              Pós-venda
+              {pendentesPv > 0 && (
+                <span className="text-xs text-muted-foreground tabular-nums">{pendentesPv}</span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="dados">Dados</TabsTrigger>
           </TabsList>
         </div>
@@ -320,6 +346,17 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
           </Frame>
         </TabsContent>
 
+        <TabsContent value="pos-venda">
+          <PosVendaPainel
+            itens={posVenda}
+            cliente={{ id: c.id, empresa_id: c.empresa_id, nome: c.nome, telefone: c.telefone }}
+            obras={obras.map((o) => ({ id: o.id, nome: o.nome }))}
+            linkGoogle={linkGoogle}
+            hoje={hoje}
+            disponivel={posVendaDisponivel}
+          />
+        </TabsContent>
+
         <TabsContent value="dados">
           <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <Frame spacing="default" className="min-w-0">
@@ -349,6 +386,16 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
                   <Dado rotulo="E-mail" valor={c.email} />
                   <Dado rotulo="Endereço" valor={c.endereco} />
                   <Dado rotulo="Origem" valor={c.origem} />
+                  {indicadoPor && (
+                    <div className="flex flex-col gap-0.5">
+                      <dt className="text-muted-foreground text-xs">Indicado por</dt>
+                      <dd className="text-sm">
+                        <Link href={`/clientes/${indicadoPor.id}`} className="hover:underline">
+                          {indicadoPor.nome}
+                        </Link>
+                      </dd>
+                    </div>
+                  )}
                   <Dado rotulo="Cliente desde" valor={formatarDataHora(c.created_at)} />
                 </dl>
               </FramePanel>

@@ -21,6 +21,9 @@ export interface Empresa {
   modo_operacao: string | null
   servicos: string[]
   created_at: string
+  // Pós-venda
+  garantia_meses?: number
+  link_avaliacao_google?: string | null
 }
 
 export interface MembroEquipe {
@@ -52,6 +55,8 @@ export interface Cliente {
   tags: string[]
   proximo_followup_em: string | null
   observacoes: string | null
+  // Pós-venda: quem indicou este cliente
+  indicado_por_id?: string | null
 }
 
 export interface Projeto {
@@ -205,4 +210,47 @@ export interface Atividade {
   ocorreu_em: string
   created_at: string
   equipe?: { nome: string } | null
+}
+
+// ---------------------------------------------------------------------------
+// CRM: pós-venda (garantia, pesquisa, avaliação, revisões, chamados, indicações)
+// ---------------------------------------------------------------------------
+
+export type TipoPosVenda = 'garantia' | 'pesquisa' | 'avaliacao' | 'revisao' | 'assistencia' | 'indicacao'
+
+export type StatusPosVenda = 'aberto' | 'agendado' | 'resolvido'
+
+export const TIPO_POS_VENDA_LABEL: Record<TipoPosVenda, string> = {
+  garantia: 'Garantia',
+  pesquisa: 'Pesquisa',
+  avaliacao: 'Avaliação Google',
+  revisao: 'Revisão',
+  assistencia: 'Assistência',
+  indicacao: 'Indicação',
+}
+
+export const STATUS_POS_VENDA_LABEL: Record<StatusPosVenda, string> = {
+  aberto: 'Aberto',
+  agendado: 'Agendado',
+  resolvido: 'Resolvido',
+}
+
+export interface PosVenda {
+  id: string
+  empresa_id: string
+  cliente_id: string
+  projeto_id: string | null
+  tipo: TipoPosVenda
+  titulo: string
+  texto: string | null
+  servico_id: string | null
+  indicado_cliente_id: string | null
+  vence_em: string | null
+  status: StatusPosVenda
+  nota_0_10: number | null
+  resolvido_em: string | null
+  created_at: string
+  // Joins
+  projetos?: { nome: string } | null
+  indicado?: { nome: string } | null
 }
