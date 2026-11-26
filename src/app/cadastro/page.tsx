@@ -33,9 +33,7 @@ export default function CadastroPage() {
       router.refresh()
       return
     }
-    setAviso(
-      'Conta criada! Se a confirmação de e-mail estiver ativa no seu projeto Supabase, confirme pelo link enviado antes de entrar.'
-    )
+    setAviso('Conta criada! Confirme seu e-mail para entrar.')
   }
 
   return (
