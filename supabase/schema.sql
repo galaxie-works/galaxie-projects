@@ -22,6 +22,12 @@ create table if not exists public.empresas (
   unique (owner_id)
 );
 
+-- Serviços que a empresa realiza (ids de src/lib/servicos.ts), escolhidos no
+-- onboarding e editáveis em /empresa. Coluna adicionada depois da versão
+-- inicial, por isso o ALTER separado: pode rodar de novo sem problema.
+alter table public.empresas
+  add column if not exists servicos text[] not null default '{}';
+
 -- ----------------------------------------------------------------------------
 -- EQUIPE — pessoas que trabalham com o dono da empresa
 -- ----------------------------------------------------------------------------
