@@ -265,9 +265,11 @@ const SECOES: Record<string, string> = {
 export function AppHeader({
   projetos,
   assistenteConfigurado,
+  empresaId,
 }: {
   projetos: Pick<Projeto, 'id' | 'nome'>[]
   assistenteConfigurado: boolean
+  empresaId: string
 }) {
   const pathname = usePathname()
   const [secao, sub] = pathname.split('/').filter(Boolean)
@@ -304,7 +306,7 @@ export function AppHeader({
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-      <AssistenteVoz configurado={assistenteConfigurado} />
+      <AssistenteVoz configurado={assistenteConfigurado} empresaId={empresaId} />
     </header>
   )
 }

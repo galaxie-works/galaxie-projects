@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AcaoAssistente, FormularioContexto, TabelaAssistente, PerguntaAssistente } from './protocolo'
+import type { AcaoAssistente, FormularioContexto, TabelaAssistente, PerguntaAssistente, CartaoObras, ObraResumo } from './protocolo'
 
 // Ferramentas que a IA pode chamar. Leitura, criação e edição rodam aqui no
 // servidor, com a sessão do usuário (o RLS do Supabase garante que só mexe
@@ -206,6 +206,23 @@ export function definirFerramentas(form: FormularioContexto | null | undefined):
     }
   }
   lista.push({
+    nome: 'mostrar_obras',
+    descricao:
+      'Mostra na tela um cartão com as obras (projetos) e o progresso de cada uma: barra colorida por etapas ' +
+      '(concluídas, em andamento, faltando), percentual, prazo, atraso e próxima etapa. ' +
+      'Use SEMPRE que o usuário pedir para listar, ver ou acompanhar obras. Não repita os dados em tabela: ' +
+      'escreva só uma frase de destaque (ex.: a obra mais atrasada) e o próximo passo.',
+    parametros: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['planejamento', 'em_execucao', 'pausado', 'completo'] },
+        texto: { type: 'string', description: 'Parte do nome da obra.' },
+        cliente_id: UUID,
+        limite: { type: 'integer', minimum: 1, maximum: 20 },
+      },
+    },
+  })
+  lista.push({
     nome: 'perguntar',
     descricao:
       'Mostra ao usuário UMA pergunta com 2 a 4 opções clicáveis (ele também pode responder falando). ' +
@@ -249,6 +266,7 @@ export interface ContextoExecucao {
   passos: string[]
   /** Pergunta feita nesta resposta; com ela o laço para e espera o usuário. */
   pergunta?: PerguntaAssistente
+  obras?: CartaoObras
 }
 
 const PLURAL: Record<TabelaAssistente, string> = {
@@ -277,6 +295,8 @@ function descreverPasso(nome: string, args: Record<string, unknown>): string {
       return 'Preencheu o formulário'
     case 'salvar_formulario':
       return 'Salvou o formulário'
+    case 'mostrar_obras':
+      return 'Buscou obras e etapas'
     case 'abrir_pagina':
       return `Abriu ${String(args.caminho ?? 'a página')}`
     default:
@@ -298,6 +318,81 @@ function limparDados(tabela: TabelaAssistente, dados: unknown): Record<string, u
 
 function colunasSelect(tabela: TabelaAssistente) {
   return ['id', ...Object.keys(TABELAS[tabela].colunas)].join(', ')
+}
+
+const TITULO_STATUS: Record<string, string> = {
+  planejamento: 'Obras em planejamento',
+  em_execucao: 'Obras em execução',
+  pausado: 'Obras pausadas',
+  completo: 'Obras concluídas',
+}
+
+type LinhaObra = {
+  id: string
+  nome: string
+  status: string
+  percentual_conclusao: number | null
+  data_prazo: string | null
+  clientes: { nome: string } | { nome: string }[] | null
+  etapas: { nome: string; status: string; ordem: number | null; data_prazo: string | null }[] | null
+}
+
+async function mostrarObras(args: Record<string, unknown>, ctx: ContextoExecucao): Promise<string> {
+  const limite = Math.min(Math.max(Number(args.limite) || 10, 1), 20)
+  const status = typeof args.status === 'string' ? args.status : null
+  let q = ctx.supabase
+    .from('projetos')
+    .select('id, nome, status, percentual_conclusao, data_prazo, clientes(nome), etapas(nome, status, ordem, data_prazo)', {
+      count: 'exact',
+    })
+    .eq('empresa_id', ctx.empresaId)
+    .order('data_prazo', { ascending: true, nullsFirst: false })
+    .limit(limite)
+  if (status) q = q.eq('status', status)
+  if (typeof args.cliente_id === 'string') q = q.eq('cliente_id', args.cliente_id)
+  if (typeof args.texto === 'string' && args.texto.trim()) {
+    q = q.ilike('nome', `%${args.texto.trim().replace(/[%_]/g, '')}%`)
+  }
+  const { data, error, count } = await q
+  if (error) return `Erro ao buscar obras: ${error.message}`
+
+  const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+  const obras: ObraResumo[] = ((data ?? []) as unknown as LinhaObra[]).map((p) => {
+    const etapas = [...(p.etapas ?? [])].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+    const concluidas = etapas.filter((e) => e.status === 'concluida').length
+    const andamento = etapas.filter((e) => e.status === 'em_andamento').length
+    const proxima = etapas.find((e) => e.status === 'em_andamento') ?? etapas.find((e) => e.status === 'pendente')
+    const cliente = Array.isArray(p.clientes) ? p.clientes[0]?.nome : p.clientes?.nome
+    const percentual = etapas.length
+      ? Math.round((concluidas / etapas.length) * 100)
+      : Math.min(Math.max(p.percentual_conclusao ?? 0, 0), 100)
+    return {
+      id: p.id,
+      nome: p.nome,
+      cliente: cliente ?? null,
+      status: p.status,
+      percentual,
+      prazo: p.data_prazo,
+      atrasada: !!p.data_prazo && p.status !== 'completo' && p.data_prazo.slice(0, 10) < hoje,
+      etapas: { concluidas, andamento, pendentes: etapas.length - concluidas - andamento },
+      proxima: proxima
+        ? { nome: proxima.nome, prazo: proxima.data_prazo, emAndamento: proxima.status === 'em_andamento' }
+        : null,
+    }
+  })
+  ctx.obras = {
+    titulo: (status && TITULO_STATUS[status]) || 'Obras',
+    obras,
+    restantes: Math.max((count ?? obras.length) - obras.length, 0),
+  }
+  return (
+    `Cartão mostrado na tela com ${obras.length} obra(s)` +
+    (ctx.obras.restantes ? ` (mais ${ctx.obras.restantes} fora do cartão)` : '') +
+    '. Não repita os dados; escreva só um destaque e o próximo passo. Dados: ' +
+    JSON.stringify(
+      obras.map((o) => ({ nome: o.nome, cliente: o.cliente, percentual: o.percentual, prazo: o.prazo, atrasada: o.atrasada, etapas: o.etapas, proxima: o.proxima })),
+    )
+  )
 }
 
 /** Executa uma ferramenta e devolve o texto que volta para a IA. */
@@ -332,6 +427,8 @@ export async function executarFerramenta(
   }
 
   ctx.passos.push(descreverPasso(nome, args))
+
+  if (nome === 'mostrar_obras') return mostrarObras(args, ctx)
 
   if (nome === 'preencher_formulario') {
     if (!ctx.formulario) return 'Erro: não há formulário aberto na tela.'

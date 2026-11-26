@@ -41,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <AppHeader
             projetos={lista.map(({ id, nome }) => ({ id, nome }))}
             assistenteConfigurado={!!ia?.ativo}
+            empresaId={empresa.id}
           />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
         </SidebarInset>

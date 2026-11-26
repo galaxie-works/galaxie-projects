@@ -55,6 +55,26 @@ export interface PerguntaAssistente {
   opcoes: OpcaoPergunta[]
 }
 
+/** Obra resumida para o cartão de progresso (dados calculados no servidor). */
+export interface ObraResumo {
+  id: string
+  nome: string
+  cliente: string | null
+  status: string
+  percentual: number
+  prazo: string | null
+  atrasada: boolean
+  etapas: { concluidas: number; andamento: number; pendentes: number }
+  proxima: { nome: string; prazo: string | null; emAndamento: boolean } | null
+}
+
+export interface CartaoObras {
+  titulo: string
+  obras: ObraResumo[]
+  /** Quantas obras ficaram de fora do cartão (limite). */
+  restantes: number
+}
+
 export interface RespostaAssistente {
   resposta: string
   acoes: AcaoAssistente[]
@@ -62,6 +82,8 @@ export interface RespostaAssistente {
   passos?: string[]
   /** Quando a IA precisa de uma escolha: mostra o cartão e espera. */
   pergunta?: PerguntaAssistente
+  /** Cartão de obras com progresso por etapas. */
+  obras?: CartaoObras
 }
 
 export interface ErroAssistente {

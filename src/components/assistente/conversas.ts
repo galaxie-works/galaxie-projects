@@ -1,10 +1,13 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import type { MensagemHistorico, PerguntaAssistente } from '@/lib/ia/protocolo'
+import { createClient } from '@/lib/supabase/client'
+import type { CartaoObras, MensagemHistorico, PerguntaAssistente } from '@/lib/ia/protocolo'
 
-// Conversas do assistente guardadas neste navegador (como a lista de
-// "Recentes" do app do Claude). Ficam só no aparelho: nada vai ao banco.
+// Conversas do assistente (lista "Recentes", como no app do Claude).
+// A tela lê e grava num cache local, na hora; por trás, cada mudança vai para
+// a tabela assistente_conversas do Supabase, então as conversas aparecem em
+// qualquer aparelho. Sem a tabela (ou sem rede), segue só no aparelho.
 
 export interface Mensagem extends MensagemHistorico {
   passos?: string[]
@@ -15,6 +18,8 @@ export interface Mensagem extends MensagemHistorico {
   pergunta?: PerguntaAssistente
   /** Índice da opção que o usuário tocou. */
   escolhida?: number
+  /** Cartão de obras com progresso. */
+  obras?: CartaoObras
 }
 
 export interface Conversa {
@@ -29,6 +34,8 @@ const MAXIMO = 30
 const VAZIO: Conversa[] = []
 
 let cache: Conversa[] | null = null
+/** Empresa da sessão; definida quando a sincronia com o Supabase começa. */
+let empresaSincronia: string | null = null
 const ouvintes = new Set<() => void>()
 
 function ler(): Conversa[] {
@@ -40,6 +47,58 @@ function ler(): Conversa[] {
     cache = []
   }
   return cache
+}
+
+async function enviarAoBanco(c: Conversa) {
+  if (!empresaSincronia) return
+  const { error } = await createClient()
+    .from('assistente_conversas')
+    .upsert({
+      id: c.id,
+      empresa_id: empresaSincronia,
+      titulo: c.titulo,
+      mensagens: c.mensagens,
+      atualizada_em: new Date(c.atualizadaEm).toISOString(),
+    })
+  if (error) console.warn('Conversa não sincronizou:', error.message)
+}
+
+async function apagarDoBanco(id: string) {
+  if (!empresaSincronia) return
+  const { error } = await createClient().from('assistente_conversas').delete().eq('id', id)
+  if (error) console.warn('Conversa não foi apagada no banco:', error.message)
+}
+
+/**
+ * Busca as conversas do usuário no Supabase e junta com as do aparelho
+ * (as que só existem aqui sobem). Sem a tabela, fica tudo local.
+ */
+export async function sincronizarConversas(empresaId: string) {
+  const { data, error } = await createClient()
+    .from('assistente_conversas')
+    .select('id, titulo, mensagens, atualizada_em')
+    .order('atualizada_em', { ascending: false })
+    .limit(MAXIMO)
+  if (error) {
+    console.warn('Conversas só neste aparelho:', error.message)
+    return
+  }
+  empresaSincronia = empresaId
+  const remotas: Conversa[] = (data ?? []).map((r) => ({
+    id: r.id as string,
+    titulo: (r.titulo as string) || 'Conversa',
+    mensagens: Array.isArray(r.mensagens) ? (r.mensagens as Mensagem[]) : [],
+    atualizadaEm: new Date(r.atualizada_em as string).getTime(),
+  }))
+  const porId = new Map(remotas.map((c) => [c.id, c]))
+  for (const local of ler()) {
+    const remota = porId.get(local.id)
+    if (!remota || local.atualizadaEm > remota.atualizadaEm) {
+      porId.set(local.id, local)
+      void enviarAoBanco(local)
+    }
+  }
+  gravar([...porId.values()].sort((a, b) => b.atualizadaEm - a.atualizadaEm))
 }
 
 function gravar(lista: Conversa[]) {
@@ -87,28 +146,38 @@ export function adicionarMensagem(id: string, mensagem: Mensagem) {
     ? { ...atual, atualizadaEm: Date.now(), mensagens: [...atual.mensagens, mensagem] }
     : { id, titulo: tituloDe(mensagem.texto), atualizadaEm: Date.now(), mensagens: [mensagem] }
   gravar([conversa, ...lista.filter((c) => c.id !== id)])
+  void enviarAoBanco(conversa)
 }
 
 /** Marca a opção escolhida numa pergunta, sem mudar a ordem da lista. */
 export function marcarEscolha(id: string, mensagem: number, opcao: number) {
-  gravar(
-    ler().map((c) =>
-      c.id !== id
-        ? c
-        : { ...c, mensagens: c.mensagens.map((m, i) => (i === mensagem ? { ...m, escolhida: opcao } : m)) },
-    ),
+  const lista = ler().map((c) =>
+    c.id !== id
+      ? c
+      : { ...c, mensagens: c.mensagens.map((m, i) => (i === mensagem ? { ...m, escolhida: opcao } : m)) },
   )
+  gravar(lista)
+  const alterada = lista.find((c) => c.id === id)
+  if (alterada) void enviarAoBanco(alterada)
 }
 
 /** Texto da mensagem para o histórico enviado à IA (inclui a pergunta feita). */
 export function textoParaHistorico(m: Mensagem): string {
-  if (!m.pergunta) return m.texto
-  const opcoes = m.pergunta.opcoes.map((o) => o.rotulo).join('; ')
-  return `${m.texto}\n\n[Perguntei: ${m.pergunta.pergunta} Opções: ${opcoes}]`.trim()
+  let texto = m.texto
+  if (m.obras) {
+    const lista = m.obras.obras.map((o) => `${o.nome} (${o.percentual}%)`).join('; ')
+    texto += `\n\n[Mostrei o cartão "${m.obras.titulo}": ${lista || 'nenhuma'}]`
+  }
+  if (m.pergunta) {
+    const opcoes = m.pergunta.opcoes.map((o) => o.rotulo).join('; ')
+    texto += `\n\n[Perguntei: ${m.pergunta.pergunta} Opções: ${opcoes}]`
+  }
+  return texto.trim()
 }
 
 export function apagarConversa(id: string) {
   gravar(ler().filter((c) => c.id !== id))
+  void apagarDoBanco(id)
 }
 
 export function novoId() {

@@ -32,8 +32,8 @@ function montarSistema(empresaNome: string, pagina: string, form: FormularioCont
     'Formato da resposta (o app mostra Markdown):',
     '- Português do Brasil, direto e curto. Use **negrito** para nomes e valores importantes.',
     '- Listar registros (obras, clientes, etapas, compras): uma frase curta com o total e uma tabela Markdown enxuta, sem parágrafos. No máximo 4 colunas e 10 linhas; se houver mais, diga quantas faltam e ofereça filtrar.',
-    '- Tabela de obras: colunas Obra | Cliente | Conclusão | Prazo. Conclusão vem de percentual_conclusao e é escrita só como "65%" (o app desenha a barra). Ordene pelo prazo mais próximo.',
-    '- Depois da tabela, no máximo uma linha de destaque (ex.: obra atrasada) e a sugestão de próximo passo.',
+    '- Para listar ou acompanhar obras, use mostrar_obras (o app desenha o cartão com progresso colorido por etapas); não faça tabela de obras.',
+    '- Depois da tabela ou do cartão, no máximo uma linha de destaque (ex.: obra atrasada) e a sugestão de próximo passo.',
     '- Valores em reais no formato R$ 1.234,56 e datas como 20/03/2027 na resposta (nas ferramentas, use número e AAAA-MM-DD).',
     '- Não mostre ids (uuid) ao usuário, nem fale de ferramentas.',
     '',
@@ -115,6 +115,7 @@ export async function POST(request: Request) {
       acoes: ctx.acoes,
       passos: ctx.passos,
       pergunta: ctx.pergunta,
+      obras: ctx.obras,
     }
     return NextResponse.json(corpo)
   } catch (e) {

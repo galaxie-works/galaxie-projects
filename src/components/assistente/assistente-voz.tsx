@@ -71,10 +71,12 @@ import {
   marcarEscolha,
   novoId,
   obterConversa,
+  sincronizarConversas,
   textoParaHistorico,
   useConversas,
   type Conversa,
 } from './conversas'
+import { CartaoObrasView } from './cartao-obras'
 import { CartaoPergunta } from './cartao-pergunta'
 import { contextoDoFormulario, useRegistroFormularios } from './formulario-assistente'
 import { Markdown } from './markdown'
@@ -116,7 +118,7 @@ function quando(ms: number) {
 // a conversa fica por cima da lista de conversas, que fica por cima do app.
 // A seta (e o "voltar" do celular) desce uma camada. O app continua montado
 // por baixo, então o formulário aberto segue disponível para a IA preencher.
-export function AssistenteVoz({ configurado }: { configurado: boolean }) {
+export function AssistenteVoz({ configurado, empresaId }: { configurado: boolean; empresaId: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const registro = useRegistroFormularios()
@@ -153,6 +155,11 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
       void enviar(t)
     },
   })
+
+  // Traz as conversas salvas no Supabase (as de outros aparelhos).
+  useEffect(() => {
+    void sincronizarConversas(empresaId)
+  }, [empresaId])
 
   // "Voltar" do navegador ou do celular desce uma camada.
   useEffect(() => {
@@ -299,6 +306,7 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
         passos: corpo.passos,
         mexeuNaTela,
         pergunta: corpo.pergunta,
+        obras: corpo.obras,
       })
       await aplicar(acoes)
     } catch {
@@ -524,6 +532,7 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
                               </BubbleContent>
                             </Bubble>
                           )}
+                          {m.obras && <CartaoObrasView cartao={m.obras} onAbrir={() => setCamada(0)} />}
                           {m.pergunta && (
                             <CartaoPergunta
                               pergunta={m.pergunta}
