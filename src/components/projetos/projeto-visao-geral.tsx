@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatarData, formatarMoeda } from '@/lib/formato'
 import type { Etapa, Projeto } from '@/types'
+import { Badge } from '@/components/reui/badge'
 import { Frame, FramePanel } from '@/components/reui/frame'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
@@ -144,8 +145,9 @@ function Linha({ rotulo, valor, alerta }: { rotulo: string; valor: string; alert
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
       <span className="text-muted-foreground">{rotulo}</span>
-      <span className={alerta ? 'font-medium text-destructive tabular-nums' : 'font-medium tabular-nums'}>
-        {valor}
+      <span className="flex items-center gap-2">
+        {alerta && <Badge variant="destructive-light">Vencido</Badge>}
+        <span className="font-medium tabular-nums">{valor}</span>
       </span>
     </div>
   )

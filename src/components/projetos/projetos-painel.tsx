@@ -167,11 +167,9 @@ export function ProjetosPainel({ empresaNome, projetos, erro }: Props) {
         id: 'prazo',
         header: ({ column }) => <DataGridColumnHeader title="Prazo" column={column} />,
         cell: ({ row }) => (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col items-start gap-1">
             <span className="tabular-nums">{formatarData(row.original.data_prazo)}</span>
-            {row.original.atrasado && (
-              <span className="text-xs font-medium text-destructive">Atrasada</span>
-            )}
+            {row.original.atrasado && <Badge variant="destructive-light">Atrasada</Badge>}
           </div>
         ),
         size: 130,
@@ -377,9 +375,13 @@ function Kpi({
     <FramePanel className="flex flex-col gap-2">
       <span className="text-xs text-muted-foreground">{rotulo}</span>
       <span className="text-2xl font-semibold tracking-tight tabular-nums">{valor}</span>
-      <span className={alerta ? 'text-xs font-medium text-destructive' : 'text-xs text-muted-foreground'}>
-        {meta}
-      </span>
+      {alerta ? (
+        <Badge variant="destructive-light" className="self-start">
+          {meta}
+        </Badge>
+      ) : (
+        <span className="text-xs text-muted-foreground">{meta}</span>
+      )}
     </FramePanel>
   )
 }

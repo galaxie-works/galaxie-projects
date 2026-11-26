@@ -8,7 +8,7 @@ import { useDitado } from '@/hooks/use-ditado'
 import { Badge } from '@/components/reui/badge'
 import { nomesDosServicos } from '@/components/servicos/servicos-picker'
 import { Button } from '@/components/ui/button'
-import { FieldDescription } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import {
   InputGroup,
   InputGroupAddon,
@@ -70,10 +70,8 @@ export function EtapaRevisao({ rascunho, atualizar, irPara }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <label htmlFor="ajuste-servicos" className="text-sm font-medium">
-          Falar para ajustar
-        </label>
+      <Field>
+        <FieldLabel htmlFor="ajuste-servicos">Falar para ajustar</FieldLabel>
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -108,7 +106,7 @@ export function EtapaRevisao({ rascunho, atualizar, irPara }: Props) {
         <FieldDescription className="text-xs" role="status" aria-live="polite">
           {ouvindo ? 'Ouvindo…' : 'Fale ou escreva o que entra e o que sai da sua lista de serviços.'}
         </FieldDescription>
-      </div>
+      </Field>
 
       <ItemGroup className="gap-2">
         <Item variant="outline">
