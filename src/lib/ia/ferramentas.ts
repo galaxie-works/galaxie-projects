@@ -217,6 +217,40 @@ export interface ContextoExecucao {
   empresaId: string
   formulario: FormularioContexto | null | undefined
   acoes: AcaoAssistente[]
+  passos: string[]
+}
+
+const PLURAL: Record<TabelaAssistente, string> = {
+  clientes: 'clientes',
+  projetos: 'projetos',
+  etapas: 'etapas',
+  compras: 'compras',
+  equipe: 'equipe',
+}
+
+/** Frase curta do passo, mostrada no painel como no app do Claude. */
+function descreverPasso(nome: string, args: Record<string, unknown>): string {
+  const t = args.tabela as TabelaAssistente | undefined
+  const rotulo = t && t in TABELAS ? TABELAS[t].rotulo : 'registro'
+  const texto = typeof args.texto === 'string' && args.texto.trim() ? ` "${args.texto.trim()}"` : ''
+  switch (nome) {
+    case 'buscar':
+      return `Buscou ${t && t in PLURAL ? PLURAL[t] : 'registros'}${texto}`
+    case 'criar':
+      return `Cadastrou ${rotulo}`
+    case 'atualizar':
+      return `Atualizou ${rotulo}`
+    case 'excluir':
+      return `Pediu para excluir ${rotulo}`
+    case 'preencher_formulario':
+      return 'Preencheu o formulário'
+    case 'salvar_formulario':
+      return 'Salvou o formulário'
+    case 'abrir_pagina':
+      return `Abriu ${String(args.caminho ?? 'a página')}`
+    default:
+      return nome
+  }
 }
 
 function ehTabela(t: unknown): t is TabelaAssistente {
@@ -242,6 +276,7 @@ export async function executarFerramenta(
   ctx: ContextoExecucao,
 ): Promise<string> {
   const { supabase, empresaId } = ctx
+  ctx.passos.push(descreverPasso(nome, args))
 
   if (nome === 'preencher_formulario') {
     if (!ctx.formulario) return 'Erro: não há formulário aberto na tela.'

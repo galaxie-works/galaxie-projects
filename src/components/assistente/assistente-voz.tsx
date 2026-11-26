@@ -3,7 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { MicIcon, SendIcon, SettingsIcon, SparklesIcon, SquareIcon } from 'lucide-react'
+import {
+  ArrowUpIcon,
+  CheckIcon,
+  CircleAlertIcon,
+  MicIcon,
+  SettingsIcon,
+  SparklesIcon,
+  SquareIcon,
+  SquarePenIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -24,20 +33,33 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { Spinner } from '@/components/ui/spinner'
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { contextoDoFormulario, useRegistroFormularios } from './formulario-assistente'
+import { Markdown } from './markdown'
 
 type Excluir = Extract<AcaoAssistente, { tipo: 'excluir' }>
 
+interface Mensagem extends MensagemHistorico {
+  passos?: string[]
+  erro?: boolean
+}
+
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** Sugestões de início, conforme a página aberta. */
+function sugestoes(pagina: string, formulario: string | null): string[] {
+  if (formulario) {
+    return [`Preencher “${formulario}” por voz`, 'O que falta preencher?', 'Salvar']
+  }
+  if (pagina.startsWith('/projetos/') && pagina !== '/projetos/novo') {
+    return ['Resumo desta obra', 'Adicionar uma etapa', 'Lançar uma compra']
+  }
+  if (pagina.startsWith('/clientes')) {
+    return ['Listar meus clientes', 'Cadastrar um cliente', 'Quais clientes têm obra em andamento?']
+  }
+  return ['Quais obras estão em execução?', 'Cadastrar um projeto novo', 'Cadastrar um cliente']
+}
 
 // Assistente por voz: botão no topo abre um painel, o usuário fala (ou
 // digita), a fala vai para a IA com o formulário aberto na tela, e a tela
@@ -47,7 +69,7 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
   const pathname = usePathname()
   const registro = useRegistroFormularios()
   const [aberto, setAberto] = useState(false)
-  const [mensagens, setMensagens] = useState<MensagemHistorico[]>([])
+  const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [rascunho, setRascunho] = useState('')
   const [pensando, setPensando] = useState(false)
   // O servidor pode dizer que falta configuração mesmo com a prop true (ex.:
@@ -71,7 +93,7 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
   })
 
   useEffect(() => {
-    fim.current?.scrollIntoView({ block: 'end' })
+    fim.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [mensagens, pensando])
 
   async function aplicar(acoes: AcaoAssistente[]) {
@@ -101,7 +123,10 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
   async function enviar(texto: string) {
     const t = texto.trim()
     if (!t || pensando) return
-    const historico = mensagens.slice(-10)
+    const historico: MensagemHistorico[] = mensagens
+      .filter((m) => !m.erro)
+      .slice(-10)
+      .map(({ papel, texto }) => ({ papel, texto }))
     setMensagens((m) => [...m, { papel: 'usuario', texto: t }])
     setRascunho('')
     setPensando(true)
@@ -122,15 +147,18 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
       if (!r.ok || 'erro' in corpo) {
         const e = corpo as ErroAssistente
         if (e.semConfiguracao) setRecusado(true)
-        setMensagens((m) => [...m, { papel: 'assistente', texto: e.erro ?? 'Algo deu errado.' }])
+        setMensagens((m) => [
+          ...m,
+          { papel: 'assistente', texto: e.erro ?? 'Algo deu errado.', passos: e.passos, erro: true },
+        ])
         if (e.acoes?.length) await aplicar(e.acoes)
         router.refresh()
         return
       }
-      setMensagens((m) => [...m, { papel: 'assistente', texto: corpo.resposta }])
+      setMensagens((m) => [...m, { papel: 'assistente', texto: corpo.resposta, passos: corpo.passos }])
       await aplicar(corpo.acoes)
     } catch {
-      setMensagens((m) => [...m, { papel: 'assistente', texto: 'Sem conexão. Tente de novo.' }])
+      setMensagens((m) => [...m, { papel: 'assistente', texto: 'Sem conexão. Tente de novo.', erro: true }])
     } finally {
       setPensando(false)
     }
@@ -144,16 +172,23 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
     }
     toast.success(`Excluído: ${a.descricao}`)
     setMensagens((m) => [...m, { papel: 'assistente', texto: `Excluí ${a.descricao}.` }])
-    if (pathname.includes(a.id)) router.push(`/${a.tabela === 'equipe' ? 'equipe' : a.tabela}`)
+    if (pathname.includes(a.id)) router.push(`/${a.tabela}`)
     router.refresh()
     return true
   }
 
   const exclusaoAtual = exclusoes[0]
+  const formularioAtual = registro?.atual()?.titulo ?? null
 
   function abrirEFalar() {
     setAberto(true)
     if (!semConfig && ditado.suportado && !ditado.ouvindo) ditado.iniciar()
+  }
+
+  function novaConversa() {
+    ditado.parar()
+    setMensagens([])
+    setRascunho('')
   }
 
   return (
@@ -177,21 +212,38 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
           if (!v) ditado.parar()
         }}
       >
-        <SheetContent side="right" className="w-full gap-0 sm:max-w-md">
-          <SheetHeader className="border-b">
-            <SheetTitle className="flex items-center gap-2">
-              <SparklesIcon className="size-4" aria-hidden />
-              Assistente
-            </SheetTitle>
-            <SheetDescription>
-              Fale o que precisa: “cadastra a cliente Ana, telefone…”, “muda o prazo da obra da Rua das
-              Acácias para 20 de março”, “salva”.
+        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-lg" showCloseButton>
+          {/* Cabeçalho enxuto, como no app do Claude */}
+          <div className="flex h-14 shrink-0 items-center gap-2 border-b pr-12 pl-4">
+            <SparklesIcon className="size-4 text-primary" aria-hidden />
+            <SheetTitle className="text-sm font-semibold">Assistente</SheetTitle>
+            <SheetDescription className="sr-only">
+              Fale ou digite o que precisa. O assistente preenche, salva, edita e exclui por você.
             </SheetDescription>
-          </SheetHeader>
+            {mensagens.length > 0 && !semConfig && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="ml-auto"
+                      onClick={novaConversa}
+                      aria-label="Nova conversa"
+                    />
+                  }
+                >
+                  <SquarePenIcon />
+                </TooltipTrigger>
+                <TooltipContent>Nova conversa</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             {semConfig ? (
-              <Empty>
+              <Empty className="flex-1">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
                     <SettingsIcon />
@@ -206,50 +258,92 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
                 </Button>
               </Empty>
             ) : mensagens.length === 0 && !rascunho ? (
-              <p className="text-muted-foreground text-sm">
-                {registro?.atual()
-                  ? `Formulário aberto: ${registro.atual()?.titulo}. Pode ditar os dados de uma vez.`
-                  : 'Toque no microfone e fale.'}
-              </p>
-            ) : (
-              mensagens.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap',
-                    m.papel === 'usuario'
-                      ? 'self-end bg-primary text-primary-foreground'
-                      : 'self-start bg-muted',
-                  )}
-                >
-                  {m.texto}
+              <div className="flex flex-1 flex-col justify-end gap-6 px-5 pb-6">
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-2xl font-semibold tracking-tight">Como posso ajudar?</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formularioAtual
+                      ? `Você está em “${formularioAtual}”. Pode ditar tudo de uma vez que eu preencho.`
+                      : 'Fale ou digite. Eu busco, cadastro, edito e preencho formulários por você.'}
+                  </p>
                 </div>
-              ))
-            )}
-            {rascunho && ditado.ouvindo && (
-              <div className="self-end max-w-[85%] rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
-                {rascunho}
+                <div className="flex flex-col gap-2">
+                  {sugestoes(pathname, formularioAtual).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => void enviar(s)}
+                      className="rounded-xl border bg-card px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6 px-5 py-5">
+                {mensagens.map((m, i) =>
+                  m.papel === 'usuario' ? (
+                    <div
+                      key={i}
+                      className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-muted px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap"
+                    >
+                      {m.texto}
+                    </div>
+                  ) : (
+                    <div key={i} className="flex flex-col gap-3">
+                      {m.passos && m.passos.length > 0 && (
+                        <ul className="flex flex-col gap-1.5 border-l pl-3">
+                          {m.passos.map((p, j) => (
+                            <li key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <CheckIcon className="size-3.5 shrink-0 text-success" aria-hidden />
+                              {p}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {m.erro ? (
+                        <p className="flex items-start gap-2 text-sm text-destructive">
+                          <CircleAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                          {m.texto}
+                        </p>
+                      ) : (
+                        <Markdown texto={m.texto} />
+                      )}
+                    </div>
+                  ),
+                )}
+                {rascunho && ditado.ouvindo && (
+                  <div className="max-w-[85%] self-end rounded-2xl rounded-br-md border border-dashed px-4 py-2.5 text-sm text-muted-foreground">
+                    {rascunho}
+                  </div>
+                )}
+                {pensando && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+                    <SparklesIcon className="size-4 animate-pulse text-primary" aria-hidden />
+                    Pensando…
+                  </div>
+                )}
+                <div ref={fim} />
               </div>
             )}
-            {pensando && (
-              <div className="flex items-center gap-2 self-start text-sm text-muted-foreground">
-                <Spinner />
-                Pensando…
-              </div>
-            )}
-            <div ref={fim} />
           </div>
 
           {!semConfig && (
             <form
-              className="border-t p-3"
+              className="shrink-0 p-3 pt-0"
               onSubmit={(e) => {
                 e.preventDefault()
                 void enviar(rascunho)
               }}
             >
-              <InputGroup>
-                <InputGroupTextarea
+              <div
+                className={cn(
+                  'flex flex-col gap-1 rounded-3xl border bg-background px-4 pt-3 pb-2 shadow-sm transition-colors focus-within:border-ring',
+                  ditado.ouvindo && 'border-primary',
+                )}
+              >
+                <textarea
                   value={rascunho}
                   onChange={(e) => setRascunho(e.target.value)}
                   onKeyDown={(e) => {
@@ -259,15 +353,24 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
                     }
                   }}
                   placeholder={ditado.ouvindo ? 'Ouvindo…' : 'Fale ou digite'}
-                  rows={2}
+                  rows={1}
                   disabled={pensando}
+                  aria-label="Mensagem para o assistente"
+                  className="field-sizing-content max-h-40 min-h-6 w-full resize-none bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
                 />
-                <InputGroupAddon align="block-end" className="justify-end gap-1">
+                <div className="flex items-center justify-end gap-1.5">
+                  {ditado.ouvindo && (
+                    <span className="mr-auto flex items-center gap-1.5 text-xs text-primary">
+                      <span className="size-2 animate-pulse rounded-full bg-primary" aria-hidden />
+                      Ouvindo, toque no quadrado para parar
+                    </span>
+                  )}
                   {ditado.suportado && (
                     <Button
                       type="button"
-                      size="icon-sm"
-                      variant={ditado.ouvindo ? 'default' : 'ghost'}
+                      size="icon"
+                      variant={ditado.ouvindo ? 'secondary' : 'ghost'}
+                      className="rounded-full"
                       onClick={ditado.alternar}
                       disabled={pensando}
                       aria-pressed={ditado.ouvindo}
@@ -278,14 +381,15 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
                   )}
                   <Button
                     type="submit"
-                    size="icon-sm"
+                    size="icon"
+                    className="rounded-full"
                     disabled={pensando || !rascunho.trim() || ditado.ouvindo}
                     aria-label="Enviar"
                   >
-                    <SendIcon />
+                    <ArrowUpIcon />
                   </Button>
-                </InputGroupAddon>
-              </InputGroup>
+                </div>
+              </div>
             </form>
           )}
         </SheetContent>

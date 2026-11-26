@@ -46,6 +46,8 @@ export type AcaoAssistente =
 export interface RespostaAssistente {
   resposta: string
   acoes: AcaoAssistente[]
+  /** O que a IA fez no caminho, para mostrar como passos ("Buscou clientes"). */
+  passos?: string[]
 }
 
 export interface ErroAssistente {
@@ -54,4 +56,5 @@ export interface ErroAssistente {
   semConfiguracao?: boolean
   /** Ações que já deram certo antes do erro (ex.: registro criado). */
   acoes?: AcaoAssistente[]
+  passos?: string[]
 }
