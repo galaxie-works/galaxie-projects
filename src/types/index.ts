@@ -1,5 +1,7 @@
 // Tipos TypeScript que espelham o schema do banco (ver supabase/schema.sql)
 
+import type { Unidade } from '@/lib/orcamento'
+
 export type StatusProjeto =
   | 'planejamento'
   | 'em_execucao'
@@ -93,4 +95,39 @@ export const STATUS_ETAPA_LABEL: Record<StatusEtapa, string> = {
   pendente: 'Pendente',
   em_andamento: 'Em andamento',
   concluida: 'Concluída',
+}
+
+export type { Unidade }
+
+// Linha de precos_servicos: preço e unidade de cobrança de cada serviço.
+export interface PrecoServicoLinha {
+  empresa_id: string
+  servico_id: string
+  unidade: Unidade
+  preco: number
+  updated_at: string
+}
+
+export interface ProjetoArea {
+  id: string
+  projeto_id: string
+  nome: string
+  observacao: string | null
+  ordem: number
+  created_at: string
+}
+
+export interface ProjetoItem {
+  id: string
+  area_id: string
+  projeto_id: string
+  servico_id: string | null
+  descricao: string | null
+  unidade: Unidade
+  quantidade: number
+  memoria_calculo: string | null
+  preco_unitario: number
+  total: number
+  ordem: number
+  created_at: string
 }
