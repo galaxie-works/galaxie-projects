@@ -2,7 +2,16 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CircleAlertIcon, ExternalLinkIcon, KeyRoundIcon, SparklesIcon, Trash2Icon } from 'lucide-react'
+import {
+  CircleAlertIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  EyeOffIcon,
+  KeyRoundIcon,
+  LockIcon,
+  SparklesIcon,
+  Trash2Icon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { alternarAssistente, removerChaveIA, salvarConfigIA } from '@/app/(dashboard)/ajustes/actions'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
@@ -25,7 +34,12 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
@@ -44,6 +58,7 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
   const [provedor, setProvedor] = useState<ProvedorIA>(config?.provedor ?? 'anthropic')
   const [modelo, setModelo] = useState(config?.modelo ?? PROVEDORES.anthropic.modeloPadrao)
   const [chave, setChave] = useState('')
+  const [mostrarChave, setMostrarChave] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmarRemocao, setConfirmarRemocao] = useState(false)
   const [salvando, iniciarSalvar] = useTransition()
@@ -97,7 +112,7 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
       <Frame spacing="default">
         <FrameHeader>
           <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <FrameTitle className="flex items-center gap-2">
                 <SparklesIcon className="size-4" aria-hidden />
                 Assistente de IA
@@ -193,21 +208,39 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
 
             <Field data-invalid={!!erro || undefined}>
               <FieldLabel htmlFor="ia-chave">Chave de API</FieldLabel>
-              <Input
-                id="ia-chave"
-                type="password"
-                autoComplete="off"
-                spellCheck={false}
-                value={chave}
-                onChange={(e) => setChave(e.target.value)}
-                placeholder={
-                  config && !trocouProvedor
-                    ? `Guardada (termina em …${config.chaveFinal}). Cole outra para trocar.`
-                    : `${info.prefixoChave ?? ''}…`
-                }
-                aria-invalid={!!erro || undefined}
-                className="font-mono"
-              />
+              {/* Campo de senha com ver/ocultar (@reui/c-input-group-35). */}
+              <InputGroup>
+                <InputGroupAddon>
+                  <LockIcon className="size-4 text-muted-foreground" aria-hidden />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="ia-chave"
+                  type={mostrarChave ? 'text' : 'password'}
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={chave}
+                  onChange={(e) => setChave(e.target.value)}
+                  placeholder={
+                    config && !trocouProvedor
+                      ? `Guardada (termina em …${config.chaveFinal}). Cole outra para trocar.`
+                      : `${info.prefixoChave ?? ''}…`
+                  }
+                  aria-invalid={!!erro || undefined}
+                  className="font-mono"
+                />
+                <InputGroupButton
+                  variant="ghost"
+                  onClick={() => setMostrarChave((v) => !v)}
+                  aria-label={mostrarChave ? 'Ocultar chave' : 'Mostrar chave'}
+                  aria-pressed={mostrarChave}
+                >
+                  {mostrarChave ? (
+                    <EyeOffIcon className="size-4 text-muted-foreground" />
+                  ) : (
+                    <EyeIcon className="size-4 text-muted-foreground" />
+                  )}
+                </InputGroupButton>
+              </InputGroup>
               {erro ? (
                 <FieldError>{erro}</FieldError>
               ) : (
@@ -216,7 +249,7 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
                   <a
                     href={info.linkChave}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 underline underline-offset-4"
                   >
                     Criar chave na {info.nome}
