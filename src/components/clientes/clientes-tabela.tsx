@@ -187,7 +187,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
             </div>
           )
         },
-        size: 240,
+        size: 220,
         enableSorting: true,
       },
       {
@@ -200,7 +200,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
             {FASE_CLIENTE_LABEL[row.original.fase]}
           </Badge>
         ),
-        size: 120,
+        size: 110,
         enableSorting: true,
       },
       {
@@ -215,7 +215,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
             <span className="text-muted-foreground">—</span>
           )
         },
-        size: 120,
+        size: 110,
         enableSorting: false,
       },
       {
@@ -227,7 +227,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
             {formatarTelefone(row.original.telefone) || '—'}
           </span>
         ),
-        size: 160,
+        size: 150,
         enableSorting: false,
       },
       {
@@ -250,7 +250,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
             </span>
           )
         },
-        size: 150,
+        size: 140,
         enableSorting: true,
       },
       {
@@ -258,7 +258,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
         accessorKey: 'contratado',
         header: ({ column }) => <DataGridColumnHeader title="Contratado" column={column} />,
         cell: ({ row }) => formatarMoeda(row.original.contratado),
-        size: 140,
+        size: 130,
         enableSorting: true,
         meta: {
           headerClassName: 'text-end [&>div]:justify-end',
@@ -270,7 +270,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
         accessorKey: 'totalProjetos',
         header: ({ column }) => <DataGridColumnHeader title="Obras" column={column} />,
         cell: ({ row }) => row.original.totalProjetos,
-        size: 100,
+        size: 80,
         enableSorting: true,
         meta: {
           headerClassName: 'text-end [&>div]:justify-end',

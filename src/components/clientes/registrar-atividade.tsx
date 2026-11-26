@@ -43,7 +43,7 @@ export function RegistrarAtividade({ clienteId, empresaId, disponivel }: Props) 
       return
     }
     setTexto('')
-    toast.success(`${TIPO_ATIVIDADE_LABEL[tipo]} registrada`)
+    toast.success('Contato registrado', { description: TIPO_ATIVIDADE_LABEL[tipo] })
     router.refresh()
   }
 

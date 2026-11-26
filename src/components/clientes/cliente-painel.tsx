@@ -74,7 +74,7 @@ function Numero({
       >
         {valor}
       </span>
-      {detalhe && <span className="truncate text-xs text-muted-foreground">{detalhe}</span>}
+      {detalhe && <span className="text-xs text-muted-foreground">{detalhe}</span>}
     </FramePanel>
   )
 }
