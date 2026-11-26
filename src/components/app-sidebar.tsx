@@ -14,6 +14,7 @@ import {
   UsersIcon,
   HardHatIcon,
   SettingsIcon,
+  WalletIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -80,6 +81,7 @@ const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
 const NAVEGACAO = [
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
+  { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
   { href: '/ajustes', rotulo: 'Ajustes', icone: SettingsIcon },
@@ -272,6 +274,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 const SECOES: Record<string, string> = {
   projetos: 'Projetos',
   clientes: 'Clientes',
+  financeiro: 'Financeiro',
   equipe: 'Equipe',
   empresa: 'Empresa',
   ajustes: 'Ajustes',

@@ -4,7 +4,8 @@ import { projetoAtrasado } from '@/lib/status'
 import { ProjetoAbas } from '@/components/projetos/projeto-abas'
 import { ProjetoCabecalho } from '@/components/projetos/projeto-cabecalho'
 import { carregarOrcamento, carregarPrecos } from '@/components/orcamento/dados'
-import type { Cliente, Compra, Etapa, MembroEquipe, Projeto } from '@/types'
+import { podeVerFinanceiro } from '@/lib/financeiro'
+import type { Cliente, Compra, Etapa, MembroEquipe, Projeto, Recebimento } from '@/types'
 
 export default async function ProjetoDetalhePage({
   params,
@@ -34,6 +35,7 @@ export default async function ProjetoDetalhePage({
     { data: empresa },
     areas,
     precos,
+    recebimentosRes,
   ] = await Promise.all([
       supabase.from('etapas').select('*, equipe(nome)').eq('projeto_id', id).order('ordem'),
       supabase
@@ -46,7 +48,16 @@ export default async function ProjetoDetalhePage({
       supabase.from('empresas').select('servicos').eq('id', projeto.empresa_id).maybeSingle(),
       carregarOrcamento(supabase, id),
       carregarPrecos(supabase, projeto.empresa_id),
+      supabase
+        .from('recebimentos')
+        .select('*')
+        .eq('projeto_id', id)
+        .order('vencimento')
+        .order('ordem'),
     ])
+  const verFinanceiro = podeVerFinanceiro()
+  // Antes de rodar o SQL do financeiro a tabela não existe: a aba avisa.
+  const financeiroDisponivel = !recebimentosRes.error
   const temItens = areas.some((a) => a.itens.length > 0)
 
   const p = projeto as Projeto
@@ -73,6 +84,9 @@ export default async function ProjetoDetalhePage({
         areasIniciais={areas}
         servicosEmpresa={(empresa?.servicos as string[]) ?? []}
         precos={precos}
+        recebimentosIniciais={financeiroDisponivel ? ((recebimentosRes.data as Recebimento[]) ?? []) : []}
+        financeiroDisponivel={financeiroDisponivel}
+        verFinanceiro={verFinanceiro}
       />
     </div>
   )

@@ -33,7 +33,7 @@ export interface PedidoAssistente {
   historico?: MensagemHistorico[]
 }
 
-export type TabelaAssistente = 'clientes' | 'projetos' | 'etapas' | 'compras' | 'equipe'
+export type TabelaAssistente = 'clientes' | 'projetos' | 'etapas' | 'compras' | 'equipe' | 'recebimentos'
 
 /** O que a tela precisa fazer depois da resposta da IA. */
 export type AcaoAssistente =

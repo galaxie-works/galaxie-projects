@@ -44,7 +44,10 @@ import {
   type Cliente,
   type MembroEquipe,
   type Projeto,
+  type Recebimento,
 } from '@/types'
+import { resumoRecebimentos } from '@/lib/financeiro'
+import { FinanceiroCliente } from '@/components/financeiro/financeiro-cliente'
 
 function Dado({ rotulo, valor }: { rotulo: string; valor: string | null | undefined }) {
   return (
@@ -155,11 +158,29 @@ type Props = {
   crmDisponivel: boolean
   /** 'YYYY-MM-DD' calculado no servidor. */
   hoje: string
+  /** Parcelas de todas as obras do cliente. */
+  recebimentos: Recebimento[]
+  /** Quem está logado pode ver valores recebidos (ver podeVerFinanceiro). */
+  verFinanceiro: boolean
+  /** false antes de rodar o SQL do financeiro. */
+  financeiroDisponivel: boolean
 }
 
 // Painel do cliente (Cliente 360): cabeçalho com fase e ações, números,
 // e abas Resumo (linha do tempo + obras), Obras e Dados.
-export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDisponivel, hoje }: Props) {
+export function ClientePainel({
+  cliente: c,
+  obras,
+  atividades,
+  equipe,
+  crmDisponivel,
+  hoje,
+  recebimentos,
+  verFinanceiro,
+  financeiroDisponivel,
+}: Props) {
+  const financeiro = resumoRecebimentos(recebimentos, hoje)
+  const mostrarFinanceiro = verFinanceiro && financeiroDisponivel
   const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras)
   const numeros = numerosDoCliente(obras)
   const followup = situacaoFollowup(c.proximo_followup_em ?? null, hoje)
@@ -236,7 +257,10 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
         </div>
       </header>
 
-      <Frame spacing="default" className="grid grid-cols-2 lg:grid-cols-4">
+      <Frame
+        spacing="default"
+        className={`grid grid-cols-2 ${mostrarFinanceiro ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
+      >
         <Numero
           rotulo="Contratado"
           valor={formatarMoeda(numeros.contratado)}
@@ -247,6 +271,23 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
           valor={formatarMoeda(numeros.emProposta)}
           detalhe="Obras em planejamento"
         />
+        {mostrarFinanceiro && (
+          <>
+            <Numero
+              rotulo="Recebido"
+              valor={formatarMoeda(financeiro.recebido)}
+              detalhe={`${financeiro.parcelas} ${financeiro.parcelas === 1 ? 'parcela' : 'parcelas'} no total`}
+            />
+            <Numero
+              rotulo="A receber"
+              valor={formatarMoeda(financeiro.aReceber)}
+              detalhe={
+                financeiro.atrasado > 0 ? `${formatarMoeda(financeiro.atrasado)} atrasado` : 'Nada atrasado'
+              }
+              alerta={financeiro.atrasado > 0}
+            />
+          </>
+        )}
         <Numero
           rotulo="Obras ativas"
           valor={String(numeros.obrasAtivas)}
@@ -280,6 +321,14 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
               Obras
               <span className="text-xs text-muted-foreground tabular-nums">{obras.length}</span>
             </TabsTrigger>
+            {mostrarFinanceiro && (
+              <TabsTrigger value="financeiro">
+                Financeiro
+                {financeiro.parcelasAtrasadas > 0 && (
+                  <span className="text-xs text-destructive tabular-nums">{financeiro.parcelasAtrasadas}</span>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="dados">Dados</TabsTrigger>
           </TabsList>
         </div>
@@ -319,6 +368,12 @@ export function ClientePainel({ cliente: c, obras, atividades, equipe, crmDispon
             </FramePanel>
           </Frame>
         </TabsContent>
+
+        {mostrarFinanceiro && (
+          <TabsContent value="financeiro">
+            <FinanceiroCliente recebimentos={recebimentos} hoje={hoje} temObras={obras.length > 0} />
+          </TabsContent>
+        )}
 
         <TabsContent value="dados">
           <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
