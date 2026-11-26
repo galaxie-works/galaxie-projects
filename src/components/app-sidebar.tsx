@@ -106,7 +106,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/projetos" />}>
-              <IconTile variant="solid" size="sm" className="text-sidebar-primary" aria-hidden>
+              <IconTile variant="solid" size="sm" aria-hidden>
                 <HardHatIcon />
               </IconTile>
               <span className="flex min-w-0 flex-col gap-0.5 leading-none">
