@@ -330,8 +330,15 @@ function limparDados(tabela: TabelaAssistente, dados: unknown): Record<string, u
   if (!dados || typeof dados !== 'object') return {}
   const permitidas = TABELAS[tabela].colunas
   return Object.fromEntries(
-    Object.entries(dados as Record<string, unknown>).filter(([k]) => k in permitidas),
+    Object.entries(dados as Record<string, unknown>)
+      .filter(([k]) => k in permitidas)
+      // Data vazia = "sem data" (ex.: desfazer um recebimento): o banco quer null.
+      .map(([k, v]) => [k, v === '' && ehData(permitidas[k]) ? null : v]),
   )
+}
+
+function ehData(esquema: Record<string, unknown>): boolean {
+  return typeof esquema.description === 'string' && esquema.description.includes('AAAA-MM-DD')
 }
 
 function colunasSelect(tabela: TabelaAssistente) {
