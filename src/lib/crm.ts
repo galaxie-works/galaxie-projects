@@ -49,13 +49,14 @@ export function situacaoFollowup(
   return 'futuro'
 }
 
-// Link do WhatsApp a partir do telefone salvo (só dígitos, com DDI 55).
-export function linkWhatsApp(telefone: string | null): string | null {
+// Link do WhatsApp a partir do telefone salvo (só dígitos, com DDI 55),
+// opcionalmente com a mensagem já escrita.
+export function linkWhatsApp(telefone: string | null, texto?: string): string | null {
   if (!telefone) return null
   let digitos = telefone.replace(/\D/g, '')
   if (digitos.length === 0) return null
   if (digitos.length <= 11) digitos = `55${digitos}`
-  return `https://wa.me/${digitos}`
+  return texto ? `https://wa.me/${digitos}?text=${encodeURIComponent(texto)}` : `https://wa.me/${digitos}`
 }
 
 export function hojeISO(): string {
