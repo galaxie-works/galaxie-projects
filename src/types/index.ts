@@ -17,6 +17,7 @@ export interface Empresa {
   cnpj: string | null
   descricao: string | null
   modo_operacao: string | null
+  servicos: string[]
   created_at: string
 }
 

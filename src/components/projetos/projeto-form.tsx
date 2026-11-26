@@ -1,0 +1,253 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { UserPlusIcon, UsersIcon } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { STATUS_PROJETO_LABEL, type Cliente, type Projeto, type StatusProjeto } from '@/types'
+import { Alert, AlertDescription } from '@/components/reui/alert'
+import { BotaoVoz } from '@/components/voz/botao-voz'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
+import { CampoData } from '@/components/projetos/campo-data'
+import { CampoMoeda } from '@/components/projetos/campo-moeda'
+
+const ITENS_STATUS = (Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][]).map(
+  ([value, label]) => ({ value, label })
+)
+
+type Props = {
+  empresaId: string
+  clientes: Cliente[]
+  clienteIdInicial?: string
+  /** Quando presente, o formulário edita este projeto em vez de criar um novo. */
+  projeto?: Projeto
+  /** Chamado após salvar uma edição (ex.: fechar o Dialog). */
+  onSalvo?: () => void
+  onCancelar?: () => void
+}
+
+type Erros = { nome?: string; cliente?: string; prazo?: string }
+
+export function ProjetoForm({
+  empresaId,
+  clientes,
+  clienteIdInicial,
+  projeto,
+  onSalvo,
+  onCancelar,
+}: Props) {
+  const router = useRouter()
+  const editando = Boolean(projeto)
+
+  const [nome, setNome] = useState(projeto?.nome ?? '')
+  const [clienteId, setClienteId] = useState(
+    projeto?.cliente_id ?? clienteIdInicial ?? clientes[0]?.id ?? ''
+  )
+  const [status, setStatus] = useState<StatusProjeto>(projeto?.status ?? 'planejamento')
+  const [dataInicio, setDataInicio] = useState(projeto?.data_inicio?.slice(0, 10) ?? '')
+  const [dataPrazo, setDataPrazo] = useState(projeto?.data_prazo?.slice(0, 10) ?? '')
+  const [orcamento, setOrcamento] = useState<number | null>(
+    projeto?.orcamento_total != null ? Number(projeto.orcamento_total) : null
+  )
+  const [erros, setErros] = useState<Erros>({})
+  const [erroGeral, setErroGeral] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
+
+  const itensCliente = clientes.map((c) => ({ value: c.id, label: c.nome }))
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const novosErros: Erros = {}
+    if (!nome.trim()) novosErros.nome = 'Dê um nome para o projeto.'
+    if (!clienteId) novosErros.cliente = 'Selecione o cliente deste projeto.'
+    if (dataInicio && dataPrazo && dataPrazo < dataInicio)
+      novosErros.prazo = 'O prazo final vem antes do início.'
+    setErros(novosErros)
+    if (Object.keys(novosErros).length > 0) return
+
+    setSalvando(true)
+    setErroGeral(null)
+    const supabase = createClient()
+    const campos = {
+      cliente_id: clienteId,
+      nome: nome.trim(),
+      status,
+      data_inicio: dataInicio || null,
+      data_prazo: dataPrazo || null,
+      orcamento_total: orcamento ?? 0,
+    }
+
+    if (projeto) {
+      const { error } = await supabase.from('projetos').update(campos).eq('id', projeto.id)
+      setSalvando(false)
+      if (error) {
+        setErroGeral(error.message)
+        return
+      }
+      toast.success('Projeto atualizado')
+      onSalvo?.()
+      router.refresh()
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('projetos')
+      .insert({ empresa_id: empresaId, ...campos })
+      .select('id')
+      .single()
+
+    setSalvando(false)
+    if (error || !data) {
+      setErroGeral(error?.message ?? 'Erro ao salvar projeto.')
+      return
+    }
+    toast.success('Projeto criado')
+    router.push(`/projetos/${data.id}`)
+    router.refresh()
+  }
+
+  if (clientes.length === 0) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <UsersIcon />
+          </EmptyMedia>
+          <EmptyTitle>Cadastre um cliente primeiro</EmptyTitle>
+          <EmptyDescription>Todo projeto pertence a um cliente.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button nativeButton={false} render={<Link href="/clientes/novo" />}>
+            <UserPlusIcon data-icon="inline-start" />
+            Cadastrar cliente
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+      <FieldGroup>
+        <Field data-invalid={Boolean(erros.nome) || undefined}>
+          <FieldLabel htmlFor="projeto-nome">Nome do projeto</FieldLabel>
+          <InputGroup>
+            <InputGroupInput
+              id="projeto-nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex.: Porcelanato sala e cozinha — Ap. 52"
+              aria-invalid={Boolean(erros.nome) || undefined}
+              autoFocus={!editando}
+            />
+            <InputGroupAddon align="inline-end">
+              <BotaoVoz size="icon-xs" rotulo="Ditar o nome" onParcial={setNome} onFinal={setNome} />
+            </InputGroupAddon>
+          </InputGroup>
+          {erros.nome && <FieldError>{erros.nome}</FieldError>}
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field data-invalid={Boolean(erros.cliente) || undefined}>
+            <FieldLabel htmlFor="projeto-cliente">Cliente</FieldLabel>
+            <Select
+              items={itensCliente}
+              value={clienteId}
+              onValueChange={(v) => setClienteId((v as string | null) ?? '')}
+            >
+              <SelectTrigger id="projeto-cliente" className="w-full">
+                <SelectValue placeholder="Selecione o cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                {itensCliente.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {erros.cliente && <FieldError>{erros.cliente}</FieldError>}
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="projeto-status">Status</FieldLabel>
+            <Select
+              items={ITENS_STATUS}
+              value={status}
+              onValueChange={(v) => v && setStatus(v as StatusProjeto)}
+            >
+              <SelectTrigger id="projeto-status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ITENS_STATUS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        </div>
+
+        <Field>
+          <FieldLabel htmlFor="projeto-orcamento">Orçamento total</FieldLabel>
+          <CampoMoeda id="projeto-orcamento" valor={orcamento} onChange={setOrcamento} />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="projeto-inicio">Início</FieldLabel>
+            <CampoData id="projeto-inicio" valor={dataInicio} onChange={setDataInicio} />
+          </Field>
+          <Field data-invalid={Boolean(erros.prazo) || undefined}>
+            <FieldLabel htmlFor="projeto-prazo">Prazo final</FieldLabel>
+            <CampoData
+              id="projeto-prazo"
+              valor={dataPrazo}
+              onChange={setDataPrazo}
+              invalido={Boolean(erros.prazo)}
+            />
+            {erros.prazo && <FieldError>{erros.prazo}</FieldError>}
+          </Field>
+        </div>
+      </FieldGroup>
+
+      {erroGeral && (
+        <Alert variant="destructive" role="alert">
+          <AlertDescription>{erroGeral}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        {onCancelar ? (
+          <Button type="button" variant="outline" onClick={onCancelar} disabled={salvando}>
+            Cancelar
+          </Button>
+        ) : (
+          <Button variant="outline" nativeButton={false} render={<Link href="/projetos" />}>
+            Cancelar
+          </Button>
+        )}
+        <Button type="submit" disabled={salvando}>
+          {salvando && <Spinner data-icon="inline-start" />}
+          {editando ? 'Salvar alterações' : 'Criar projeto'}
+        </Button>
+      </div>
+    </form>
+  )
+}

@@ -1,13 +1,11 @@
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Sidebar from '@/components/Sidebar'
+import { AppHeader, AppSidebar } from '@/components/app-sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import type { Projeto } from '@/types'
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -29,12 +27,16 @@ export default async function AppLayout({
     .eq('empresa_id', empresa.id)
     .order('created_at', { ascending: false })
 
+  const lista = (projetos as Projeto[]) ?? []
+  const sidebarAberta = (await cookies()).get('sidebar_state')?.value !== 'false'
+
   return (
-    <div className="flex min-h-screen">
-      <Sidebar empresaNome={empresa.nome} projetos={(projetos as Projeto[]) ?? []} />
-      <main className="min-w-0 flex-1 overflow-y-auto bg-background">
-        {children}
-      </main>
-    </div>
+    <SidebarProvider defaultOpen={sidebarAberta}>
+      <AppSidebar empresaNome={empresa.nome} email={user.email ?? ''} projetos={lista} />
+      <SidebarInset className="min-w-0">
+        <AppHeader projetos={lista.map(({ id, nome }) => ({ id, nome }))} />
+        <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

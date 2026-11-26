@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Componentes de terceiros (shadcn / ReUI), instalados pelo CLI como vêm.
+    "src/components/ui/**",
+    "src/components/reui/**",
+    "src/hooks/use-mobile.ts",
   ]),
 ]);
 

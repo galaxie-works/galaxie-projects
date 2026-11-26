@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import OnboardingChat from '@/components/OnboardingChat'
+import { Onboarding } from '@/components/onboarding/onboarding'
 
 export default async function OnboardingPage() {
   const supabase = await createClient()
@@ -18,5 +18,5 @@ export default async function OnboardingPage() {
 
   if (empresa) redirect('/projetos')
 
-  return <OnboardingChat />
+  return <Onboarding userId={user.id} />
 }

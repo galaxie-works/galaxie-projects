@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import ProjetoForm from '@/components/ProjetoForm'
+import { ProjetoForm } from '@/components/projetos/projeto-form'
+import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
 import type { Cliente } from '@/types'
 
 export default async function NovoProjetoPage({
@@ -29,13 +30,20 @@ export default async function NovoProjetoPage({
     .order('nome')
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold">Novo projeto</h1>
-      <ProjetoForm
-        empresaId={empresa.id}
-        clientes={(clientes as Cliente[]) ?? []}
-        clienteIdInicial={clienteId}
-      />
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+      <Frame spacing="default">
+        <FrameHeader>
+          <FrameTitle>Novo projeto</FrameTitle>
+          <FrameDescription>Cliente, prazos e orçamento da obra.</FrameDescription>
+        </FrameHeader>
+        <FramePanel>
+          <ProjetoForm
+            empresaId={empresa.id}
+            clientes={(clientes as Cliente[]) ?? []}
+            clienteIdInicial={clienteId}
+          />
+        </FramePanel>
+      </Frame>
     </div>
   )
 }

@@ -22,6 +22,12 @@ create table if not exists public.empresas (
   unique (owner_id)
 );
 
+-- Serviços que a empresa realiza (ids de src/lib/servicos.ts), escolhidos no
+-- onboarding e editáveis em /empresa. Coluna adicionada depois da versão
+-- inicial, por isso o ALTER separado: pode rodar de novo sem problema.
+alter table public.empresas
+  add column if not exists servicos text[] not null default '{}';
+
 -- ----------------------------------------------------------------------------
 -- EQUIPE — pessoas que trabalham com o dono da empresa
 -- ----------------------------------------------------------------------------
@@ -108,6 +114,16 @@ alter table public.clientes enable row level security;
 alter table public.projetos enable row level security;
 alter table public.etapas enable row level security;
 alter table public.compras enable row level security;
+
+-- Projetos novos do Supabase não dão mais acesso automático às tabelas do
+-- schema public para a API. Sem este GRANT, toda leitura e escrita do app
+-- falha com "permission denied for table ...". Quem logou só enxerga as
+-- próprias linhas por causa das políticas de RLS abaixo; visitante (anon)
+-- continua sem acesso.
+grant select, insert, update, delete on
+  public.empresas, public.equipe, public.clientes,
+  public.projetos, public.etapas, public.compras
+to authenticated;
 
 drop policy if exists "empresas_select_own" on public.empresas;
 drop policy if exists "empresas_insert_own" on public.empresas;

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import EmpresaForm from '@/components/EmpresaForm'
+import { EmpresaForm } from '@/components/empresa/empresa-form'
 import type { Empresa } from '@/types'
 
 export default async function EmpresaPage() {
@@ -18,9 +18,14 @@ export default async function EmpresaPage() {
   if (!empresa) redirect('/onboarding')
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold">Dados da empresa</h1>
-      <EmpresaForm empresa={empresa as Empresa} />
+    <div className="flex flex-col gap-6 p-4 md:p-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <header className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-semibold tracking-tight">Empresa</h1>
+          <p className="text-muted-foreground text-sm">Seus dados e os serviços que você faz.</p>
+        </header>
+        <EmpresaForm empresa={empresa as Empresa} />
+      </div>
     </div>
   )
 }
