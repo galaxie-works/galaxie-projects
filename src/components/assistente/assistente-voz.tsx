@@ -68,11 +68,14 @@ import { cn } from '@/lib/utils'
 import {
   adicionarMensagem,
   apagarConversa,
+  marcarEscolha,
   novoId,
   obterConversa,
+  textoParaHistorico,
   useConversas,
   type Conversa,
 } from './conversas'
+import { CartaoPergunta } from './cartao-pergunta'
 import { contextoDoFormulario, useRegistroFormularios } from './formulario-assistente'
 import { Markdown } from './markdown'
 
@@ -255,7 +258,7 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
     const historico: MensagemHistorico[] = (obterConversa(id)?.mensagens ?? [])
       .filter((m) => !m.erro)
       .slice(-10)
-      .map(({ papel, texto }) => ({ papel, texto }))
+      .map((m) => ({ papel: m.papel, texto: textoParaHistorico(m) }))
     adicionarMensagem(id, { papel: 'usuario', texto: t })
     setAtivaId(id)
     setRascunho('')
@@ -290,7 +293,13 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
         router.refresh()
         return
       }
-      adicionarMensagem(id, { papel: 'assistente', texto: corpo.resposta, passos: corpo.passos, mexeuNaTela })
+      adicionarMensagem(id, {
+        papel: 'assistente',
+        texto: corpo.resposta,
+        passos: corpo.passos,
+        mexeuNaTela,
+        pergunta: corpo.pergunta,
+      })
       await aplicar(acoes)
     } catch {
       adicionarMensagem(id, { papel: 'assistente', texto: 'Sem conexão. Tente de novo.', erro: true })
@@ -310,6 +319,13 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
     if (pathname.includes(a.id)) router.push(`/${a.tabela}`)
     router.refresh()
     return true
+  }
+
+  function escolher(mensagem: number, opcao: number) {
+    const p = mensagens[mensagem]?.pergunta
+    if (!ativaId || !p || pensandoEm) return
+    marcarEscolha(ativaId, mensagem, opcao)
+    void enviar(p.opcoes[opcao].rotulo)
   }
 
   function copiar(i: number, texto: string) {
@@ -500,13 +516,26 @@ export function AssistenteVoz({ configurado }: { configurado: boolean }) {
                           </BubbleContent>
                         </Bubble>
                       ) : (
-                        <Bubble variant="ghost">
-                          <BubbleContent>
-                            <Markdown texto={m.texto} />
-                          </BubbleContent>
-                        </Bubble>
+                        <>
+                          {m.texto && (
+                            <Bubble variant="ghost">
+                              <BubbleContent>
+                                <Markdown texto={m.texto} />
+                              </BubbleContent>
+                            </Bubble>
+                          )}
+                          {m.pergunta && (
+                            <CartaoPergunta
+                              pergunta={m.pergunta}
+                              escolhida={m.escolhida}
+                              onEscolher={
+                                i === mensagens.length - 1 && !pensando ? (o) => escolher(i, o) : undefined
+                              }
+                            />
+                          )}
+                        </>
                       )}
-                      {!usuario && !m.erro && (
+                      {!usuario && !m.erro && m.texto && (
                         <MessageFooter className="gap-1">
                           <Button
                             type="button"

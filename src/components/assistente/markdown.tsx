@@ -1,8 +1,15 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
+
+// O bloco de código da ReUI é pesado (Shiki): só carrega quando aparece um.
+const BlocoCodigo = dynamic(() => import('./bloco-codigo'), {
+  ssr: false,
+  loading: () => <pre className="overflow-x-auto rounded-lg border bg-muted/50 p-3 font-mono text-xs" />,
+})
 
 // Resposta do assistente em Markdown, com as classes do exemplo de resposta
 // formatada da ReUI (@reui/c-bubble-7): negrito, itálico, listas, tabelas.
@@ -23,21 +30,13 @@ const componentes: Components = {
     <blockquote className={cn('border-l-2 pl-3 text-muted-foreground', className)} {...p} />
   ),
   hr: () => <hr className="border-border" />,
-  code: ({ className, children, ...p }) => {
-    const bloco = /language-/.test(className ?? '')
-    return bloco ? (
-      <code className={cn('font-mono text-xs', className)} {...p}>
-        {children}
-      </code>
-    ) : (
-      <code className="rounded-sm bg-muted px-1 py-0.5 font-mono text-[0.85em]" {...p}>
-        {children}
-      </code>
-    )
-  },
-  pre: ({ className, ...p }) => (
-    <pre className={cn('overflow-x-auto rounded-lg border bg-muted/50 p-3', className)} {...p} />
+  // Código inline; blocos (```) vão para o <pre> abaixo, que vira CodeBlock.
+  code: ({ className, children, ...p }) => (
+    <code className={cn('rounded-sm bg-muted px-1 py-0.5 font-mono text-[0.85em]', className)} {...p}>
+      {children}
+    </code>
   ),
+  pre: ({ children }) => <BlocoCodigo>{children}</BlocoCodigo>,
   table: ({ className, ...p }) => (
     <div className="-mx-1 overflow-x-auto rounded-lg border">
       <table className={cn('w-full border-collapse text-xs', className)} {...p} />

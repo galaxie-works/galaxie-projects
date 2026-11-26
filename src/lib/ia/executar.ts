@@ -19,6 +19,8 @@ export interface ParametrosLaco {
   texto: string
   ferramentas: DefinicaoFerramenta[]
   executar: (nome: string, args: Record<string, unknown>) => Promise<string>
+  /** true depois de uma ferramenta que espera o usuário (ex.: perguntar). */
+  parar?: () => boolean
 }
 
 export async function rodarAssistente(p: ParametrosLaco): Promise<string> {
@@ -104,6 +106,7 @@ async function rodarAnthropic(p: ParametrosLaco): Promise<string> {
         ...(saida.startsWith('Erro') ? { is_error: true } : {}),
       })
     }
+    if (p.parar?.()) return texto
     messages.push({ role: 'user', content: resultados })
   }
   return 'Fiz o que deu, mas parei para não demorar demais. Confira a tela.'
@@ -147,6 +150,7 @@ async function rodarCompativelOpenAI(p: ParametrosLaco): Promise<string> {
       const saida = await p.executar(c.function.name, lerArgs(c.function.arguments))
       messages.push({ role: 'tool', tool_call_id: c.id, content: saida })
     }
+    if (p.parar?.()) return msg.content?.trim() ?? ''
   }
   return 'Fiz o que deu, mas parei para não demorar demais. Confira a tela.'
 }

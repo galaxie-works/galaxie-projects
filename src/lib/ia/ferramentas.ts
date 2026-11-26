@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AcaoAssistente, FormularioContexto, TabelaAssistente } from './protocolo'
+import type { AcaoAssistente, FormularioContexto, TabelaAssistente, PerguntaAssistente } from './protocolo'
 
 // Ferramentas que a IA pode chamar. Leitura, criação e edição rodam aqui no
 // servidor, com a sessão do usuário (o RLS do Supabase garante que só mexe
@@ -205,6 +205,35 @@ export function definirFerramentas(form: FormularioContexto | null | undefined):
       })
     }
   }
+  lista.push({
+    nome: 'perguntar',
+    descricao:
+      'Mostra ao usuário UMA pergunta com 2 a 4 opções clicáveis (ele também pode responder falando). ' +
+      'Use quando precisar de uma escolha (ex.: qual cliente, qual status, qual tipo de serviço). ' +
+      'Busque antes para oferecer opções reais. Marque recomendada=true em no máximo uma. ' +
+      'Depois de chamar, pare: a resposta do usuário chega na próxima mensagem.',
+    parametros: {
+      type: 'object',
+      properties: {
+        pergunta: { type: 'string', description: 'A pergunta, curta e direta.' },
+        opcoes: {
+          type: 'array',
+          minItems: 2,
+          maxItems: 4,
+          items: {
+            type: 'object',
+            properties: {
+              rotulo: { type: 'string', description: 'Nome curto da opção.' },
+              descricao: { type: 'string', description: 'Uma frase sobre o que acontece se escolher.' },
+              recomendada: { type: 'boolean' },
+            },
+            required: ['rotulo'],
+          },
+        },
+      },
+      required: ['pergunta', 'opcoes'],
+    },
+  })
   return lista
 }
 
@@ -218,6 +247,8 @@ export interface ContextoExecucao {
   formulario: FormularioContexto | null | undefined
   acoes: AcaoAssistente[]
   passos: string[]
+  /** Pergunta feita nesta resposta; com ela o laço para e espera o usuário. */
+  pergunta?: PerguntaAssistente
 }
 
 const PLURAL: Record<TabelaAssistente, string> = {
@@ -276,6 +307,30 @@ export async function executarFerramenta(
   ctx: ContextoExecucao,
 ): Promise<string> {
   const { supabase, empresaId } = ctx
+
+  if (nome === 'perguntar') {
+    if (ctx.pergunta) return 'Erro: só uma pergunta por vez. Espere a resposta do usuário.'
+    const pergunta = typeof args.pergunta === 'string' ? args.pergunta.trim() : ''
+    const opcoes = (Array.isArray(args.opcoes) ? args.opcoes : [])
+      .filter((o): o is Record<string, unknown> => !!o && typeof o === 'object')
+      .map((o) => ({
+        rotulo: String(o.rotulo ?? '').trim().slice(0, 80),
+        descricao: typeof o.descricao === 'string' ? o.descricao.trim().slice(0, 200) : undefined,
+        recomendada: o.recomendada === true,
+      }))
+      .filter((o) => o.rotulo)
+      .slice(0, 4)
+    if (!pergunta || opcoes.length < 2) return 'Erro: mande a pergunta e de 2 a 4 opções.'
+    // No máximo uma recomendada.
+    let jaTem = false
+    for (const o of opcoes) {
+      if (o.recomendada && jaTem) o.recomendada = false
+      if (o.recomendada) jaTem = true
+    }
+    ctx.pergunta = { pergunta: pergunta.slice(0, 200), opcoes }
+    return 'Pergunta mostrada. Pare aqui e espere a resposta do usuário.'
+  }
+
   ctx.passos.push(descreverPasso(nome, args))
 
   if (nome === 'preencher_formulario') {

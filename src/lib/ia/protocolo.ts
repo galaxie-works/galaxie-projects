@@ -43,11 +43,25 @@ export type AcaoAssistente =
   | { tipo: 'navegar'; caminho: string }
   | { tipo: 'atualizar' }
 
+/** Uma pergunta com opções clicáveis (uma por vez), como no app do Claude. */
+export interface OpcaoPergunta {
+  rotulo: string
+  descricao?: string
+  recomendada?: boolean
+}
+
+export interface PerguntaAssistente {
+  pergunta: string
+  opcoes: OpcaoPergunta[]
+}
+
 export interface RespostaAssistente {
   resposta: string
   acoes: AcaoAssistente[]
   /** O que a IA fez no caminho, para mostrar como passos ("Buscou clientes"). */
   passos?: string[]
+  /** Quando a IA precisa de uma escolha: mostra o cartão e espera. */
+  pergunta?: PerguntaAssistente
 }
 
 export interface ErroAssistente {

@@ -25,12 +25,13 @@ function montarSistema(empresaNome: string, pagina: string, form: FormularioCont
     'Jeito de trabalhar (como um colega competente, não um formulário):',
     '- Seja proativo: antes de pedir uma informação, procure nos dados com buscar. Ex.: para um projeto novo, busque os clientes e ofereça os nomes como opções; se só houver um que combina, já use.',
     '- Se o usuário falou o suficiente para agir, aja e depois diga o que fez. Pergunte só o que não dá para descobrir nem deduzir.',
-    '- Quando faltar algo, pergunte tudo de uma vez, já com sugestões (ex.: lista numerada dos clientes existentes, "ou diga um novo").',
+    '- Quando precisar de uma escolha, use a ferramenta perguntar: UMA pergunta por vez, com 2 a 4 opções reais (busque antes), uma marcada como recomendada. Não repita as opções no texto; no máximo uma frase curta de contexto antes. Se faltar mais de uma coisa, pergunte a mais importante primeiro e as outras depois, uma de cada vez.',
+    '- Perguntas abertas (ex.: nome de um cliente novo, um valor) vão em texto, também uma por vez.',
     '- Depois de agir, sugira o próximo passo útil em uma linha (ex.: "Quer que eu já crie as etapas?").',
     '',
     'Formato da resposta (o app mostra Markdown):',
     '- Português do Brasil, direto e curto. Use **negrito** para nomes e valores importantes.',
-    '- Listas com "-" ou numeradas para opções; tabelas Markdown para comparar ou listar vários registros com colunas (ex.: projetos com status e prazo).',
+    '- Listas com "-" ou numeradas para enumerar dados; tabelas Markdown para comparar ou listar vários registros com colunas (ex.: projetos com status e prazo).',
     '- Valores em reais no formato R$ 1.234,56 e datas como 20/03/2027 na resposta (nas ferramentas, use número e AAAA-MM-DD).',
     '- Não mostre ids (uuid) ao usuário, nem fale de ferramentas.',
     '',
@@ -105,8 +106,14 @@ export async function POST(request: Request) {
       texto,
       ferramentas: definirFerramentas(formulario),
       executar: (nome, args) => executarFerramenta(nome, args, ctx),
+      parar: () => !!ctx.pergunta,
     })
-    const corpo: RespostaAssistente = { resposta, acoes: ctx.acoes, passos: ctx.passos }
+    const corpo: RespostaAssistente = {
+      resposta,
+      acoes: ctx.acoes,
+      passos: ctx.passos,
+      pergunta: ctx.pergunta,
+    }
     return NextResponse.json(corpo)
   } catch (e) {
     // O que já foi gravado antes do erro precisa chegar na tela (atualizar a

@@ -1,7 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import type { MensagemHistorico } from '@/lib/ia/protocolo'
+import type { MensagemHistorico, PerguntaAssistente } from '@/lib/ia/protocolo'
 
 // Conversas do assistente guardadas neste navegador (como a lista de
 // "Recentes" do app do Claude). Ficam só no aparelho: nada vai ao banco.
@@ -11,6 +11,10 @@ export interface Mensagem extends MensagemHistorico {
   erro?: boolean
   /** A resposta mexeu na tela (preencheu ou salvou): mostra "Ver na tela". */
   mexeuNaTela?: boolean
+  /** Pergunta com opções clicáveis feita nesta resposta. */
+  pergunta?: PerguntaAssistente
+  /** Índice da opção que o usuário tocou. */
+  escolhida?: number
 }
 
 export interface Conversa {
@@ -83,6 +87,24 @@ export function adicionarMensagem(id: string, mensagem: Mensagem) {
     ? { ...atual, atualizadaEm: Date.now(), mensagens: [...atual.mensagens, mensagem] }
     : { id, titulo: tituloDe(mensagem.texto), atualizadaEm: Date.now(), mensagens: [mensagem] }
   gravar([conversa, ...lista.filter((c) => c.id !== id)])
+}
+
+/** Marca a opção escolhida numa pergunta, sem mudar a ordem da lista. */
+export function marcarEscolha(id: string, mensagem: number, opcao: number) {
+  gravar(
+    ler().map((c) =>
+      c.id !== id
+        ? c
+        : { ...c, mensagens: c.mensagens.map((m, i) => (i === mensagem ? { ...m, escolhida: opcao } : m)) },
+    ),
+  )
+}
+
+/** Texto da mensagem para o histórico enviado à IA (inclui a pergunta feita). */
+export function textoParaHistorico(m: Mensagem): string {
+  if (!m.pergunta) return m.texto
+  const opcoes = m.pergunta.opcoes.map((o) => o.rotulo).join('; ')
+  return `${m.texto}\n\n[Perguntei: ${m.pergunta.pergunta} Opções: ${opcoes}]`.trim()
 }
 
 export function apagarConversa(id: string) {
