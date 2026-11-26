@@ -115,6 +115,16 @@ alter table public.projetos enable row level security;
 alter table public.etapas enable row level security;
 alter table public.compras enable row level security;
 
+-- Projetos novos do Supabase não dão mais acesso automático às tabelas do
+-- schema public para a API. Sem este GRANT, toda leitura e escrita do app
+-- falha com "permission denied for table ...". Quem logou só enxerga as
+-- próprias linhas por causa das políticas de RLS abaixo; visitante (anon)
+-- continua sem acesso.
+grant select, insert, update, delete on
+  public.empresas, public.equipe, public.clientes,
+  public.projetos, public.etapas, public.compras
+to authenticated;
+
 drop policy if exists "empresas_select_own" on public.empresas;
 drop policy if exists "empresas_insert_own" on public.empresas;
 drop policy if exists "empresas_update_own" on public.empresas;
