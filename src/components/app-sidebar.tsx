@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client'
 import { iniciais } from '@/lib/formato'
 import { STATUS_PROJETO_LABEL, type Projeto, type StatusProjeto } from '@/types'
 import { IconTile } from '@/components/reui/icon-tile'
+import { MenuTema } from '@/components/tema/menu-tema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Breadcrumb,
@@ -246,6 +247,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                   <Building2Icon />
                   Dados da empresa
                 </DropdownMenuItem>
+                <MenuTema />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={sair}>
                   <LogOutIcon />
