@@ -11,7 +11,7 @@ export default function Erro({ error, retry }: { error: unknown; retry: () => vo
   }, [error])
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       <Alert variant="destructive" role="alert">
         <CircleAlertIcon />
         <AlertTitle>Algo deu errado</AlertTitle>

@@ -58,7 +58,7 @@ export default async function ProjetoDetalhePage({
   const versao = [p.status, p.nome, p.percentual_conclusao, p.orcamento_total, p.data_inicio, p.data_prazo].join('|')
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       <ProjetoCabecalho
         key={`cabecalho-${versao}`}
         projeto={p}
