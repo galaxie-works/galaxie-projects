@@ -84,7 +84,9 @@ export async function salvarSegredoAcao(nome: string, valor: string): Promise<Re
     return { ok: false, erro: e instanceof Error ? e.message : 'Não foi possível guardar.' }
   }
   atualizar()
-  return { ok: true, mensagem: `Guardada e já valendo. ${teste}` }
+  // Chave nova (talvez de outra conta do Stripe): os preços precisam existir lá.
+  const precos = nome === 'STRIPE_SECRET_KEY' ? await sincronizarSeLigado().catch((e) => ` Preços não subiram: ${e instanceof Error ? e.message : e}.`) : ''
+  return { ok: true, mensagem: `Guardada e já valendo. ${teste}${precos}` }
 }
 
 export async function testarSegredoAcao(nome: string): Promise<ResultadoAdmin> {
@@ -135,16 +137,25 @@ export async function criarWebhookAcao(): Promise<ResultadoAdmin> {
 
   try {
     const s = stripeCom(chave)
-    // O Stripe não mostra de novo o segredo de um webhook antigo: troca pelo novo.
-    const antigos = await s.webhookEndpoints.list({ limit: 100 })
-    for (const w of antigos.data) if (w.url === url) await s.webhookEndpoints.del(w.id)
+    // O Stripe não mostra de novo o segredo de um webhook antigo: cria um novo,
+    // guarda o segredo e só então apaga os antigos do mesmo endereço. Se guardar
+    // falhar, o novo sai e o antigo continua funcionando.
     const novo = await s.webhookEndpoints.create({
       url,
       enabled_events: EVENTOS_WEBHOOK,
       description: 'Galaxie Obras (criado pelo painel do admin master)',
     })
-    if (!novo.secret) return { ok: false, erro: 'O Stripe criou o webhook mas não devolveu o segredo.' }
-    await gravarSegredo('STRIPE_WEBHOOK_SECRET', novo.secret, admin.user.id)
+    try {
+      if (!novo.secret) throw new Error('O Stripe criou o webhook mas não devolveu o segredo.')
+      await gravarSegredo('STRIPE_WEBHOOK_SECRET', novo.secret, admin.user.id)
+    } catch (e) {
+      await s.webhookEndpoints.del(novo.id).catch(() => null)
+      throw e
+    }
+    const antigos = await s.webhookEndpoints.list({ limit: 100 })
+    for (const w of antigos.data) {
+      if (w.url === url && w.id !== novo.id) await s.webhookEndpoints.del(w.id).catch(() => null)
+    }
   } catch (e) {
     return { ok: false, erro: erroDeTeste(e) }
   }
