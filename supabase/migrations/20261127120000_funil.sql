@@ -229,6 +229,18 @@ grant execute on function public.ganhar_negocio(uuid) to authenticated;
 -- (Lista completa de tipos, igual em todas as frentes do CRM.)
 alter table public.atividades
   add column if not exists negocio_id uuid references public.negocios (id) on delete set null;
+-- Se a coluna já existia sem FK (criada antes da tabela negocios), liga agora.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.atividades'::regclass and conname = 'atividades_negocio_id_fkey'
+  ) then
+    alter table public.atividades
+      add constraint atividades_negocio_id_fkey
+      foreign key (negocio_id) references public.negocios (id) on delete set null;
+  end if;
+end $$;
 alter table public.atividades drop constraint if exists atividades_tipo_check;
 alter table public.atividades add constraint atividades_tipo_check
   check (tipo in ('nota', 'ligacao', 'whatsapp', 'visita', 'reuniao', 'email', 'audio', 'tarefa', 'sistema'));
