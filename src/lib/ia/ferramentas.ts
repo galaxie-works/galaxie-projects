@@ -42,6 +42,8 @@ export const TABELAS: Record<TabelaAssistente, EspecTabela> = {
       email: { type: 'string' },
       telefone: { type: 'string', description: 'Telefone no formato E.164, ex. +5511987654321' },
       endereco: { type: 'string', description: 'Endereço da obra' },
+      origem: { type: 'string', description: 'Como chegou à empresa, ex.: "Indicação", "Instagram", "Google"' },
+      indicado_por_id: { ...UUID, description: 'id do cliente que indicou este (quando origem = "Indicação")' },
     },
     obrigatorias: ['tipo', 'nome'],
     daEmpresa: true,
@@ -150,13 +152,15 @@ export const TABELAS: Record<TabelaAssistente, EspecTabela> = {
         enum: ['garantia', 'pesquisa', 'avaliacao', 'revisao', 'assistencia', 'indicacao'],
         description:
           'assistencia = chamado de problema depois da entrega; pesquisa = nota 0 a 10; avaliacao = pedido de avaliação no Google. ' +
-          'Para indicação, crie primeiro o cliente indicado (origem "Indicação") e depois este item com status resolvido.',
+          'Para indicação, crie primeiro o cliente indicado (origem "Indicação", indicado_por_id = quem indicou) ' +
+          'e depois este item no cliente que indicou, com status resolvido e indicado_cliente_id = o cliente novo.',
       },
       titulo: { type: 'string', description: 'Ex.: "Chamado de assistência"' },
       texto: { type: 'string', description: 'O que aconteceu ou o comentário do cliente' },
       vence_em: { ...DATA, description: 'Data prevista ou agendada (AAAA-MM-DD)' },
       status: { type: 'string', enum: ['aberto', 'agendado', 'resolvido'] },
       nota_0_10: { type: 'integer', minimum: 0, maximum: 10, description: 'Nota da pesquisa de satisfação' },
+      indicado_cliente_id: { ...UUID, description: 'id do cliente indicado (só no tipo indicacao)' },
     },
     obrigatorias: ['cliente_id', 'tipo', 'titulo'],
     daEmpresa: true,
@@ -378,6 +382,13 @@ function limparDados(tabela: TabelaAssistente, dados: unknown): Record<string, u
   )
 }
 
+// Pós-venda resolvido guarda quando foi resolvido, como a tela faz ao mudar o
+// status; voltar para aberto/agendado limpa a data.
+function marcarResolvido(tabela: TabelaAssistente, dados: Record<string, unknown>) {
+  if (tabela !== 'pos_venda' || !('status' in dados)) return
+  dados.resolvido_em = dados.status === 'resolvido' ? new Date().toISOString() : null
+}
+
 function ehData(esquema: Record<string, unknown>): boolean {
   return typeof esquema.description === 'string' && esquema.description.includes('AAAA-MM-DD')
 }
@@ -540,6 +551,7 @@ export async function executarFerramenta(
     const faltando = espec.obrigatorias.filter((c) => dados[c] === undefined || dados[c] === '')
     if (faltando.length) return `Erro: faltam campos obrigatórios: ${faltando.join(', ')}. Pergunte ao usuário.`
     if (espec.daEmpresa) dados.empresa_id = empresaId
+    marcarResolvido(tabela, dados)
     const { data, error } = await supabase.from(tabela).insert(dados).select(colunasSelect(tabela)).single()
     if (error) return `Erro ao criar: ${error.message}`
     ctx.acoes.push({ tipo: 'atualizar' })
@@ -552,6 +564,7 @@ export async function executarFerramenta(
   if (nome === 'atualizar') {
     const dados = limparDados(tabela, args.dados)
     if (!Object.keys(dados).length) return 'Erro: nenhuma coluna válida para alterar.'
+    marcarResolvido(tabela, dados)
     let q = supabase.from(tabela).update(dados).eq('id', id)
     if (espec.daEmpresa) q = q.eq('empresa_id', empresaId)
     const { data, error } = await q.select(colunasSelect(tabela)).maybeSingle()
