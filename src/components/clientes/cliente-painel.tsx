@@ -27,6 +27,8 @@ import { formatarTelefone } from './telefone'
 import { ClienteLinhaDoTempo, type EventoCliente } from './cliente-linha-do-tempo'
 import { ClienteRelacionamento } from './cliente-relacionamento'
 import { RegistrarAtividade } from './registrar-atividade'
+import { NovaTarefa } from '@/components/agenda/nova-tarefa'
+import { TarefaItem } from '@/components/agenda/tarefa-item'
 import { PosVendaPainel } from '@/components/pos-venda/pos-venda-painel'
 import { pendentesPosVenda } from '@/lib/pos-venda'
 import { BotaoWhatsApp } from './botao-whatsapp'
@@ -52,6 +54,7 @@ import {
   type Negocio,
   type Projeto,
   type Recebimento,
+  type TarefaAgenda,
 } from '@/types'
 import { resumoRecebimentos } from '@/lib/financeiro'
 import { FinanceiroCliente } from '@/components/financeiro/financeiro-cliente'
@@ -80,7 +83,7 @@ function Numero({
     <FramePanel className="flex min-w-0 flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{rotulo}</span>
       <span
-        className={`truncate text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${alerta ? 'text-destructive' : ''}`}
+        className={`truncate text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${alerta ? 'text-destructive-foreground' : ''}`}
       >
         {valor}
       </span>
@@ -163,6 +166,10 @@ type Props = {
   equipe: Pick<MembroEquipe, 'id' | 'nome'>[]
   /** false antes de rodar o SQL do Cliente 360 (colunas e tabela novas). */
   crmDisponivel: boolean
+  /** false antes de rodar o SQL da agenda (prazo e conclusão em atividades). */
+  agendaDisponivel: boolean
+  /** Tarefas abertas deste cliente, da mais próxima para a mais distante. */
+  tarefas: TarefaAgenda[]
   posVenda: PosVenda[]
   /** false antes de rodar o SQL do pós-venda. */
   posVendaDisponivel: boolean
@@ -189,6 +196,8 @@ export function ClientePainel({
   atividades,
   equipe,
   crmDisponivel,
+  agendaDisponivel,
+  tarefas,
   posVenda,
   posVendaDisponivel,
   linkGoogle,
@@ -206,22 +215,26 @@ export function ClientePainel({
   const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras, negocios ?? [])
   const numeros = numerosDoCliente(obras)
   const followup = situacaoFollowup(c.proximo_followup_em ?? null, hoje)
-  const ultimoContato = atividades[0]?.ocorreu_em ?? null
+  // Contatos já feitos (sem prazo) e tarefas concluídas entram na linha do tempo;
+  // tarefas abertas ficam em "Próximos passos".
+  const feitas = atividades.filter((a) => !a.previsto_para || a.concluida_em)
+  const ultimoContato = feitas.find((a) => !a.previsto_para)?.ocorreu_em ?? null
   const novoProjeto = `/projetos/novo?clienteId=${c.id}`
   const responsavel = equipe.find(
     (m) => m.id === c.responsavel_id
   )
 
   const eventos: EventoCliente[] = [
-    ...atividades.map((a) => ({
-      id: `a-${a.id}`,
-      quando: a.ocorreu_em,
-      tipo: a.tipo,
-      titulo: a.equipe?.nome
-        ? `${TIPO_ATIVIDADE_LABEL[a.tipo] ?? 'Registro'} · ${a.equipe.nome}`
-        : (TIPO_ATIVIDADE_LABEL[a.tipo] ?? 'Registro'),
-      texto: a.texto,
-    })),
+    ...feitas.map((a) => {
+      const rotulo = a.concluida_em ? `${TIPO_ATIVIDADE_LABEL[a.tipo]} feita` : TIPO_ATIVIDADE_LABEL[a.tipo]
+      return {
+        id: `a-${a.id}`,
+        quando: a.concluida_em ?? a.ocorreu_em,
+        tipo: a.tipo,
+        titulo: a.equipe?.nome ? `${rotulo} · ${a.equipe.nome}` : rotulo,
+        texto: a.resultado ? `${a.texto}\nResultado: ${a.resultado}` : a.texto,
+      }
+    }),
     ...obras.map((p) => ({
       id: `p-${p.id}`,
       quando: p.created_at,
@@ -366,13 +379,53 @@ export function ClientePainel({
                 <FrameDescription>Contatos, obras e mudanças deste cliente</FrameDescription>
               </FrameHeader>
               <FramePanel className="flex flex-col gap-6">
-                <RegistrarAtividade clienteId={c.id} empresaId={c.empresa_id} disponivel={crmDisponivel} />
+                <RegistrarAtividade
+                  clienteId={c.id}
+                  empresaId={c.empresa_id}
+                  disponivel={crmDisponivel}
+                  agendaDisponivel={agendaDisponivel}
+                  equipe={equipe}
+                  responsavelPadrao={c.responsavel_id ?? null}
+                  hoje={hoje}
+                />
                 <Separator />
                 <ClienteLinhaDoTempo eventos={eventos} />
               </FramePanel>
             </Frame>
 
             <div className="flex min-w-0 flex-col gap-6 self-start">
+            {agendaDisponivel && (
+              <Frame spacing="default" className="min-w-0">
+                <FrameHeader className="flex flex-row items-start justify-between gap-2">
+                  <div className="flex flex-col gap-0.5">
+                    <FrameTitle>Próximos passos</FrameTitle>
+                    <FrameDescription>
+                      {tarefas.length === 0
+                        ? 'Nada agendado'
+                        : tarefas.length === 1
+                          ? '1 tarefa aberta'
+                          : `${tarefas.length} tarefas abertas`}
+                    </FrameDescription>
+                  </div>
+                  <NovaTarefa
+                    variante="outline"
+                    empresaId={c.empresa_id}
+                    equipe={equipe}
+                    hoje={hoje}
+                    cliente={{ id: c.id, nome: c.nome, responsavel_id: c.responsavel_id }}
+                  />
+                </FrameHeader>
+                {tarefas.length > 0 && (
+                  <FramePanel>
+                    <ItemGroup className="gap-2">
+                      {tarefas.map((t) => (
+                        <TarefaItem key={t.id} tarefa={t} hoje={hoje} mostrarDia />
+                      ))}
+                    </ItemGroup>
+                  </FramePanel>
+                )}
+              </Frame>
+            )}
               {negocios && (
                 <Frame spacing="default" className="min-w-0">
                   <FrameHeader>
@@ -475,6 +528,7 @@ export function ClientePainel({
                   faseCalculada={faseAutomatica(obras, negocios ?? [])}
                   equipe={equipe}
                   disponivel={crmDisponivel}
+                  agendaDisponivel={agendaDisponivel}
                 />
               </FramePanel>
             </Frame>

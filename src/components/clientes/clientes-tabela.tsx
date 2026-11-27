@@ -242,7 +242,7 @@ export function ClientesTabela({ clientes, hoje }: { clientes: ClienteLinha[]; h
             <span
               className={
                 situacao === 'atrasado'
-                  ? 'text-destructive whitespace-nowrap font-medium tabular-nums'
+                  ? 'text-destructive-foreground whitespace-nowrap font-medium tabular-nums'
                   : 'whitespace-nowrap tabular-nums'
               }
             >

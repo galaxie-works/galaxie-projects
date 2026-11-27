@@ -220,7 +220,18 @@ export interface Atividade {
   responsavel_id: string | null
   ocorreu_em: string
   created_at: string
+  /** Agenda (frente B): prazo do próximo passo. Nulo = contato já feito. */
+  previsto_para?: string | null
+  concluida_em?: string | null
+  resultado?: string | null
+  negocio_id?: string | null
   equipe?: { nome: string } | null
+}
+
+/** Atividade com prazo (tarefa / próximo passo), com o nome do cliente. */
+export type TarefaAgenda = Atividade & {
+  previsto_para: string
+  clientes?: { nome: string; telefone: string | null } | null
 }
 
 // ---------------------------------------------------------------------------

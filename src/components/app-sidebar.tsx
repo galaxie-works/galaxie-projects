@@ -6,6 +6,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from 
 import {
   ArrowLeftIcon,
   BriefcaseBusinessIcon,
+  CalendarDaysIcon,
+  HouseIcon,
   Building2Icon,
   FunnelIcon,
   ChevronsUpDownIcon,
@@ -81,13 +83,13 @@ const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
 ]
 
 const NAVEGACAO = [
+  { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
+  { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
   { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
-  { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
-  { href: '/ajustes', rotulo: 'Ajustes', icone: SettingsIcon },
 ]
 
 type Props = {
@@ -124,7 +126,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/projetos" />}>
+            <SidebarMenuButton size="lg" render={<Link href="/inicio" />}>
               <IconTile variant="solid" size="sm" aria-hidden>
                 <HardHatIcon />
               </IconTile>
@@ -235,7 +237,14 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    isActive={pathname.startsWith('/empresa') || pathname.startsWith('/ajustes')}
+                  />
+                }
+              >
                 <Avatar className="size-8">
                   <AvatarFallback>{iniciais(empresaNome) || '?'}</AvatarFallback>
                 </Avatar>
@@ -255,7 +264,14 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                   onClick={() => isMobile && setOpenMobile(false)}
                 >
                   <Building2Icon />
-                  Dados da empresa
+                  Empresa
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={<Link href="/ajustes" />}
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
+                  <SettingsIcon />
+                  Ajustes
                 </DropdownMenuItem>
                 <MenuTema />
                 <DropdownMenuSeparator />
@@ -275,6 +291,8 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 }
 
 const SECOES: Record<string, string> = {
+  inicio: 'Início',
+  agenda: 'Agenda',
   projetos: 'Projetos',
   funil: 'Funil',
   clientes: 'Clientes',
