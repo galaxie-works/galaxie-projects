@@ -3,7 +3,9 @@ import type Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { clienteAdmin } from '@/lib/supabase/admin'
 import { stripe } from '@/lib/stripe/servidor'
-import { lerLookupKey, planoPorId } from '@/lib/planos'
+import { lerLookupKey } from '@/lib/planos'
+import { planoPorId } from '@/lib/plataforma/config'
+import { lerSegredo } from '@/lib/plataforma/segredos'
 
 // Webhook do Stripe. Única porta por onde a assinatura muda e por onde entram
 // comandos de IA comprados. Cada evento é processado uma vez (stripe_eventos);
@@ -41,7 +43,7 @@ async function sincronizarAssinatura(s: Stripe, db: SupabaseClient, sub: Stripe.
 
   const item = sub.items.data[0]
   const chave = lerLookupKey(item?.price.lookup_key)
-  const plano = planoPorId(chave?.plano ?? sub.metadata?.plano)
+  const plano = await planoPorId(chave?.plano ?? sub.metadata?.plano)
   // Atrasada: vale até onde foi pago (início do período em aberto), não até o
   // fim do período que ainda não foi pago; a tolerância de 7 dias conta daí.
   const fimSeg =
@@ -112,8 +114,8 @@ async function processar(s: Stripe, db: SupabaseClient, evento: Stripe.Event) {
 }
 
 export async function POST(request: Request) {
-  const s = stripe()
-  const segredo = process.env.STRIPE_WEBHOOK_SECRET
+  const s = await stripe()
+  const segredo = await lerSegredo('STRIPE_WEBHOOK_SECRET')
   const db = clienteAdmin()
   if (!s || !segredo || !db) return NextResponse.json({ erro: 'Cobrança não configurada.' }, { status: 503 })
 

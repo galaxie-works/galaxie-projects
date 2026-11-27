@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server'
-import { PACOTE_IA } from '@/lib/planos'
+import { lerConfig } from '@/lib/plataforma/config'
 import { precoPorChave, stripe, urlApp } from '@/lib/stripe/servidor'
 import { empresaLogada, garantirClienteStripe } from '@/lib/stripe/cliente-empresa'
 
 // Compra avulsa de 500 comandos de IA. Os comandos só entram quando o Stripe
 // confirma o pagamento no webhook (Pix pode levar alguns minutos).
 export async function POST(request: Request) {
-  const s = stripe()
+  const s = await stripe()
   if (!s) return NextResponse.json({ erro: 'A cobrança online ainda não está ligada.' }, { status: 503 })
 
   const dados = await empresaLogada()
   if (!dados) return NextResponse.json({ erro: 'Entre na sua conta.' }, { status: 401 })
 
   const base = urlApp(request)
+  const PACOTE_IA = (await lerConfig()).pacoteIA
   try {
     const preco = await precoPorChave(s, PACOTE_IA.lookupKey)
     if (!preco) {

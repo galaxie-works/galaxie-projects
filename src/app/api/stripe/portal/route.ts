@@ -4,7 +4,7 @@ import { empresaLogada } from '@/lib/stripe/cliente-empresa'
 
 // Portal do Stripe: trocar cartão, plano, ver faturas e cancelar.
 export async function POST(request: Request) {
-  const s = stripe()
+  const s = await stripe()
   if (!s) return NextResponse.json({ erro: 'A cobrança online ainda não está ligada.' }, { status: 503 })
 
   const dados = await empresaLogada()

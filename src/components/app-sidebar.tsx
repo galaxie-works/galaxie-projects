@@ -18,6 +18,7 @@ import {
   UsersIcon,
   HardHatIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   SparklesIcon,
   WalletIcon,
 } from 'lucide-react'
@@ -104,9 +105,11 @@ type Props = {
   projetos: Projeto[]
   /** Teste grátis em andamento (null quando já assinou ou é cortesia). */
   teste: { dias: number; progresso: number } | null
+  /** Dono da plataforma: vê o painel do admin master. */
+  adminMaster?: boolean
 }
 
-export function AppSidebar({ empresaNome, email, projetos, teste }: Props) {
+export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = false }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -307,6 +310,15 @@ export function AppSidebar({ empresaNome, email, projetos, teste }: Props) {
                   <SparklesIcon />
                   Assinatura
                 </DropdownMenuItem>
+                {adminMaster && (
+                  <DropdownMenuItem
+                    render={<Link href="/admin" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <ShieldCheckIcon />
+                    Admin master
+                  </DropdownMenuItem>
+                )}
                 <MenuTema />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={sair}>
@@ -336,6 +348,7 @@ const SECOES: Record<string, string> = {
   empresa: 'Empresa',
   ajustes: 'Ajustes',
   assinatura: 'Assinatura',
+  admin: 'Admin master',
 }
 
 type Camada = { id: string; nome: string }

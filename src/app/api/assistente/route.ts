@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { configComChave, sessaoEmpresa } from '@/lib/ia/config-servidor'
 import { definirFerramentas, executarFerramenta, type ContextoExecucao } from '@/lib/ia/ferramentas'
 import { mensagemErroProvedor, rodarAssistente } from '@/lib/ia/executar'
-import { MODELO_GALAXIE, acertar, iaGalaxieDisponivel, reservar, usoVazio } from '@/lib/ia/cota'
+import { MODELO_GALAXIE, acertar, chaveIAGalaxie, reservar, usoVazio } from '@/lib/ia/cota'
 import type {
   ErroAssistente,
   FormularioContexto,
@@ -82,7 +82,8 @@ export async function POST(request: Request) {
   // Sem chave própria: usa a IA da Galaxie, que gasta a cota do plano.
   const daGalaxie = !config
   if (!config) {
-    if (!iaGalaxieDisponivel()) {
+    const chaveGalaxie = await chaveIAGalaxie()
+    if (!chaveGalaxie) {
       return erro(400, {
         erro: 'Configure uma chave de API em Ajustes para usar o assistente.',
         semConfiguracao: true,
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
     } catch (e) {
       return erro(500, { erro: e instanceof Error ? e.message : 'Erro ao ler seus comandos de IA.' })
     }
-    config = { provedor: 'anthropic' as const, modelo: MODELO_GALAXIE, chave: process.env.ANTHROPIC_API_KEY! }
+    config = { provedor: 'anthropic' as const, modelo: MODELO_GALAXIE, chave: chaveGalaxie }
   }
   const uso = usoVazio()
 
