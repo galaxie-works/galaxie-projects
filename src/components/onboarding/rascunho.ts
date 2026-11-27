@@ -2,11 +2,15 @@ import { SERVICOS_POR_ID } from '@/lib/servicos'
 
 export type Membro = { id: string; nome: string; funcao: string }
 export type ModoTrabalho = 'sozinho' | 'equipe'
+export type TipoPessoa = 'PF' | 'PJ'
 
 export type Rascunho = {
   etapa: number
+  /** Pessoa física (sem nota fiscal) ou jurídica (emite NFS-e). */
+  tipo: TipoPessoa
   nome: string
   cnpj: string
+  cpf: string
   descricao: string
   areas: string[]
   servicos: string[]
@@ -17,8 +21,10 @@ export type Rascunho = {
 
 export const RASCUNHO_INICIAL: Rascunho = {
   etapa: 1,
+  tipo: 'PJ',
   nome: '',
   cnpj: '',
+  cpf: '',
   descricao: '',
   areas: [],
   servicos: [],
@@ -77,6 +83,25 @@ export function cnpjValido(cnpj: string) {
   return d.length === 0 || d.length === 14
 }
 
+/** 000.000.000-00, aplicada enquanto a pessoa digita. */
+export function mascararCpf(texto: string) {
+  const d = texto.replace(/\D/g, '').slice(0, 11)
+  return d
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2')
+}
+
+export function cpfValido(cpf: string) {
+  const d = cpf.replace(/\D/g, '')
+  return d.length === 0 || d.length === 11
+}
+
+/** O documento da etapa Empresa está ok para o tipo escolhido. */
+export function documentoValido(r: Pick<Rascunho, 'tipo' | 'cnpj' | 'cpf'>) {
+  return r.tipo === 'PF' ? cpfValido(r.cpf) : cnpjValido(r.cnpj)
+}
+
 /** Serviços que pertencem às áreas marcadas (os de áreas desmarcadas ficam de fora). */
 export function servicosEfetivos(r: Pick<Rascunho, 'areas' | 'servicos'>) {
   return r.servicos.filter((id) => {
@@ -94,7 +119,7 @@ export function membrosValidos(r: Pick<Rascunho, 'modo' | 'equipe'>) {
 
 /** Primeira etapa que ainda não está completa (TOTAL_ETAPAS se todas estiverem). */
 export function etapaMaximaLiberada(r: Rascunho) {
-  if (!r.nome.trim() || !cnpjValido(r.cnpj)) return 1
+  if (!r.nome.trim() || !documentoValido(r)) return 1
   if (r.areas.length === 0) return 2
   if (servicosEfetivos(r).length === 0) return 3
   return TOTAL_ETAPAS

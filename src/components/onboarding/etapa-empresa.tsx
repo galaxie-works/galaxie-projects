@@ -3,10 +3,14 @@
 import { BotaoVoz } from '@/components/voz/botao-voz'
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
@@ -15,7 +19,28 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from '@/components/ui/input-group'
-import { cnpjValido, mascararCnpj, type Rascunho } from './rascunho'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  cnpjValido,
+  cpfValido,
+  mascararCnpj,
+  mascararCpf,
+  type Rascunho,
+  type TipoPessoa,
+} from './rascunho'
+
+const TIPOS: { value: TipoPessoa; titulo: string; descricao: string }[] = [
+  {
+    value: 'PJ',
+    titulo: 'Pessoa jurídica',
+    descricao: 'Empresa com CNPJ, inclusive MEI. Emite nota fiscal de serviço pelo app.',
+  },
+  {
+    value: 'PF',
+    titulo: 'Pessoa física',
+    descricao: 'Profissional autônomo, sem CNPJ. Sem emissão de nota fiscal.',
+  },
+]
 
 type Props = {
   rascunho: Rascunho
@@ -24,29 +49,73 @@ type Props = {
 }
 
 export function EtapaEmpresa({ rascunho, atualizar, mostrarErros }: Props) {
+  const pf = rascunho.tipo === 'PF'
   const erroNome = mostrarErros && !rascunho.nome.trim()
-  const erroCnpj = mostrarErros && !cnpjValido(rascunho.cnpj)
+  const erroCnpj = mostrarErros && !pf && !cnpjValido(rascunho.cnpj)
+  const erroCpf = mostrarErros && pf && !cpfValido(rascunho.cpf)
 
   return (
     <FieldGroup>
+      <FieldSet>
+        <FieldLegend variant="label">Você vai usar como</FieldLegend>
+        <RadioGroup
+          value={rascunho.tipo}
+          onValueChange={(v) => atualizar({ tipo: v as TipoPessoa })}
+          className="grid gap-3 sm:grid-cols-2"
+        >
+          {TIPOS.map((t) => (
+            <FieldLabel key={t.value} htmlFor={`tipo-${t.value}`}>
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldTitle>{t.titulo}</FieldTitle>
+                  <FieldDescription>{t.descricao}</FieldDescription>
+                </FieldContent>
+                <RadioGroupItem value={t.value} id={`tipo-${t.value}`} />
+              </Field>
+            </FieldLabel>
+          ))}
+        </RadioGroup>
+      </FieldSet>
+
       <Field data-invalid={erroNome || undefined}>
-        <FieldLabel htmlFor="empresa-nome">Nome da empresa</FieldLabel>
+        <FieldLabel htmlFor="empresa-nome">{pf ? 'Seu nome profissional' : 'Nome da empresa'}</FieldLabel>
         <Input
           id="empresa-nome"
           value={rascunho.nome}
           onChange={(e) => atualizar({ nome: e.target.value })}
-          placeholder="Ex.: Consani Reformas"
-          autoComplete="organization"
+          placeholder={pf ? 'Ex.: João Pisos e Revestimentos' : 'Ex.: Consani Reformas'}
+          autoComplete={pf ? 'name' : 'organization'}
           aria-invalid={erroNome || undefined}
           required
         />
         {erroNome ? (
-          <FieldError>Informe o nome da empresa.</FieldError>
+          <FieldError>{pf ? 'Informe o seu nome.' : 'Informe o nome da empresa.'}</FieldError>
         ) : (
-          <FieldDescription>Se você trabalha por conta, pode ser o seu nome.</FieldDescription>
+          <FieldDescription>
+            {pf ? 'Como seus clientes conhecem você.' : 'O nome que aparece nos orçamentos.'}
+          </FieldDescription>
         )}
       </Field>
 
+      {pf ? (
+        <Field data-invalid={erroCpf || undefined}>
+          <FieldLabel htmlFor="empresa-cpf">CPF</FieldLabel>
+          <Input
+            id="empresa-cpf"
+            value={rascunho.cpf}
+            onChange={(e) => atualizar({ cpf: mascararCpf(e.target.value) })}
+            placeholder="000.000.000-00"
+            inputMode="numeric"
+            className="tabular-nums"
+            aria-invalid={erroCpf || undefined}
+          />
+          {erroCpf ? (
+            <FieldError>O CPF tem 11 dígitos. Complete ou deixe em branco.</FieldError>
+          ) : (
+            <FieldDescription>Opcional.</FieldDescription>
+          )}
+        </Field>
+      ) : (
       <Field data-invalid={erroCnpj || undefined}>
         <FieldLabel htmlFor="empresa-cnpj">CNPJ</FieldLabel>
         <Input
@@ -61,12 +130,13 @@ export function EtapaEmpresa({ rascunho, atualizar, mostrarErros }: Props) {
         {erroCnpj ? (
           <FieldError>O CNPJ tem 14 dígitos. Complete ou deixe em branco.</FieldError>
         ) : (
-          <FieldDescription>Opcional.</FieldDescription>
+          <FieldDescription>Opcional. Necessário para emitir nota fiscal.</FieldDescription>
         )}
       </Field>
+      )}
 
       <Field>
-        <FieldLabel htmlFor="empresa-descricao">O que a empresa faz</FieldLabel>
+        <FieldLabel htmlFor="empresa-descricao">{pf ? 'O que você faz' : 'O que a empresa faz'}</FieldLabel>
         <InputGroup>
           <InputGroupTextarea
             id="empresa-descricao"

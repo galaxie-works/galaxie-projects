@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from 'lucide-react'
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, GiftIcon } from 'lucide-react'
+import { DIAS_TESTE } from '@/lib/assinatura'
 import { createClient } from '@/lib/supabase/client'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import {
@@ -124,7 +125,9 @@ export function Onboarding({ userId }: { userId: string }) {
         .insert({
           owner_id: user.id,
           nome: rascunho.nome.trim(),
-          cnpj: rascunho.cnpj.trim() || null,
+          tipo_pessoa: rascunho.tipo,
+          cnpj: rascunho.tipo === 'PJ' ? rascunho.cnpj.trim() || null : null,
+          cpf: rascunho.tipo === 'PF' ? rascunho.cpf.trim() || null : null,
           descricao: rascunho.descricao.trim() || null,
           modo_operacao: rascunho.processo.trim() || null,
           servicos: servicosEfetivos(rascunho),
@@ -266,6 +269,14 @@ export function Onboarding({ userId }: { userId: string }) {
                 <StepperContent value={5}>
                   <div className="flex flex-col gap-4">
                     <EtapaRevisao rascunho={rascunho} atualizar={atualizar} irPara={irPara} />
+                    <Alert variant="info">
+                      <GiftIcon />
+                      <AlertTitle>{DIAS_TESTE} dias grátis, sem cartão</AlertTitle>
+                      <AlertDescription>
+                        Ao concluir, sua conta própria é criada e o teste começa hoje. Você
+                        escolhe o plano só no fim do teste.
+                      </AlertDescription>
+                    </Alert>
                     {erroSalvar && (
                       <Alert variant="destructive">
                         <AlertTitle>Não deu para salvar</AlertTitle>
@@ -316,7 +327,7 @@ export function Onboarding({ userId }: { userId: string }) {
                     disabled={salvando || maxLiberada < TOTAL_ETAPAS}
                   >
                     {salvando ? <Spinner data-icon="inline-start" /> : <CheckIcon data-icon="inline-start" />}
-                    {salvando ? 'Salvando…' : 'Concluir'}
+                    {salvando ? 'Criando sua conta…' : 'Começar teste grátis'}
                   </Button>
                 )}
               </div>

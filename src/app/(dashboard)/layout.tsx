@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import type { Projeto } from '@/types'
 import { RegistroFormulariosProvider } from '@/components/assistente/formulario-assistente'
 import { configPublica } from '@/lib/ia/config-servidor'
+import { carregarAssinatura, situacaoAssinatura } from '@/lib/assinatura'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -17,11 +18,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: empresa } = await supabase
     .from('empresas')
-    .select('id, nome')
+    .select('id, nome, created_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
   if (!empresa) redirect('/onboarding')
+
+  // Teste grátis acabou (ou assinatura vencida): só a tela de assinatura.
+  const assinatura = situacaoAssinatura(
+    await carregarAssinatura(supabase, empresa.id),
+    empresa.created_at
+  )
+  if (!assinatura.liberado) redirect('/teste-encerrado')
 
   const { data: projetos } = await supabase
     .from('projetos')
@@ -41,7 +49,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <RegistroFormulariosProvider>
       <SidebarProvider defaultOpen={sidebarAberta}>
-        <AppSidebar empresaNome={empresa.nome} email={user.email ?? ''} projetos={lista} />
+        <AppSidebar
+          empresaNome={empresa.nome}
+          email={user.email ?? ''}
+          projetos={lista}
+          teste={
+            assinatura.status === 'teste'
+              ? { dias: assinatura.diasRestantes ?? 0, progresso: assinatura.progressoTeste ?? 0 }
+              : null
+          }
+        />
         <SidebarInset className="min-w-0">
           <AppHeader
             projetos={lista.map(({ id, nome }) => ({ id, nome }))}

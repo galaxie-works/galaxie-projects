@@ -37,6 +37,10 @@ export function EtapaRevisao({ rascunho, atualizar, irPara }: Props) {
   const [comando, setComando] = useState('')
   const servicos = servicosEfetivos(rascunho)
   const membros = membrosValidos(rascunho)
+  const documento =
+    rascunho.tipo === 'PF'
+      ? rascunho.cpf && `CPF ${rascunho.cpf}`
+      : rascunho.cnpj && `CNPJ ${rascunho.cnpj}`
   const nomesAreas = AREAS_SERVICO.filter((a) => rascunho.areas.includes(a.id)).map((a) => a.nome)
 
   function aplicar(texto: string) {
@@ -111,18 +115,25 @@ export function EtapaRevisao({ rascunho, atualizar, irPara }: Props) {
       <ItemGroup className="gap-2">
         <Item variant="outline">
           <ItemContent>
-            <ItemTitle>Empresa</ItemTitle>
+            <ItemTitle>
+              {rascunho.tipo === 'PF' ? 'Pessoa física' : 'Empresa'}
+            </ItemTitle>
             <ItemDescription>
               {rascunho.nome}
-              {rascunho.cnpj && (
+              {documento && (
                 <>
                   <span
                     aria-hidden="true"
                     className="mx-1.5 inline-block size-1 rounded-full bg-muted-foreground/40 align-middle"
                   />
-                  <span className="tabular-nums">CNPJ {rascunho.cnpj}</span>
+                  <span className="tabular-nums">{documento}</span>
                 </>
               )}
+            </ItemDescription>
+            <ItemDescription>
+              {rascunho.tipo === 'PF'
+                ? 'Sem emissão de nota fiscal.'
+                : 'Emite nota fiscal de serviço (configure em Empresa, depois).'}
             </ItemDescription>
             {rascunho.descricao && <ItemDescription>{rascunho.descricao}</ItemDescription>}
           </ItemContent>

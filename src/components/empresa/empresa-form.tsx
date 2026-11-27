@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Building2Icon, HammerIcon, HeartHandshakeIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { mascararCnpj } from '@/components/clientes/documento'
+import { mascararCnpj, mascararCpf } from '@/components/clientes/documento'
 import { Badge } from '@/components/reui/badge'
 import {
   Frame,
@@ -19,8 +19,19 @@ import { PrecosServicos } from '@/components/orcamento/precos-servicos'
 import { ServicosPicker } from '@/components/servicos/servicos-picker'
 import { BotaoVoz } from '@/components/voz/botao-voz'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -71,6 +82,11 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
   const supabase = createClient()
   const [nome, setNome] = useState(empresa.nome)
   const [cnpj, setCnpj] = useState(empresa.cnpj ?? '')
+  // Tipo de pessoa: só existe depois da migration de assinaturas.
+  const tipoDisponivel = 'tipo_pessoa' in empresa
+  const [tipo, setTipo] = useState<'PF' | 'PJ'>(empresa.tipo_pessoa ?? 'PJ')
+  const [cpf, setCpf] = useState(empresa.cpf ?? '')
+  const pf = tipo === 'PF'
   const [descricao, setDescricao] = useState(empresa.descricao ?? '')
   const [modoOperacao, setModoOperacao] = useState(empresa.modo_operacao ?? '')
   const [servicos, setServicos] = useState<string[]>(empresa.servicos ?? [])
@@ -82,7 +98,7 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
   const [tentou, setTentou] = useState(false)
   const [salvando, setSalvando] = useState(false)
 
-  const erroNome = tentou && !nome.trim() ? 'Informe o nome da empresa.' : null
+  const erroNome = tentou && !nome.trim() ? (pf ? 'Informe o seu nome.' : 'Informe o nome da empresa.') : null
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault()
@@ -93,7 +109,8 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
       .from('empresas')
       .update({
         nome,
-        cnpj: cnpj || null,
+        cnpj: pf ? null : cnpj || null,
+        ...(tipoDisponivel ? { tipo_pessoa: tipo, cpf: pf ? cpf || null : null } : {}),
         descricao: descricao || null,
         modo_operacao: modoOperacao || null,
         servicos,
@@ -177,9 +194,38 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
             </FrameHeader>
             <FramePanel>
               <FieldGroup>
+                {tipoDisponivel && (
+                  <FieldSet>
+                    <FieldLegend variant="label">Tipo de conta</FieldLegend>
+                    <RadioGroup
+                      value={tipo}
+                      onValueChange={(v) => setTipo(v as 'PF' | 'PJ')}
+                      className="grid gap-3 sm:grid-cols-2"
+                    >
+                      <FieldLabel htmlFor="empresa-tipo-pj">
+                        <Field orientation="horizontal">
+                          <FieldContent>
+                            <FieldTitle>Pessoa jurídica</FieldTitle>
+                            <FieldDescription>Com CNPJ, inclusive MEI. Emite nota fiscal.</FieldDescription>
+                          </FieldContent>
+                          <RadioGroupItem value="PJ" id="empresa-tipo-pj" />
+                        </Field>
+                      </FieldLabel>
+                      <FieldLabel htmlFor="empresa-tipo-pf">
+                        <Field orientation="horizontal">
+                          <FieldContent>
+                            <FieldTitle>Pessoa física</FieldTitle>
+                            <FieldDescription>Autônomo, sem CNPJ. Sem nota fiscal.</FieldDescription>
+                          </FieldContent>
+                          <RadioGroupItem value="PF" id="empresa-tipo-pf" />
+                        </Field>
+                      </FieldLabel>
+                    </RadioGroup>
+                  </FieldSet>
+                )}
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field data-invalid={!!erroNome || undefined}>
-                    <FieldLabel htmlFor="empresa-nome">Nome da empresa</FieldLabel>
+                    <FieldLabel htmlFor="empresa-nome">{pf ? 'Nome profissional' : 'Nome da empresa'}</FieldLabel>
                     <Input
                       id="empresa-nome"
                       value={nome}
@@ -188,18 +234,33 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
                     />
                     <FieldError>{erroNome}</FieldError>
                   </Field>
-                  <Field>
-                    <FieldLabel htmlFor="empresa-cnpj">CNPJ</FieldLabel>
-                    <Input
-                      id="empresa-cnpj"
-                      inputMode="numeric"
-                      value={cnpj}
-                      onChange={(e) => setCnpj(mascararCnpj(e.target.value))}
-                      placeholder="00.000.000/0000-00"
-                      className="tabular-nums"
-                    />
-                    <FieldDescription>Opcional.</FieldDescription>
-                  </Field>
+                  {pf ? (
+                    <Field>
+                      <FieldLabel htmlFor="empresa-cpf">CPF</FieldLabel>
+                      <Input
+                        id="empresa-cpf"
+                        inputMode="numeric"
+                        value={cpf}
+                        onChange={(e) => setCpf(mascararCpf(e.target.value))}
+                        placeholder="000.000.000-00"
+                        className="tabular-nums"
+                      />
+                      <FieldDescription>Opcional.</FieldDescription>
+                    </Field>
+                  ) : (
+                    <Field>
+                      <FieldLabel htmlFor="empresa-cnpj">CNPJ</FieldLabel>
+                      <Input
+                        id="empresa-cnpj"
+                        inputMode="numeric"
+                        value={cnpj}
+                        onChange={(e) => setCnpj(mascararCnpj(e.target.value))}
+                        placeholder="00.000.000/0000-00"
+                        className="tabular-nums"
+                      />
+                      <FieldDescription>Opcional.</FieldDescription>
+                    </Field>
+                  )}
                 </div>
                 <Field>
                   <FieldLabel htmlFor="empresa-descricao">O que a empresa faz</FieldLabel>
