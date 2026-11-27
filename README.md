@@ -80,6 +80,21 @@ Postgres: cada tabela filha só é visível se a empresa correspondente
 pertence ao usuário logado (`auth.uid()`). Isso está todo definido em
 `supabase/schema.sql`.
 
+## Mudanças no banco (automáticas)
+
+Toda mudança de banco vira um arquivo em `supabase/migrations/`, com nome
+`AAAAMMDDHHMMSS_nome.sql` e SQL que pode rodar de novo com segurança
+(`if not exists`, `drop ... if exists`). Ao mergear o PR na `main`, o GitHub
+Action **Banco (Supabase)** (`.github/workflows/supabase-migrations.yml`)
+aplica no Supabase só as migrations que ainda não rodaram, cada uma numa
+transação, e registra em `supabase_migrations.schema_migrations`. Ninguém
+precisa colar SQL no SQL Editor.
+
+Precisa de um secret no GitHub, uma vez só: `SUPABASE_ACCESS_TOKEN` (token
+pessoal de https://supabase.com/dashboard/account/tokens). O projeto padrão é
+`qtgneigzwngvecuzpjdc`; para outro, crie a variável `SUPABASE_PROJECT_REF`.
+A pasta antiga `supabase/migracoes/` fica só como histórico.
+
 ## Como configurar o Supabase (uma vez só)
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (plano free

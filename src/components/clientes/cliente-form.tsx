@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Building2Icon, CircleAlertIcon, UserIcon } from 'lucide-react'
@@ -24,6 +24,8 @@ import type { TipoCliente } from '@/types'
 import { useFormularioAssistente } from '@/components/assistente/formulario-assistente'
 import { CampoComVoz } from './campo-com-voz'
 import { documentoCompleto, mascararCnpj, mascararCpf } from './documento'
+import { AvisoDuplicado, useClientesExistentes } from './aviso-duplicado'
+import { acharDuplicados } from '@/lib/duplicados'
 
 export function ClienteForm({ empresaId }: { empresaId: string }) {
   const router = useRouter()
@@ -42,6 +44,16 @@ export function ClienteForm({ empresaId }: { empresaId: string }) {
   const [salvando, setSalvando] = useState(false)
 
   const formRef = useRef<HTMLFormElement>(null)
+  const existentes = useClientesExistentes(empresaId)
+  const duplicados = useMemo(
+    () =>
+      acharDuplicados(existentes, {
+        telefone,
+        cpf: tipo === 'PF' ? cpf : null,
+        cnpj: tipo === 'PJ' ? cnpj : null,
+      }),
+    [existentes, telefone, cpf, cnpj, tipo]
+  )
 
   useFormularioAssistente({
     id: 'cliente-novo',
@@ -223,6 +235,8 @@ export function ClienteForm({ empresaId }: { empresaId: string }) {
               />
             </Field>
 
+            <AvisoDuplicado duplicados={duplicados} />
+
             {erro && (
               <Alert variant="destructive" role="alert">
                 <CircleAlertIcon />
@@ -238,7 +252,7 @@ export function ClienteForm({ empresaId }: { empresaId: string }) {
           </Button>
           <Button type="submit" disabled={salvando}>
             {salvando && <Spinner data-icon="inline-start" />}
-            {salvando ? 'Salvando…' : 'Salvar cliente'}
+            {salvando ? 'Salvando…' : duplicados.length ? 'Salvar mesmo assim' : 'Salvar cliente'}
           </Button>
         </FrameFooter>
       </Frame>
