@@ -1109,7 +1109,7 @@ create index if not exists idx_recebimentos_projeto on public.recebimentos (proj
 create index if not exists idx_recebimentos_cliente on public.recebimentos (cliente_id, vencimento);
 create index if not exists idx_recebimentos_empresa on public.recebimentos (empresa_id, vencimento);
 
--- Diário de obra (migration 20261127214500_diario_obra.sql)
+-- Diário de obra (migration 20261127223000_diario_obra.sql)
 create table if not exists public.diario_obra (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas (id) on delete cascade,
