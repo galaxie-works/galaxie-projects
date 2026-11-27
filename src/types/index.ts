@@ -336,6 +336,8 @@ export interface PosVenda {
   indicado_cliente_id: string | null
   vence_em: string | null
   status: StatusPosVenda
+  /** 'portal' quando o cliente abriu o chamado pelo portal. */
+  origem?: 'interno' | 'portal'
   nota_0_10: number | null
   resolvido_em: string | null
   created_at: string

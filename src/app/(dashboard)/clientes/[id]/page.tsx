@@ -125,6 +125,7 @@ export default async function ClienteDetalhePage({
       financeiroDisponivel={financeiroDisponivel}
       negocios={negociosRes.error ? null : ((negociosRes.data as unknown as Negocio[]) ?? [])}
       agora={agoraMs()}
+      empresaNome={(empresa?.nome as string | undefined) ?? ''}
     />
   )
 }
