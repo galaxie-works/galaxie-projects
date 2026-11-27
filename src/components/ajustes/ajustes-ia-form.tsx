@@ -118,8 +118,9 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
                 Assistente de IA
               </FrameTitle>
               <FrameDescription>
-                Use a sua própria chave da Anthropic, OpenAI ou DeepSeek. O uso é cobrado pelo provedor
-                na sua conta.
+                Opcional. Sem chave, o assistente usa os comandos de IA do seu plano. Com a sua própria
+                chave da Anthropic, OpenAI ou DeepSeek, o uso é ilimitado e cobrado pelo provedor na sua
+                conta.
               </FrameDescription>
             </div>
             {config ? (

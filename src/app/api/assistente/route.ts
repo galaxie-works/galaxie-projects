@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { configComChave, sessaoEmpresa } from '@/lib/ia/config-servidor'
 import { definirFerramentas, executarFerramenta, type ContextoExecucao } from '@/lib/ia/ferramentas'
 import { mensagemErroProvedor, rodarAssistente } from '@/lib/ia/executar'
+import { MODELO_GALAXIE, acertar, iaGalaxieDisponivel, reservar, usoVazio } from '@/lib/ia/cota'
 import type {
   ErroAssistente,
   FormularioContexto,
@@ -78,12 +79,28 @@ export async function POST(request: Request) {
   } catch (e) {
     return erro(500, { erro: e instanceof Error ? e.message : 'Erro ao ler a configuração da IA.' })
   }
+  // Sem chave própria: usa a IA da Galaxie, que gasta a cota do plano.
+  const daGalaxie = !config
   if (!config) {
-    return erro(400, {
-      erro: 'Configure uma chave de API em Ajustes para usar o assistente.',
-      semConfiguracao: true,
-    })
+    if (!iaGalaxieDisponivel()) {
+      return erro(400, {
+        erro: 'Configure uma chave de API em Ajustes para usar o assistente.',
+        semConfiguracao: true,
+      })
+    }
+    try {
+      if (!(await reservar(sessao.supabase, sessao.empresaId))) {
+        return erro(402, {
+          erro: 'Seus comandos de IA deste mês acabaram. Compre um pacote em Assinatura ou use sua própria chave em Ajustes.',
+          semCota: true,
+        })
+      }
+    } catch (e) {
+      return erro(500, { erro: e instanceof Error ? e.message : 'Erro ao ler seus comandos de IA.' })
+    }
+    config = { provedor: 'anthropic' as const, modelo: MODELO_GALAXIE, chave: process.env.ANTHROPIC_API_KEY! }
   }
+  const uso = usoVazio()
 
   const formulario = pedido.formulario ?? null
   const historico = Array.isArray(pedido.historico)
@@ -109,6 +126,7 @@ export async function POST(request: Request) {
       ferramentas: definirFerramentas(formulario),
       executar: (nome, args) => executarFerramenta(nome, args, ctx),
       parar: () => !!ctx.pergunta,
+      uso: daGalaxie ? uso : undefined,
     })
     const corpo: RespostaAssistente = {
       resposta,
@@ -123,5 +141,8 @@ export async function POST(request: Request) {
     // lista, avisar), senão o usuário repete o pedido e duplica o registro.
     const feitas = ctx.acoes.length ? ' O que já tinha sido feito antes do erro foi mantido.' : ''
     return erro(502, { erro: mensagemErroProvedor(e) + feitas, acoes: ctx.acoes, passos: ctx.passos })
+  } finally {
+    // Cobra o que foi usado, mesmo se deu erro no meio (a reserva já saiu).
+    if (daGalaxie) await acertar(sessao.supabase, sessao.empresaId, uso, texto.slice(0, 80))
   }
 }

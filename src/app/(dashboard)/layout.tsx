@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import type { Projeto } from '@/types'
 import { RegistroFormulariosProvider } from '@/components/assistente/formulario-assistente'
 import { configPublica } from '@/lib/ia/config-servidor'
+import { iaGalaxieDisponivel } from '@/lib/ia/cota'
 import { carregarAssinatura, situacaoAssinatura } from '@/lib/assinatura'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -63,7 +64,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <AppHeader
             projetos={lista.map(({ id, nome }) => ({ id, nome }))}
             clientes={clientes ?? []}
-            assistenteConfigurado={!!ia?.ativo}
+            // Com chave própria, ou pela IA da Galaxie (cota do plano).
+            assistenteConfigurado={!!ia?.ativo || iaGalaxieDisponivel()}
             empresaId={empresa.id}
           />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>

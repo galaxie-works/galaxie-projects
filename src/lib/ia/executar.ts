@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import type { DefinicaoFerramenta } from './ferramentas'
 import type { MensagemHistorico } from './protocolo'
 import type { ProvedorIA } from './provedores'
+import type { UsoTokens } from './cota'
 
 // Laço de conversa com ferramentas, um por família de API. A IA pede uma
 // ferramenta, o servidor executa (`executar`) e devolve o resultado, até a IA
@@ -21,6 +22,8 @@ export interface ParametrosLaco {
   executar: (nome: string, args: Record<string, unknown>) => Promise<string>
   /** true depois de uma ferramenta que espera o usuário (ex.: perguntar). */
   parar?: () => boolean
+  /** Soma aqui os tokens de cada volta (para cobrar da cota de IA). */
+  uso?: UsoTokens
 }
 
 export async function rodarAssistente(p: ParametrosLaco): Promise<string> {
@@ -70,12 +73,21 @@ async function rodarAnthropic(p: ParametrosLaco): Promise<string> {
       system: p.sistema,
       messages,
       tools,
+      // Cada volta repete sistema, ferramentas e conversa: o cache barateia.
+      cache_control: { type: 'ephemeral' },
       // Preencher formulário por voz precisa ser rápido.
       output_config: { effort: 'low' },
       ...(fallback
         ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }
         : {}),
     })
+
+    if (p.uso) {
+      p.uso.entrada += resposta.usage.input_tokens
+      p.uso.saida += resposta.usage.output_tokens
+      p.uso.cacheLeitura += resposta.usage.cache_read_input_tokens ?? 0
+      p.uso.cacheEscrita += resposta.usage.cache_creation_input_tokens ?? 0
+    }
 
     if (resposta.stop_reason === 'refusal') {
       return 'Não consegui ajudar com esse pedido.'

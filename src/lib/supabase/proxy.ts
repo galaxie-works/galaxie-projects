@@ -2,7 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Public routes: anyone can see these without being logged in.
-const PUBLIC_PATHS = ['/login', '/cadastro', '/auth']
+// O webhook do Stripe chega sem sessão; ele se autentica pela assinatura do Stripe.
+const PUBLIC_PATHS = ['/login', '/cadastro', '/auth', '/api/stripe/webhook']
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
