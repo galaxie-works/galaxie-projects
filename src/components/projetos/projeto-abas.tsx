@@ -155,6 +155,7 @@ export function ProjetoAbas({
             totalGasto={totalGasto}
             hoje={hoje}
             disponivel={financeiroDisponivel}
+            cliente={cliente}
           />
         </TabsContent>
       )}
