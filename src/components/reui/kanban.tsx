@@ -604,6 +604,9 @@ function Kanban<T>({
     ]
   )
 
+  // Id estável entre servidor e cliente (evita erro de hidratação do dnd-kit).
+  const dndId = React.useId()
+
   const contextValue = useMemo(
     () => ({
       columns,
@@ -638,6 +641,7 @@ function Kanban<T>({
   return (
     <KanbanContext.Provider value={contextValue}>
       <DndContext
+        id={dndId}
         sensors={sensors}
         modifiers={modifiers}
         accessibility={accessibility}
