@@ -1,8 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ClientePainel } from '@/components/clientes/cliente-painel'
-import { hojeISO } from '@/lib/crm'
-import type { Atividade, Cliente, MembroEquipe, Projeto, TarefaAgenda } from '@/types'
+import { agoraMs, hojeISO } from '@/lib/crm'
+import { SELECT_NEGOCIO } from '@/lib/negocios'
+import { SELECT_POS_VENDA } from '@/lib/pos-venda'
+import type { Atividade, Cliente, MembroEquipe, Negocio, PosVenda, Projeto, TarefaAgenda } from '@/types'
 
 export default async function ClienteDetalhePage({
   params,
@@ -19,8 +21,16 @@ export default async function ClienteDetalhePage({
   const { data: cliente } = await supabase.from('clientes').select('*').eq('id', id).maybeSingle()
   if (!cliente) notFound()
 
-  const [{ data: projetos, error }, atividadesRes, { data: equipe }, tarefasRes, concluidasRes] =
-    await Promise.all([
+  const [
+    { data: projetos, error },
+    atividadesRes,
+    { data: equipe },
+    negociosRes,
+    posVendaRes,
+    { data: empresa },
+    tarefasRes,
+    concluidasRes,
+  ] = await Promise.all([
     supabase.from('projetos').select('*').eq('cliente_id', id).order('created_at', { ascending: false }),
     supabase
       .from('atividades')
@@ -29,6 +39,9 @@ export default async function ClienteDetalhePage({
       .order('ocorreu_em', { ascending: false })
       .limit(100),
     supabase.from('equipe').select('id, nome').order('nome'),
+    supabase.from('negocios').select(SELECT_NEGOCIO).eq('cliente_id', id).order('created_at', { ascending: false }),
+    supabase.from('pos_venda').select(SELECT_POS_VENDA).eq('cliente_id', id).order('vence_em'),
+    supabase.from('empresas').select('*').eq('id', cliente.empresa_id).maybeSingle(),
     // Tarefas abertas (frente B). Erra enquanto o SQL da agenda não rodou.
     supabase
       .from('atividades')
@@ -60,9 +73,17 @@ export default async function ClienteDetalhePage({
   const atividades = [...recentes, ...concluidas.filter((a) => !ids.has(a.id))]
   const agendaDisponivel = crmDisponivel && !tarefasRes.error
   const tarefas = agendaDisponivel ? ((tarefasRes.data as TarefaAgenda[]) ?? []) : []
+  // Pós-venda: a aba funciona (vazia) antes de rodar o SQL da frente D.
+  const posVendaDisponivel = !posVendaRes.error
+  const posVenda = posVendaDisponivel ? ((posVendaRes.data as PosVenda[] | null) ?? []) : []
+
+  const { data: indicadoPor } = c.indicado_por_id
+    ? await supabase.from('clientes').select('id, nome').eq('id', c.indicado_por_id).maybeSingle()
+    : { data: null }
 
   return (
     <ClientePainel
+      indicadoPor={(indicadoPor as { id: string; nome: string } | null) ?? null}
       cliente={c}
       obras={obras}
       atividades={atividades}
@@ -70,7 +91,12 @@ export default async function ClienteDetalhePage({
       crmDisponivel={crmDisponivel}
       agendaDisponivel={agendaDisponivel}
       tarefas={tarefas}
+      posVenda={posVenda}
+      posVendaDisponivel={posVendaDisponivel}
+      linkGoogle={(empresa?.link_avaliacao_google as string | null | undefined) ?? null}
       hoje={hojeISO()}
+      negocios={negociosRes.error ? null : ((negociosRes.data as unknown as Negocio[]) ?? [])}
+      agora={agoraMs()}
     />
   )
 }

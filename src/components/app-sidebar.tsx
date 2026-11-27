@@ -9,6 +9,7 @@ import {
   CalendarDaysIcon,
   HouseIcon,
   Building2Icon,
+  FunnelIcon,
   ChevronsUpDownIcon,
   FolderKanbanIcon,
   LogOutIcon,
@@ -84,6 +85,7 @@ const NAVEGACAO = [
   { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
   { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
+  { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
@@ -278,6 +280,7 @@ const SECOES: Record<string, string> = {
   inicio: 'Início',
   agenda: 'Agenda',
   projetos: 'Projetos',
+  funil: 'Funil',
   clientes: 'Clientes',
   equipe: 'Equipe',
   empresa: 'Empresa',
@@ -320,7 +323,7 @@ export function AppHeader({
       trilha.push({ rotulo: 'Importar planilha' })
     } else if (sub) {
       const lista = secao === 'projetos' ? projetos : secao === 'clientes' ? clientes : []
-      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? 'Detalhes' })
+      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? (secao === 'funil' ? 'Negócio' : 'Detalhes') })
     }
   }
   const emCamada = Boolean(sub) && Boolean(SECOES[secao ?? ''])

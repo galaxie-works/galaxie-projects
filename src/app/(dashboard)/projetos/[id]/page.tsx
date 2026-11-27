@@ -4,14 +4,19 @@ import { projetoAtrasado } from '@/lib/status'
 import { ProjetoAbas } from '@/components/projetos/projeto-abas'
 import { ProjetoCabecalho } from '@/components/projetos/projeto-cabecalho'
 import { carregarOrcamento, carregarPrecos } from '@/components/orcamento/dados'
-import type { Cliente, Compra, Etapa, MembroEquipe, Projeto } from '@/types'
+import { hojeISO } from '@/lib/crm'
+import { SELECT_POS_VENDA } from '@/lib/pos-venda'
+import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto } from '@/types'
 
 export default async function ProjetoDetalhePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ aba?: string }>
 }) {
   const { id } = await params
+  const { aba } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -34,6 +39,7 @@ export default async function ProjetoDetalhePage({
     { data: empresa },
     areas,
     precos,
+    posVendaRes,
   ] = await Promise.all([
       supabase.from('etapas').select('*, equipe(nome)').eq('projeto_id', id).order('ordem'),
       supabase
@@ -43,9 +49,10 @@ export default async function ProjetoDetalhePage({
         .order('created_at', { ascending: false }),
       supabase.from('equipe').select('*').eq('empresa_id', projeto.empresa_id).order('nome'),
       supabase.from('clientes').select('*').eq('empresa_id', projeto.empresa_id).order('nome'),
-      supabase.from('empresas').select('servicos').eq('id', projeto.empresa_id).maybeSingle(),
+      supabase.from('empresas').select('*').eq('id', projeto.empresa_id).maybeSingle(),
       carregarOrcamento(supabase, id),
       carregarPrecos(supabase, projeto.empresa_id),
+      supabase.from('pos_venda').select(SELECT_POS_VENDA).eq('projeto_id', id).order('vence_em'),
     ])
   const temItens = areas.some((a) => a.itens.length > 0)
 
@@ -55,7 +62,7 @@ export default async function ProjetoDetalhePage({
   const versao = [p.status, p.nome, p.percentual_conclusao, p.orcamento_total, p.data_inicio, p.data_prazo].join('|')
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       <ProjetoCabecalho
         key={`cabecalho-${versao}`}
         projeto={p}
@@ -73,6 +80,12 @@ export default async function ProjetoDetalhePage({
         areasIniciais={areas}
         servicosEmpresa={(empresa?.servicos as string[]) ?? []}
         precos={precos}
+        posVenda={posVendaRes.error ? [] : ((posVendaRes.data as PosVenda[] | null) ?? [])}
+        posVendaDisponivel={!posVendaRes.error}
+        cliente={(clientes as Cliente[] | null)?.find((c) => c.id === p.cliente_id) ?? null}
+        linkGoogle={(empresa?.link_avaliacao_google as string | null | undefined) ?? null}
+        hojeBrasil={hojeISO()}
+        abaInicial={aba}
       />
     </div>
   )

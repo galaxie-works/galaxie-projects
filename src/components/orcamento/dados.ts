@@ -29,14 +29,28 @@ export async function carregarPrecos(
   return tabela
 }
 
+/** De quem é o orçamento: de uma obra ou de um negócio ainda não ganho. */
+export type DonoOrcamento = { projetoId: string } | { negocioId: string }
+
+function dono(d: string | DonoOrcamento): DonoOrcamento {
+  return typeof d === 'string' ? { projetoId: d } : d
+}
+
 export async function carregarOrcamento(
   supabase: SupabaseClient,
-  projetoId: string,
+  alvo: string | DonoOrcamento,
 ): Promise<AreaOrcamento[]> {
-  const [{ data: areas }, { data: itens }] = await Promise.all([
-    supabase.from('projeto_areas').select('*').eq('projeto_id', projetoId),
-    supabase.from('projeto_itens').select('*').eq('projeto_id', projetoId),
-  ])
+  const d = dono(alvo)
+  const areasQ = supabase.from('projeto_areas').select('*')
+  const itensQ = supabase.from('projeto_itens').select('*')
+  const [{ data: areas }, { data: itens }] = await Promise.all(
+    'projetoId' in d
+      ? [areasQ.eq('projeto_id', d.projetoId), itensQ.eq('projeto_id', d.projetoId)]
+      : [
+          areasQ.eq('negocio_id', d.negocioId).is('projeto_id', null),
+          itensQ.eq('negocio_id', d.negocioId).is('projeto_id', null),
+        ]
+  )
   return doBanco(areas ?? [], itens ?? [])
 }
 
@@ -48,21 +62,26 @@ export async function carregarOrcamento(
 export async function salvarOrcamento(
   supabase: SupabaseClient,
   {
-    projetoId,
     empresaId,
     areas,
     precos,
-  }: {
-    projetoId: string
+    ...alvo
+  }: DonoOrcamento & {
     empresaId: string
     areas: AreaOrcamento[]
     precos: TabelaPrecos
   },
 ): Promise<{ total: number | null; erro: string | null }> {
-  const { data, error } = await supabase.rpc('salvar_orcamento', {
-    p_projeto_id: projetoId,
-    p_areas: paraBanco(areas),
-  })
+  const { data, error } =
+    'negocioId' in alvo
+      ? await supabase.rpc('salvar_orcamento_negocio', {
+          p_negocio_id: alvo.negocioId,
+          p_areas: paraBanco(areas),
+        })
+      : await supabase.rpc('salvar_orcamento', {
+          p_projeto_id: alvo.projetoId,
+          p_areas: paraBanco(areas),
+        })
   if (error) return { total: null, erro: error.message }
 
   const novos = new Map<
