@@ -175,7 +175,9 @@ export function ArquivosLista({ empresaId, clienteId, projetoId, obras = [] }: P
     multiple: true,
     onFilesAdded: (novos) => {
       const files = novos.map((n) => n.file).filter((f): f is File => f instanceof File)
-      upload.clearFiles()
+      // Esvazia a fila do hook depois que ele termina de guardar o lote;
+      // assim o mesmo arquivo pode ser enviado de novo.
+      setTimeout(upload.clearFiles, 0)
       void enviar(files)
     },
   })
