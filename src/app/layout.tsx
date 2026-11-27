@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TemaProvider } from '@/components/tema/tema-provider'
 import { TEMA_COOKIE, TEMA_PADRAO, temaValido } from '@/lib/temas'
 import { cn } from '@/lib/utils'
+import { RegistrarServiceWorker } from '@/components/pwa/registrar-sw'
 import './globals.css'
 
 // Fonte do ReUI; os temas trocam só as cores.
@@ -14,6 +15,7 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 export const metadata: Metadata = {
   title: 'Galaxie Obras',
   description: 'Gestão de obras, clientes e equipe',
+  appleWebApp: { capable: true, title: 'Galaxie Obras', statusBarStyle: 'default' },
 }
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
@@ -30,6 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
         <TemaProvider>
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster richColors position="bottom-center" />
+          <RegistrarServiceWorker />
         </TemaProvider>
       </body>
     </html>

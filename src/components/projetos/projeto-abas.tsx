@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatarMoeda } from '@/lib/formato'
 import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto, Recebimento } from '@/types'
 import { resumoRecebimentos } from '@/lib/financeiro'
@@ -15,6 +15,7 @@ import { EtapasQuadro } from '@/components/projetos/etapas-quadro'
 import { ProjetoVisaoGeral } from '@/components/projetos/projeto-visao-geral'
 import { ArquivosLista } from '@/components/arquivos/arquivos-lista'
 import { Frame, FramePanel } from '@/components/reui/frame'
+import { DiarioApp } from '@/components/diario/diario-app'
 
 type Props = {
   projeto: Projeto
@@ -71,6 +72,15 @@ export function ProjetoAbas({
   const financeiro = resumoRecebimentos(recebimentos, hoje)
   const totalGasto = compras.reduce((s, c) => s + Number(c.valor), 0)
   const concluidas = etapas.filter((e) => e.status === 'concluida').length
+  const contextoDiario = useMemo(
+    () => ({
+      empresaId: projeto.empresa_id,
+      obras: [{ id: projeto.id, nome: projeto.nome, cliente: cliente?.nome ?? null }],
+      equipe: equipe.map((m) => ({ id: m.id, nome: m.nome, funcao: m.funcao ?? null })),
+      salvoEm: '',
+    }),
+    [projeto.empresa_id, projeto.id, projeto.nome, cliente?.nome, equipe]
+  )
 
   return (
     <Tabs defaultValue={abaInicial ?? 'visao'} className="gap-4">
@@ -91,6 +101,7 @@ export function ProjetoAbas({
               {concluidas}/{etapas.length}
             </span>
           </TabsTrigger>
+          <TabsTrigger value="diario">Diário</TabsTrigger>
           <TabsTrigger value="compras">
             Compras
             <span className="text-xs text-muted-foreground tabular-nums">{formatarMoeda(totalGasto)}</span>
@@ -140,6 +151,9 @@ export function ProjetoAbas({
           equipe={equipe}
           hoje={hoje}
         />
+      </TabsContent>
+      <TabsContent value="diario">
+        <DiarioApp contexto={contextoDiario} obraFixa={projeto.id} />
       </TabsContent>
       <TabsContent value="compras">
         <ComprasTabela
