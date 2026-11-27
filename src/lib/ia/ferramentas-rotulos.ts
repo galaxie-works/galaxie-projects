@@ -7,5 +7,6 @@ export const TABELAS: Record<TabelaAssistente, string> = {
   etapas: 'etapa',
   compras: 'compra',
   equipe: 'pessoa da equipe',
+  recebimentos: 'parcela a receber',
   pos_venda: 'item de pós-venda',
 }

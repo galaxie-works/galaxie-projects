@@ -123,6 +123,23 @@ export const TABELAS: Record<TabelaAssistente, EspecTabela> = {
     colunaTexto: 'nome',
     descrever: (r) => `${r.nome} da equipe`,
   },
+  recebimentos: {
+    rotulo: 'parcela a receber',
+    colunas: {
+      projeto_id: UUID,
+      cliente_id: { ...UUID, description: 'id do cliente da obra (o mesmo cliente_id do projeto)' },
+      descricao: { type: 'string', description: 'Nome da parcela, ex.: Entrada, Meio da obra, Entrega' },
+      valor: { type: 'number', description: 'Valor em reais' },
+      vencimento: DATA,
+      recebido_em: { ...DATA, description: 'Data em que o cliente pagou (AAAA-MM-DD); vazio = ainda não pagou' },
+      forma: { type: 'string', enum: ['pix', 'boleto', 'cartao', 'dinheiro', 'transferencia'] },
+    },
+    obrigatorias: ['projeto_id', 'descricao', 'valor', 'vencimento'],
+    daEmpresa: true,
+    colunaTexto: 'descricao',
+    descrever: (r) => `a parcela "${r.descricao}"`,
+    caminho: (r) => `/projetos/${r.projeto_id}`,
+  },
   pos_venda: {
     rotulo: 'item de pós-venda',
     colunas: {
@@ -217,7 +234,7 @@ export function definirFerramentas(form: FormularioContexto | null | undefined):
     {
       nome: 'abrir_pagina',
       descricao:
-        'Leva o usuário para uma página do app: /projetos, /projetos/novo, /projetos/<id>, /clientes, /clientes/novo, /clientes/<id>, /equipe, /equipe/novo, /equipe/<id>, /empresa, /ajustes.',
+        'Leva o usuário para uma página do app: /projetos, /projetos/novo, /projetos/<id>, /clientes, /clientes/novo, /clientes/<id>, /financeiro, /equipe, /equipe/novo, /equipe/<id>, /empresa, /ajustes.',
       parametros: {
         type: 'object',
         properties: { caminho: { type: 'string' } },
@@ -315,6 +332,7 @@ const PLURAL: Record<TabelaAssistente, string> = {
   etapas: 'etapas',
   compras: 'compras',
   equipe: 'equipe',
+  recebimentos: 'parcelas',
   pos_venda: 'itens de pós-venda',
 }
 
@@ -353,8 +371,15 @@ function limparDados(tabela: TabelaAssistente, dados: unknown): Record<string, u
   if (!dados || typeof dados !== 'object') return {}
   const permitidas = TABELAS[tabela].colunas
   return Object.fromEntries(
-    Object.entries(dados as Record<string, unknown>).filter(([k]) => k in permitidas),
+    Object.entries(dados as Record<string, unknown>)
+      .filter(([k]) => k in permitidas)
+      // Data vazia = "sem data" (ex.: desfazer um recebimento): o banco quer null.
+      .map(([k, v]) => [k, v === '' && ehData(permitidas[k]) ? null : v]),
   )
+}
+
+function ehData(esquema: Record<string, unknown>): boolean {
+  return typeof esquema.description === 'string' && esquema.description.includes('AAAA-MM-DD')
 }
 
 function colunasSelect(tabela: TabelaAssistente) {

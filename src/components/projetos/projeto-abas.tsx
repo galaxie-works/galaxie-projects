@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { formatarMoeda } from '@/lib/formato'
-import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto } from '@/types'
+import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto, Recebimento } from '@/types'
+import { resumoRecebimentos } from '@/lib/financeiro'
+import { FinanceiroObra } from '@/components/financeiro/financeiro-obra'
 import { pendentesPosVenda } from '@/lib/pos-venda'
 import { PosVendaPainel } from '@/components/pos-venda/pos-venda-painel'
 import { totalOrcamento, type AreaOrcamento, type TabelaPrecos } from '@/lib/orcamento'
@@ -23,6 +25,11 @@ type Props = {
   areasIniciais: AreaOrcamento[]
   servicosEmpresa: string[]
   precos: TabelaPrecos
+  recebimentosIniciais: Recebimento[]
+  /** false antes de rodar o SQL do financeiro. */
+  financeiroDisponivel: boolean
+  /** Quem está logado pode ver valores recebidos (ver podeVerFinanceiro). */
+  verFinanceiro: boolean
   posVenda: PosVenda[]
   posVendaDisponivel: boolean
   cliente: Cliente | null
@@ -42,6 +49,9 @@ export function ProjetoAbas({
   areasIniciais,
   servicosEmpresa,
   precos,
+  recebimentosIniciais,
+  financeiroDisponivel,
+  verFinanceiro,
   posVenda,
   posVendaDisponivel,
   cliente,
@@ -54,6 +64,8 @@ export function ProjetoAbas({
   const [etapas, setEtapas] = useState(etapasIniciais)
   const [compras, setCompras] = useState(comprasIniciais)
   const [areas, setAreas] = useState(areasIniciais)
+  const [recebimentos, setRecebimentos] = useState(recebimentosIniciais)
+  const financeiro = resumoRecebimentos(recebimentos, hoje)
   const totalGasto = compras.reduce((s, c) => s + Number(c.valor), 0)
   const concluidas = etapas.filter((e) => e.status === 'concluida').length
 
@@ -80,6 +92,18 @@ export function ProjetoAbas({
             Compras
             <span className="text-xs text-muted-foreground tabular-nums">{formatarMoeda(totalGasto)}</span>
           </TabsTrigger>
+          {verFinanceiro && (
+            <TabsTrigger value="financeiro">
+              Financeiro
+              {recebimentos.length > 0 && (
+                <span
+                  className={`text-xs tabular-nums ${financeiro.atrasado > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
+                >
+                  {formatarMoeda(financeiro.recebido)}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
           {(projeto.status === 'completo' || posVenda.length > 0) && (
             <TabsTrigger value="pos-venda">
               Pós-venda
@@ -122,6 +146,18 @@ export function ProjetoAbas({
           equipe={equipe}
         />
       </TabsContent>
+      {verFinanceiro && (
+        <TabsContent value="financeiro">
+          <FinanceiroObra
+            projeto={projeto}
+            recebimentos={recebimentos}
+            onRecebimentosChange={setRecebimentos}
+            totalGasto={totalGasto}
+            hoje={hoje}
+            disponivel={financeiroDisponivel}
+          />
+        </TabsContent>
+      )}
       {cliente && (
         <TabsContent value="pos-venda">
           <PosVendaPainel

@@ -53,8 +53,11 @@ import {
   type PosVenda,
   type Negocio,
   type Projeto,
+  type Recebimento,
   type TarefaAgenda,
 } from '@/types'
+import { resumoRecebimentos } from '@/lib/financeiro'
+import { FinanceiroCliente } from '@/components/financeiro/financeiro-cliente'
 
 function Dado({ rotulo, valor }: { rotulo: string; valor: string | null | undefined }) {
   return (
@@ -174,6 +177,12 @@ type Props = {
   indicadoPor: { id: string; nome: string } | null
   /** 'YYYY-MM-DD' calculado no servidor. */
   hoje: string
+  /** Parcelas de todas as obras do cliente. */
+  recebimentos: Recebimento[]
+  /** Quem está logado pode ver valores recebidos (ver podeVerFinanceiro). */
+  verFinanceiro: boolean
+  /** false antes de rodar o SQL do financeiro. */
+  financeiroDisponivel: boolean
   /** null antes de rodar o SQL do funil. */
   negocios: Negocio[] | null
   agora: number
@@ -196,7 +205,12 @@ export function ClientePainel({
   hoje,
   negocios,
   agora,
+  recebimentos,
+  verFinanceiro,
+  financeiroDisponivel,
 }: Props) {
+  const financeiro = resumoRecebimentos(recebimentos, hoje)
+  const mostrarFinanceiro = verFinanceiro && financeiroDisponivel
   const pendentesPv = pendentesPosVenda(posVenda)
   const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras, negocios ?? [])
   const numeros = numerosDoCliente(obras)
@@ -268,7 +282,10 @@ export function ClientePainel({
         </div>
       </header>
 
-      <Frame spacing="default" className="grid grid-cols-2 lg:grid-cols-4">
+      <Frame
+        spacing="default"
+        className={`grid grid-cols-2 ${mostrarFinanceiro ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
+      >
         <Numero
           rotulo="Contratado"
           valor={formatarMoeda(numeros.contratado)}
@@ -279,6 +296,23 @@ export function ClientePainel({
           valor={formatarMoeda(numeros.emProposta)}
           detalhe="Obras em planejamento"
         />
+        {mostrarFinanceiro && (
+          <>
+            <Numero
+              rotulo="Recebido"
+              valor={formatarMoeda(financeiro.recebido)}
+              detalhe={`${financeiro.parcelas} ${financeiro.parcelas === 1 ? 'parcela' : 'parcelas'} no total`}
+            />
+            <Numero
+              rotulo="A receber"
+              valor={formatarMoeda(financeiro.aReceber)}
+              detalhe={
+                financeiro.atrasado > 0 ? `${formatarMoeda(financeiro.atrasado)} atrasado` : 'Nada atrasado'
+              }
+              alerta={financeiro.atrasado > 0}
+            />
+          </>
+        )}
         <Numero
           rotulo="Obras ativas"
           valor={String(numeros.obrasAtivas)}
@@ -318,6 +352,14 @@ export function ClientePainel({
               Obras
               <span className="text-xs text-muted-foreground tabular-nums">{obras.length}</span>
             </TabsTrigger>
+            {mostrarFinanceiro && (
+              <TabsTrigger value="financeiro">
+                Financeiro
+                {financeiro.parcelasAtrasadas > 0 && (
+                  <span className="text-xs text-destructive tabular-nums">{financeiro.parcelasAtrasadas}</span>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="pos-venda">
               Pós-venda
               {pendentesPv > 0 && (
@@ -441,6 +483,11 @@ export function ClientePainel({
           </Frame>
         </TabsContent>
 
+        {mostrarFinanceiro && (
+          <TabsContent value="financeiro">
+            <FinanceiroCliente recebimentos={recebimentos} hoje={hoje} temObras={obras.length > 0} />
+          </TabsContent>
+        )}
         <TabsContent value="pos-venda">
           <PosVendaPainel
             itens={posVenda}

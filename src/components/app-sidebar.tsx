@@ -17,6 +17,7 @@ import {
   UsersIcon,
   HardHatIcon,
   SettingsIcon,
+  WalletIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -87,6 +88,7 @@ const NAVEGACAO = [
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
   { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
+  { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
 ]
 
@@ -294,6 +296,7 @@ const SECOES: Record<string, string> = {
   projetos: 'Projetos',
   funil: 'Funil',
   clientes: 'Clientes',
+  financeiro: 'Financeiro',
   equipe: 'Equipe',
   empresa: 'Empresa',
   ajustes: 'Ajustes',
