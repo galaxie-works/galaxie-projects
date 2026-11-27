@@ -65,7 +65,7 @@ alter table public.atividades add constraint atividades_tipo_check
   check (tipo in ('nota', 'ligacao', 'whatsapp', 'visita', 'reuniao', 'email', 'audio', 'tarefa', 'sistema'));
 
 -- negocio_id só vira chave estrangeira quando a tabela de negócios existir
--- (frente A). Rodar este arquivo de novo depois dela liga a FK.
+-- (frente A). A migration do funil, que cria negocios, liga a FK.
 do $$
 begin
   if to_regclass('public.negocios') is not null

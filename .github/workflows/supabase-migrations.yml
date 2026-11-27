@@ -3,12 +3,13 @@ name: Banco (Supabase)
 # Toda migration nova em supabase/migrations entra no banco sozinha quando o
 # PR é mergeado na main. Também dá para rodar à mão em Actions → "Banco
 # (Supabase)" → Run workflow.
+#
+# Não roda em pull_request de propósito: o token do Supabase só chega a código
+# que já está na main (revisado), nunca a código de um PR.
 
 on:
   push:
     branches: [main]
-    paths: ["supabase/migrations/**"]
-  pull_request:
     paths: ["supabase/migrations/**"]
   workflow_dispatch:
 
@@ -33,10 +34,5 @@ jobs:
             echo "::error::Falta o secret SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions)."
             exit 1
           fi
-      # No PR só lista o que vai rodar; no merge (main) aplica de verdade.
-      - name: Migrations pendentes (prévia)
-        if: github.event_name == 'pull_request'
-        run: node scripts/aplicar-migrations.mjs --dry-run
       - name: Aplicar migrations
-        if: github.event_name != 'pull_request'
         run: node scripts/aplicar-migrations.mjs

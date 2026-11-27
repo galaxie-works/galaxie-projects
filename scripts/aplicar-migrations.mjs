@@ -38,12 +38,14 @@ const literal = (s) => `'${s.replaceAll("'", "''")}'`;
 
 const arquivos = (await readdir(dir)).filter((f) => /^\d{14}_.+\.sql$/.test(f)).sort();
 
-await query(`
-  create schema if not exists supabase_migrations;
-  create table if not exists supabase_migrations.schema_migrations (
-    version text primary key, statements text[], name text
-  );
-`);
+if (!dryRun) {
+  await query(`
+    create schema if not exists supabase_migrations;
+    create table if not exists supabase_migrations.schema_migrations (
+      version text primary key, statements text[], name text
+    );
+  `);
+}
 const aplicadas = new Set(
   (await query("select version from supabase_migrations.schema_migrations")).map((r) => r.version),
 );
