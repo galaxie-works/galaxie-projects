@@ -61,6 +61,12 @@ export type DadosDps = {
     aliquotaIssqn?: number | null // %, só quando a prefeitura pede
     percentualTributosSimples?: number | null
   }
+  // Grupo IBS/CBS (reforma tributária). Destinatário = tomador.
+  ibscbs?: {
+    indicadorOperacao: string // cIndOp, 6 dígitos
+    cst: string // 3 dígitos
+    classificacao: string // cClassTrib, 6 dígitos
+  } | null
 }
 
 const so = (v: string | null | undefined) => (v ?? '').replace(/\D/g, '')
@@ -214,6 +220,19 @@ export function montarDps(d: DadosDps): { xml: string; id: string } {
     ),
   )
 
+  const ibscbs = d.ibscbs
+    ? grupo(
+        'IBSCBS',
+        el('finNFSe', '0'),
+        el('cIndOp', so(d.ibscbs.indicadorOperacao)),
+        el('indDest', '0'),
+        grupo(
+          'valores',
+          grupo('trib', grupo('gIBSCBS', el('CST', so(d.ibscbs.cst)), el('cClassTrib', so(d.ibscbs.classificacao)))),
+        ),
+      )
+    : ''
+
   const inf =
     `<infDPS Id="${id}">` +
     el('tpAmb', d.ambiente === 'producao' ? '1' : '2') +
@@ -228,6 +247,7 @@ export function montarDps(d: DadosDps): { xml: string; id: string } {
     toma +
     serv +
     valores +
+    ibscbs +
     '</infDPS>'
 
   return { xml: `<DPS xmlns="${NS_NFSE}" versao="${VERSAO_LEIAUTE}">${inf}</DPS>`, id }

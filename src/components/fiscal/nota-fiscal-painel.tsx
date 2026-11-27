@@ -71,6 +71,10 @@ const VAZIO: Omit<EmpresaFiscal, 'empresa_id'> = {
   iss_retido: false,
   percentual_tributos_simples: null,
   descricao_padrao: '',
+  ibscbs_ind_op: '',
+  ibscbs_cst: '000',
+  ibscbs_class_trib: '000001',
+  ibscbs_sempre: false,
   ambiente: 'homologacao',
   serie: '1',
   proximo_numero_homologacao: 1,
@@ -466,6 +470,68 @@ export function NotaFiscalPainel({
                   placeholder="Serviço de assentamento de pisos e revestimentos, com mão de obra."
                 />
               </Field>
+            </FieldGroup>
+          </FramePanel>
+          <FramePanel>
+            <FieldGroup>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">Reforma tributária (IBS/CBS)</span>
+                <span className="text-muted-foreground text-xs">
+                  {f.opcao_simples === '1'
+                    ? 'Obrigatório para quem não é do Simples desde 01/10/2026. Confirme os códigos com o seu contador.'
+                    : 'No Simples e no MEI ainda é opcional. Ligue só se o seu contador pedir.'}
+                </span>
+              </div>
+              {f.opcao_simples !== '1' && (
+                <Field orientation="horizontal">
+                  <Switch
+                    id="nf-ibscbs-sempre"
+                    checked={f.ibscbs_sempre}
+                    onCheckedChange={(v) => set('ibscbs_sempre', !!v)}
+                  />
+                  <FieldLabel htmlFor="nf-ibscbs-sempre">Informar IBS/CBS nas notas</FieldLabel>
+                </Field>
+              )}
+              {(f.opcao_simples === '1' || f.ibscbs_sempre) && (
+                <div className="grid gap-5 sm:grid-cols-3">
+                  <Field>
+                    <FieldLabel htmlFor="nf-cindop">Indicador da operação</FieldLabel>
+                    <Input
+                      id="nf-cindop"
+                      inputMode="numeric"
+                      className="tabular-nums"
+                      maxLength={6}
+                      value={f.ibscbs_ind_op ?? ''}
+                      onChange={(e) => set('ibscbs_ind_op', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <FieldDescription>cIndOp, 6 dígitos.</FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="nf-cst">CST IBS/CBS</FieldLabel>
+                    <Input
+                      id="nf-cst"
+                      inputMode="numeric"
+                      className="tabular-nums"
+                      maxLength={3}
+                      value={f.ibscbs_cst}
+                      onChange={(e) => set('ibscbs_cst', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <FieldDescription>000 = tributação integral.</FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="nf-classtrib">Classificação tributária</FieldLabel>
+                    <Input
+                      id="nf-classtrib"
+                      inputMode="numeric"
+                      className="tabular-nums"
+                      maxLength={6}
+                      value={f.ibscbs_class_trib}
+                      onChange={(e) => set('ibscbs_class_trib', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <FieldDescription>cClassTrib, 6 dígitos.</FieldDescription>
+                  </Field>
+                </div>
+              )}
             </FieldGroup>
           </FramePanel>
           <FramePanel>

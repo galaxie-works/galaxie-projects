@@ -40,6 +40,13 @@ create table if not exists public.empresa_fiscal (
   updated_at timestamptz not null default now()
 );
 
+-- Reforma tributária: grupo IBS/CBS da DPS. Obrigatório para quem não é do
+-- Simples desde 01/10/2026; opcional para o Simples até 2027.
+alter table public.empresa_fiscal add column if not exists ibscbs_ind_op text;
+alter table public.empresa_fiscal add column if not exists ibscbs_cst text not null default '000';
+alter table public.empresa_fiscal add column if not exists ibscbs_class_trib text not null default '000001';
+alter table public.empresa_fiscal add column if not exists ibscbs_sempre boolean not null default false;
+
 alter table public.empresa_fiscal enable row level security;
 grant select, insert, update, delete on public.empresa_fiscal to authenticated;
 

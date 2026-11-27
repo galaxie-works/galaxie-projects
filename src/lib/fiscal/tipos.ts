@@ -27,6 +27,10 @@ export type EmpresaFiscal = {
   iss_retido: boolean
   percentual_tributos_simples: number | null
   descricao_padrao: string | null
+  ibscbs_ind_op: string | null
+  ibscbs_cst: string
+  ibscbs_class_trib: string
+  ibscbs_sempre: boolean
   ambiente: 'homologacao' | 'producao'
   serie: string
   proximo_numero_homologacao: number

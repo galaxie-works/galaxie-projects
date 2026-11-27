@@ -203,7 +203,7 @@ export function NotasObra({
     descricao: config?.descricaoPadrao ? `${config.descricaoPadrao}\nObra: ${projeto.nome}` : `Serviços da obra ${projeto.nome}`,
     recebimentos,
     parcelasComNota: (notas ?? [])
-      .filter((n) => n.recebimento_id && (n.status === 'autorizada' || n.status === 'processando'))
+      .filter((n) => n.recebimento_id && (n.status === 'autorizada' || n.status === 'processando' || n.status === 'erro_envio'))
       .map((n) => n.recebimento_id as string),
     producao: !!config?.producao,
   }

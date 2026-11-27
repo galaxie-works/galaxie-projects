@@ -44,6 +44,9 @@ export async function salvarDadosFiscais(dados: Partial<EmpresaFiscal>): Promise
     codigo_municipio: so(dados.codigo_municipio) || null,
     codigo_tributacao_nacional: so(dados.codigo_tributacao_nacional) || '070201',
     codigo_tributacao_municipal: so(dados.codigo_tributacao_municipal) || null,
+    ibscbs_ind_op: so(dados.ibscbs_ind_op) || null,
+    ibscbs_cst: so(dados.ibscbs_cst) || '000',
+    ibscbs_class_trib: so(dados.ibscbs_class_trib) || '000001',
     telefone: so(dados.telefone) || null,
     updated_at: new Date().toISOString(),
   }
@@ -179,6 +182,14 @@ export async function emitirNota(d: DadosEmissao): Promise<Resultado<{ id: strin
     return { ok: false, erro: 'Nota de obra precisa do CNO ou do endereço da obra.' }
   }
 
+  const precisaIbsCbs = fiscal.opcao_simples === '1' || fiscal.ibscbs_sempre
+  if (precisaIbsCbs && so(fiscal.ibscbs_ind_op).length !== 6) {
+    return {
+      ok: false,
+      erro: 'Falta o código indicador da operação (IBS/CBS) em Empresa > Nota fiscal. Peça ao seu contador.',
+    }
+  }
+
   const ambiente = fiscal.ambiente as Ambiente
   const { data: numero, error: erroNumero } = await supabase.rpc('reservar_numero_dps', {
     p_empresa_id: empresaId,
@@ -234,6 +245,13 @@ export async function emitirNota(d: DadosEmissao): Promise<Resultado<{ id: strin
       aliquotaIssqn: fiscal.aliquota_iss,
       percentualTributosSimples: fiscal.percentual_tributos_simples,
     },
+    ibscbs: precisaIbsCbs
+      ? {
+          indicadorOperacao: fiscal.ibscbs_ind_op!,
+          cst: fiscal.ibscbs_cst || '000',
+          classificacao: fiscal.ibscbs_class_trib || '000001',
+        }
+      : null,
   })
 
   let assinada: string
@@ -339,6 +357,14 @@ export async function conferirNota(notaId: string): Promise<Resultado<{ status: 
     }
     const n = await consultarNfse(nota.ambiente as Ambiente, cert, chave)
     const xmlNfse = descompactar(n.corpo?.nfseXmlGZipB64)
+    if (n.status < 200 || n.status >= 300 || !xmlNfse) {
+      // A nota existe, mas o XML não veio: guarda a chave e deixa conferir de novo.
+      await supabase.from('notas_fiscais').update({ chave_acesso: chave }).eq('id', notaId)
+      return {
+        ok: false,
+        erro: resumoMensagens(mensagensDeErro(n.corpo)) || `A nota existe, mas a Sefin não devolveu o XML (${n.status}). Tente de novo.`,
+      }
+    }
     await supabase
       .from('notas_fiscais')
       .update({
