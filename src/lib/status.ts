@@ -14,7 +14,6 @@ export const VARIANTE_STATUS_PROJETO: Record<StatusProjeto, VarianteBadge> = {
   em_execucao: 'primary-light',
   pausado: 'warning-light',
   completo: 'success-light',
-  cancelado: 'destructive-light',
 }
 
 export const VARIANTE_STATUS_ETAPA: Record<StatusEtapa, VarianteBadge> = {
@@ -24,7 +23,7 @@ export const VARIANTE_STATUS_ETAPA: Record<StatusEtapa, VarianteBadge> = {
 }
 
 export function projetoAtrasado(p: { data_prazo: string | null; status: StatusProjeto }): boolean {
-  if (!p.data_prazo || p.status === 'completo' || p.status === 'cancelado') return false
+  if (!p.data_prazo || p.status === 'completo') return false
   return p.data_prazo.slice(0, 10) < new Date().toISOString().slice(0, 10)
 }
 

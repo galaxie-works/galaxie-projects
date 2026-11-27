@@ -10,13 +10,12 @@ const NEGOCIO_FECHADO: FaseNegocio[] = ['contrato_assinado', 'ganho']
 // Fase automática pelo que está mais avançado entre obras e negócios:
 // obra em execução/pausada ou contrato fechado = cliente; obra em
 // planejamento ou orçamento enviado = proposta; negócio no começo do funil =
-// prospect; só obras completas = pós-venda; nada = lead. Obras canceladas e
-// negócios perdidos não contam.
+// prospect; só obras completas = pós-venda; nada = lead. Negócios perdidos
+// não contam.
 export function faseAutomatica(obras: ObraResumo[], negocios: NegocioResumo[] = []): FaseCliente {
   const temNegocio = (fases: FaseNegocio[]) => negocios.some((n) => fases.includes(n.fase))
   if (obras.some((o) => o.status === 'em_execucao' || o.status === 'pausado')) return 'cliente'
-  if (temNegocio(NEGOCIO_FECHADO) && !obras.every((o) => o.status === 'completo' || o.status === 'cancelado'))
-    return 'cliente'
+  if (temNegocio(NEGOCIO_FECHADO) && !obras.every((o) => o.status === 'completo')) return 'cliente'
   if (obras.some((o) => o.status === 'planejamento') || temNegocio(NEGOCIO_PROPOSTA)) return 'proposta'
   if (temNegocio(NEGOCIO_PROSPECT)) return 'prospect'
   if (obras.some((o) => o.status === 'completo')) return 'pos_venda'
@@ -45,18 +44,12 @@ export function numerosDoCliente(obras: ObraResumo[]): NumerosCliente {
   let emProposta = 0
   let obrasAtivas = 0
   for (const o of obras) {
-    if (o.status === 'cancelado') continue
     const valor = Number(o.orcamento_total ?? 0)
     if (o.status === 'planejamento') emProposta += valor
     else contratado += valor
     if (o.status === 'em_execucao' || o.status === 'pausado') obrasAtivas += 1
   }
-  return {
-    contratado,
-    emProposta,
-    obrasAtivas,
-    totalObras: obras.filter((o) => o.status !== 'cancelado').length,
-  }
+  return { contratado, emProposta, obrasAtivas, totalObras: obras.length }
 }
 
 // Situação do follow-up em relação a hoje ('YYYY-MM-DD').

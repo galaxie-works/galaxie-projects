@@ -22,7 +22,6 @@ export default async function ProjetosPage() {
     .from('projetos')
     .select('*, clientes(nome)')
     .eq('empresa_id', empresa.id)
-    .neq('status', 'cancelado')
     .order('created_at', { ascending: false })
 
   const lista = (projetos as Projeto[]) ?? []

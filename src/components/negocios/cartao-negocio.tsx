@@ -5,6 +5,7 @@ import {
   CalculatorIcon,
   CalendarIcon,
   EllipsisIcon,
+  FolderKanbanIcon,
   PencilIcon,
   RotateCcwIcon,
   ThumbsDownIcon,
@@ -51,7 +52,11 @@ export function CartaoNegocio({ negocio: n, acoes, agora, mostrarFase, mostrarCl
   return (
     <Item variant="outline" size="sm" className="bg-background">
       <ItemContent className="min-w-0">
-        <ItemTitle className="line-clamp-2">{n.titulo}</ItemTitle>
+        <ItemTitle className="line-clamp-2">
+          <Link href={`/funil/${n.id}`} className="hover:underline">
+            {n.titulo}
+          </Link>
+        </ItemTitle>
         {mostrarCliente && n.clientes?.nome && (
           <Link
             href={`/clientes/${n.cliente_id}`}
@@ -109,7 +114,7 @@ export function CartaoNegocio({ negocio: n, acoes, agora, mostrarFase, mostrarCl
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => acoes.orcamento(n)}>
               <CalculatorIcon />
-              {n.projeto_id ? 'Abrir orçamento' : 'Montar orçamento'}
+              {n.fase === 'ganho' ? 'Orçamento da obra' : Number(n.orcamento_total) > 0 ? 'Abrir orçamento' : 'Montar orçamento'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {aberto ? (
@@ -123,12 +128,17 @@ export function CartaoNegocio({ negocio: n, acoes, agora, mostrarFase, mostrarCl
                   Marcar perdido
                 </DropdownMenuItem>
               </>
-            ) : (
+            ) : n.fase === 'perdido' ? (
               <DropdownMenuItem onClick={() => acoes.mover(n, 'negociacao', n.ordem)}>
                 <RotateCcwIcon />
                 Reabrir em Negociação
               </DropdownMenuItem>
-            )}
+            ) : n.projeto_id ? (
+              <DropdownMenuItem render={<Link href={`/projetos/${n.projeto_id}`} />}>
+                <FolderKanbanIcon />
+                Abrir obra
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={() => acoes.excluir(n)}>
               <Trash2Icon />

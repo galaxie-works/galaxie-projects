@@ -52,7 +52,7 @@ export default async function ClientesPage() {
         ...c,
         fase: faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras, negocios ?? []),
         contratado: numerosDoCliente(obras).contratado,
-        totalProjetos: obras.filter((o) => o.status !== 'cancelado').length,
+        totalProjetos: obras.length,
       }
     }
   )

@@ -68,16 +68,15 @@ const PONTO_STATUS: Record<StatusProjeto, string> = {
   em_execucao: 'bg-primary',
   pausado: 'bg-warning',
   completo: 'bg-success',
-  cancelado: 'bg-destructive',
 }
 
 type FiltroStatus = StatusProjeto | 'todos'
 
 const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
   { value: 'todos', label: 'Todos os status' },
-  ...(Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][])
-    .filter(([value]) => value !== 'cancelado')
-    .map(([value, label]) => ({ value, label })),
+  ...(Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][]).map(
+    ([value, label]) => ({ value, label })
+  ),
 ]
 
 const NAVEGACAO = [
@@ -318,7 +317,7 @@ export function AppHeader({
       trilha.push({ rotulo: 'Importar planilha' })
     } else if (sub) {
       const lista = secao === 'projetos' ? projetos : secao === 'clientes' ? clientes : []
-      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? 'Detalhes' })
+      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? (secao === 'funil' ? 'Negócio' : 'Detalhes') })
     }
   }
   const emCamada = Boolean(sub) && Boolean(SECOES[secao ?? ''])

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { ganharNegocio, moverNegocio, obraDoOrcamento, perderNegocio } from '@/lib/negocios'
+import { ganharNegocio, moverNegocio, perderNegocio } from '@/lib/negocios'
 import { FASE_NEGOCIO_LABEL, type FaseNegocio, type MembroEquipe, type Negocio } from '@/types'
 import { ConfirmarExclusao } from '@/components/projetos/confirmar-exclusao'
 import { NegocioDialog, type ClienteOpcao } from './negocio-dialog'
@@ -13,7 +13,7 @@ import { PerderDialog } from './perder-dialog'
 export type AcoesNegocio = {
   novo: (fase?: FaseNegocio) => void
   editar: (n: Negocio) => void
-  orcamento: (n: Negocio) => Promise<void>
+  orcamento: (n: Negocio) => void
   ganhar: (n: Negocio) => Promise<boolean>
   perder: (n: Negocio) => void
   mover: (n: Negocio, fase: FaseNegocio, ordem: number) => Promise<boolean>
@@ -39,21 +39,24 @@ export function useAcoesNegocio({ empresaId, equipe, clientes, clienteId, proxim
   const acoes: AcoesNegocio = {
     novo: (fase) => setDialogo({ fase }),
     editar: (negocio) => setDialogo({ negocio }),
-    async orcamento(n) {
-      const { error, projetoId } = await obraDoOrcamento(createClient(), n)
-      if (error || !projetoId) {
-        toast.error('Não foi possível abrir o orçamento', { description: error ?? undefined })
-        return
-      }
-      router.push(`/projetos/${projetoId}?aba=orcamento`)
+    // Até ganhar, o orçamento mora no negócio; depois, na obra.
+    orcamento(n) {
+      router.push(
+        n.fase === 'ganho' && n.projeto_id
+          ? `/projetos/${n.projeto_id}?aba=orcamento`
+          : `/funil/${n.id}?aba=orcamento`
+      )
     },
     async ganhar(n) {
-      const { error } = await ganharNegocio(createClient(), n)
+      const { error, projetoId } = await ganharNegocio(createClient(), n)
       if (error) {
         toast.error('Não foi possível marcar como ganho', { description: error })
         return false
       }
-      toast.success(`${n.titulo}: ganho`, { description: 'A obra está em Planejamento até começar.' })
+      toast.success(`${n.titulo}: ganho`, {
+        description: 'A obra foi criada em Planejamento com o orçamento do negócio.',
+        action: projetoId ? { label: 'Abrir obra', onClick: () => router.push(`/projetos/${projetoId}`) } : undefined,
+      })
       router.refresh()
       return true
     },
@@ -107,7 +110,9 @@ export function useAcoesNegocio({ empresaId, equipe, clientes, clienteId, proxim
         titulo="Excluir este negócio?"
         descricao={
           excluindo
-            ? `“${excluindo.titulo}” sai do funil. A obra e o orçamento ligados continuam.`
+            ? excluindo.projeto_id
+              ? `“${excluindo.titulo}” sai do funil. A obra criada a partir dele continua.`
+              : `“${excluindo.titulo}” sai do funil junto com o orçamento feito nele.`
             : ''
         }
         rotulo="Excluir negócio"

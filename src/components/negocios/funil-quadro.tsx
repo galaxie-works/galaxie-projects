@@ -57,6 +57,11 @@ export function FunilQuadro({ negocios, empresaId, equipe, clientes, agora }: Pr
     const movido = FASES_NEGOCIO.flatMap((f) => final[f].filter((n) => n.fase !== f))[0]
 
     if (movido && de !== para) {
+      // Negócio ganho já virou obra: não volta para o funil.
+      if (movido.fase === 'ganho') {
+        toast.info('Este negócio já virou obra', { description: 'Abra a obra para acompanhar.' })
+        return
+      }
       // Ganho e perdido têm regra própria (obra e motivo de perda).
       if (fase === 'ganho') return void acoes.ganhar(movido)
       if (fase === 'perdido') return acoes.perder(movido)

@@ -7,7 +7,6 @@ export type StatusProjeto =
   | 'em_execucao'
   | 'pausado'
   | 'completo'
-  | 'cancelado'
 
 export type StatusEtapa = 'pendente' | 'em_andamento' | 'concluida'
 
@@ -98,7 +97,6 @@ export const STATUS_PROJETO_LABEL: Record<StatusProjeto, string> = {
   em_execucao: 'Em execução',
   pausado: 'Pausado',
   completo: 'Completo',
-  cancelado: 'Cancelado',
 }
 
 export const STATUS_ETAPA_LABEL: Record<StatusEtapa, string> = {
@@ -297,6 +295,8 @@ export interface Negocio {
   titulo: string
   fase: FaseNegocio
   valor_estimado: number | null
+  /** Soma do orçamento por área feito no negócio. */
+  orcamento_total: number
   valor_fechado: number | null
   probabilidade: number | null
   previsao_fechamento: string | null
@@ -309,5 +309,5 @@ export interface Negocio {
   created_at: string
   clientes?: { nome: string; telefone: string | null } | null
   equipe?: { nome: string } | null
-  projetos?: { nome: string; status: StatusProjeto; orcamento_total: number | null } | null
+  projetos?: { nome: string; status: StatusProjeto } | null
 }

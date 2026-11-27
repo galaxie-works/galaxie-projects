@@ -27,7 +27,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .from('projetos')
     .select('*, clientes(nome)')
     .eq('empresa_id', empresa.id)
-    .neq('status', 'cancelado')
     .order('created_at', { ascending: false })
 
   const { data: clientes } = await supabase

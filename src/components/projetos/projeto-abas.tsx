@@ -75,7 +75,7 @@ export function ProjetoAbas({
       </TabsContent>
       <TabsContent value="orcamento">
         <OrcamentoAba
-          projetoId={projeto.id}
+          dono={{ projetoId: projeto.id }}
           empresaId={projeto.empresa_id}
           areas={areas}
           onAreasChange={setAreas}
