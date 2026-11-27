@@ -42,7 +42,14 @@ async function sincronizarAssinatura(s: Stripe, db: SupabaseClient, sub: Stripe.
   const item = sub.items.data[0]
   const chave = lerLookupKey(item?.price.lookup_key)
   const plano = planoPorId(chave?.plano ?? sub.metadata?.plano)
-  const fimSeg = sub.status === 'canceled' ? (sub.ended_at ?? item?.current_period_end) : item?.current_period_end
+  // Atrasada: vale até onde foi pago (início do período em aberto), não até o
+  // fim do período que ainda não foi pago; a tolerância de 7 dias conta daí.
+  const fimSeg =
+    sub.status === 'canceled'
+      ? (sub.ended_at ?? item?.current_period_end)
+      : status === 'atrasada'
+        ? item?.current_period_start
+        : item?.current_period_end
 
   const { error } = await db
     .from('assinaturas')

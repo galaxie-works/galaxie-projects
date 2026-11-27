@@ -23,8 +23,13 @@ export async function POST(request: Request) {
   try {
     const cliente = await garantirClienteStripe(s, dados)
 
-    const assinaturaAtual = dados.assinatura?.gateway_assinatura_id
-    if (assinaturaAtual && ['ativa', 'atrasada'].includes(dados.assinatura?.status ?? '')) {
+    // Já tem assinatura no Stripe (mesmo que o webhook ainda não tenha chegado):
+    // trocar de plano vai pelo portal, para não cobrar duas vezes.
+    const existentes = await s.subscriptions.list({ customer: cliente, status: 'all', limit: 10 })
+    const viva = existentes.data.find((x) =>
+      ['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'].includes(x.status),
+    )
+    if (viva || (dados.assinatura?.gateway_assinatura_id && ['ativa', 'atrasada'].includes(dados.assinatura?.status ?? ''))) {
       const portal = await s.billingPortal.sessions.create({
         customer: cliente,
         return_url: `${base}/assinatura`,
@@ -32,15 +37,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: portal.url })
     }
 
+    // Um checkout aberto por vez: o anterior (outra aba, tentativa antiga) expira.
+    const abertos = await s.checkout.sessions.list({ customer: cliente, status: 'open', limit: 10 })
+    for (const sessao of abertos.data) {
+      if (sessao.mode === 'subscription') await s.checkout.sessions.expire(sessao.id).catch(() => null)
+    }
+
     const preco = await precoPorChave(s, lookupKey(plano.id, ciclo))
     if (!preco) {
       return NextResponse.json({ erro: 'Esse plano ainda não foi cadastrado no Stripe.' }, { status: 503 })
     }
 
-    // Quem assina durante o teste não perde os dias que faltam.
+    // Quem assina durante o teste não perde os dias que faltam. O Stripe exige
+    // pelo menos 48 h de teste; nos últimos dois dias, ganha o que faltar.
     const fimTeste = dados.assinatura?.status === 'teste' ? Date.parse(dados.assinatura.teste_fim) : NaN
     const trialEnd =
-      Number.isFinite(fimTeste) && fimTeste - Date.now() > DOIS_DIAS ? Math.floor(fimTeste / 1000) : undefined
+      Number.isFinite(fimTeste) && fimTeste > Date.now()
+        ? Math.ceil(Math.max(fimTeste, Date.now() + DOIS_DIAS + 60_000) / 1000)
+        : undefined
 
     const sessao = await s.checkout.sessions.create({
       mode: 'subscription',
