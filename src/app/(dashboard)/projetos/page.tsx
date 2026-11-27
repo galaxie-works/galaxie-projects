@@ -48,7 +48,7 @@ export default async function ProjetosPage() {
   }))
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+    <div className="flex flex-col p-4 md:p-6">
       <ProjetosPainel empresaNome={empresa.nome} projetos={linhas} erro={error?.message ?? null} />
     </div>
   )
