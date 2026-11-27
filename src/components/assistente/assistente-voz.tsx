@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { BUCKET_FOTOS } from '@/lib/equipe'
 import { useDitado } from '@/hooks/use-ditado'
 import type {
   AcaoAssistente,
@@ -317,11 +318,15 @@ export function AssistenteVoz({ configurado, empresaId }: { configurado: boolean
   }
 
   async function confirmarExclusao(a: Excluir): Promise<boolean> {
-    const { error } = await createClient().from(a.tabela).delete().eq('id', a.id)
+    const supabase = createClient()
+    const { data: apagados, error } = await supabase.from(a.tabela).delete().eq('id', a.id).select('*')
     if (error) {
       toast.error(`Não foi possível excluir: ${error.message}`)
       return false
     }
+    // Pessoa da equipe com foto: apaga também o arquivo no Storage.
+    const foto = a.tabela === 'equipe' ? (apagados?.[0] as { foto_caminho?: string | null } | undefined)?.foto_caminho : null
+    if (foto) await supabase.storage.from(BUCKET_FOTOS).remove([foto])
     toast.success(`Excluído: ${a.descricao}`)
     if (ativaId) adicionarMensagem(ativaId, { papel: 'assistente', texto: `Excluí **${a.descricao}**.` })
     if (pathname.includes(a.id)) router.push(`/${a.tabela}`)

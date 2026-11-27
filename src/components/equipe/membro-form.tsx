@@ -122,20 +122,27 @@ export function MembroForm({
   }
 
   // Preenche endereço pelo CEP (ViaCEP). Se falhar, a pessoa digita.
+  // Campos vazios ou preenchidos por um CEP anterior são trocados; o que a
+  // pessoa digitou à mão fica. Respostas atrasadas de CEPs antigos são ignoradas.
+  const ultimoCep = useRef('')
+  const doCep = useRef<Partial<Record<'endereco' | 'bairro' | 'cidade' | 'uf', string>>>({})
   async function buscarCep(cep: string) {
     const d = cep.replace(/\D/g, '')
+    ultimoCep.current = d
     if (d.length !== 8) return
     try {
       const r = await fetch(`https://viacep.com.br/ws/${d}/json/`)
       const j = await r.json()
-      if (j.erro) return
-      setC((atual) => ({
-        ...atual,
-        endereco: atual.endereco || j.logradouro || '',
-        bairro: atual.bairro || j.bairro || '',
-        cidade: atual.cidade || j.localidade || '',
-        uf: atual.uf || j.uf || '',
-      }))
+      if (j.erro || ultimoCep.current !== d) return
+      const novos = { endereco: j.logradouro || '', bairro: j.bairro || '', cidade: j.localidade || '', uf: j.uf || '' }
+      setC((atual) => {
+        const prox = { ...atual }
+        for (const k of ['endereco', 'bairro', 'cidade', 'uf'] as const) {
+          if (!atual[k] || atual[k] === doCep.current[k]) prox[k] = novos[k]
+        }
+        return prox
+      })
+      doCep.current = novos
     } catch {
       // sem rede ou serviço fora: segue sem preencher
     }
