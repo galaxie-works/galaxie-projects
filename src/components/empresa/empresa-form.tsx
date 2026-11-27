@@ -39,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { CertificadoPublico, EmpresaFiscal } from '@/lib/fiscal/tipos'
 import type { TabelaPrecos } from '@/lib/orcamento'
 import type { Empresa } from '@/types'
+import { emiteNotaFiscal } from '@/lib/assinatura'
 
 // Texto longo com ditado: a fala é acrescentada ao que já estava escrito.
 function TextoComVoz({
@@ -101,6 +102,8 @@ export function EmpresaForm({
   const [tipo, setTipo] = useState<'PF' | 'PJ'>(empresa.tipo_pessoa ?? 'PJ')
   const [cpf, setCpf] = useState(empresa.cpf ?? '')
   const pf = tipo === 'PF'
+  // Nota fiscal só para PJ, pelo tipo já salvo (trocar e salvar atualiza a aba).
+  const emiteNota = emiteNotaFiscal(empresa.tipo_pessoa)
   const [descricao, setDescricao] = useState(empresa.descricao ?? '')
   const [modoOperacao, setModoOperacao] = useState(empresa.modo_operacao ?? '')
   const [servicos, setServicos] = useState<string[]>(empresa.servicos ?? [])
@@ -198,10 +201,12 @@ export function EmpresaForm({
               Pós-venda
             </TabsTrigger>
           )}
-          <TabsTrigger value="nota-fiscal" className="flex-none md:flex-1">
-            <ReceiptTextIcon />
-            Nota fiscal
-          </TabsTrigger>
+          {emiteNota && (
+            <TabsTrigger value="nota-fiscal" className="flex-none md:flex-1">
+              <ReceiptTextIcon />
+              Nota fiscal
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="dados" className="min-w-0">
@@ -341,6 +346,7 @@ export function EmpresaForm({
 </form>
         </TabsContent>
 
+        {emiteNota && (
         <TabsContent value="nota-fiscal" className="min-w-0">
           <NotaFiscalPainel
             fiscal={fiscal}
@@ -350,6 +356,7 @@ export function EmpresaForm({
             empresaCnpj={cnpj || null}
           />
         </TabsContent>
+        )}
 
         {posVendaDisponivel && (
           <TabsContent value="pos-venda" className="min-w-0">
