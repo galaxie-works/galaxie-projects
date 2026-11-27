@@ -30,9 +30,40 @@ export interface MembroEquipe {
   id: string
   empresa_id: string
   nome: string
+  /** Profissão (obrigatória nos cadastros novos). */
   funcao: string | null
+  /** Telefone profissional. */
   telefone: string | null
+  foto_caminho?: string | null
+  telefone_pessoal?: string | null
+  email?: string | null
+  cpf?: string | null
+  data_nascimento?: string | null
+  cep?: string | null
+  endereco?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  uf?: string | null
+  vinculo?: VinculoEquipe | null
+  valor_diaria?: number | null
+  chave_pix?: string | null
+  data_inicio?: string | null
+  contato_emergencia_nome?: string | null
+  contato_emergencia_telefone?: string | null
+  observacoes?: string | null
   created_at: string
+}
+
+export type VinculoEquipe = 'clt' | 'autonomo' | 'mei' | 'empreiteiro' | 'diarista' | 'socio' | 'outro'
+
+export const VINCULO_EQUIPE_LABEL: Record<VinculoEquipe, string> = {
+  clt: 'CLT',
+  autonomo: 'Autônomo',
+  mei: 'MEI',
+  empreiteiro: 'Empreiteiro',
+  diarista: 'Diarista',
+  socio: 'Sócio',
+  outro: 'Outro',
 }
 
 export interface Cliente {

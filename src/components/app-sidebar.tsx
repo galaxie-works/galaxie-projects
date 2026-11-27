@@ -330,12 +330,14 @@ export function AppHeader({
   if (secao && SECOES[secao]) {
     trilha.push({ rotulo: SECOES[secao], href: sub ? `/${secao}` : undefined })
     if (sub === 'novo') {
-      trilha.push({ rotulo: secao === 'projetos' ? 'Novo projeto' : 'Novo cadastro' })
+      trilha.push({
+        rotulo: secao === 'projetos' ? 'Novo projeto' : secao === 'equipe' ? 'Nova pessoa' : 'Novo cadastro',
+      })
     } else if (sub === 'importar') {
       trilha.push({ rotulo: 'Importar planilha' })
     } else if (sub) {
       const lista = secao === 'projetos' ? projetos : secao === 'clientes' ? clientes : []
-      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? (secao === 'funil' ? 'Negócio' : 'Detalhes') })
+      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? (secao === 'funil' ? 'Negócio' : secao === 'equipe' ? 'Pessoa' : 'Detalhes') })
     }
   }
   const emCamada = Boolean(sub) && Boolean(SECOES[secao ?? ''])

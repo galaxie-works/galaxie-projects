@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { CampoComVoz } from '@/components/clientes/campo-com-voz'
-import { formatarTelefone, paraE164 } from '@/components/clientes/telefone'
+import { formatarTelefone } from '@/components/clientes/telefone'
 import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
-import { PhoneInput } from '@/components/reui/phone-input'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -18,17 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +34,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import {
   Item,
   ItemActions,
@@ -56,150 +45,21 @@ import {
 } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
 import { iniciais } from '@/lib/formato'
+import { BUCKET_FOTOS } from '@/lib/equipe'
 import type { MembroEquipe } from '@/types'
 
-type Rascunho = { id: string | null; nome: string; funcao: string; telefone: string }
-
-const VAZIO: Rascunho = { id: null, nome: '', funcao: '', telefone: '' }
-
-function MembroDialog({
-  aberto,
-  onAbertoChange,
-  inicial,
-  onSalvar,
-}: {
-  aberto: boolean
-  onAbertoChange: (aberto: boolean) => void
-  inicial: Rascunho
-  onSalvar: (r: Rascunho) => Promise<string | null>
-}) {
-  const [rascunho, setRascunho] = useState(inicial)
-  const [tentou, setTentou] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
-  const [salvando, setSalvando] = useState(false)
-  const editando = inicial.id !== null
-  const erroNome = tentou && !rascunho.nome.trim() ? 'Informe o nome da pessoa.' : null
-
-  async function enviar(e: React.FormEvent) {
-    e.preventDefault()
-    setTentou(true)
-    if (!rascunho.nome.trim()) return
-    setSalvando(true)
-    setErro(null)
-    const falha = await onSalvar(rascunho)
-    setSalvando(false)
-    if (falha) setErro(falha)
-  }
-
-  return (
-    <Dialog open={aberto} onOpenChange={(aberto) => !salvando && onAbertoChange(aberto)}>
-      <DialogContent>
-        <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
-          <DialogHeader>
-            <DialogTitle>{editando ? 'Editar pessoa' : 'Adicionar pessoa'}</DialogTitle>
-            <DialogDescription>Quem trabalha com você nas obras.</DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field data-invalid={!!erroNome || undefined}>
-              <FieldLabel htmlFor="membro-nome">Nome</FieldLabel>
-              <CampoComVoz
-                id="membro-nome"
-                value={rascunho.nome}
-                onChange={(nome) => setRascunho((r) => ({ ...r, nome }))}
-                placeholder="Josué Ferreira"
-                invalido={!!erroNome}
-                autoFocus
-              />
-              <FieldError>{erroNome}</FieldError>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="membro-funcao">Função</FieldLabel>
-              <CampoComVoz
-                id="membro-funcao"
-                value={rascunho.funcao}
-                onChange={(funcao) => setRascunho((r) => ({ ...r, funcao }))}
-                placeholder="Pedreiro, assentador de porcelanato"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="membro-telefone">Telefone</FieldLabel>
-              <PhoneInput
-                id="membro-telefone"
-                defaultCountry="BR"
-                value={rascunho.telefone}
-                onChange={(telefone) => setRascunho((r) => ({ ...r, telefone: telefone ?? '' }))}
-                placeholder="(11) 98765-4321"
-              />
-            </Field>
-            <FieldError>{erro}</FieldError>
-          </FieldGroup>
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" disabled={salvando} />}>
-              Cancelar
-            </DialogClose>
-            <Button type="submit" disabled={salvando}>
-              {salvando && <Spinner data-icon="inline-start" />}
-              {editando ? 'Salvar' : 'Adicionar'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 export function EquipeManager({
-  empresaId,
   equipeInicial,
+  fotos,
 }: {
-  empresaId: string
   equipeInicial: MembroEquipe[]
+  fotos: Record<string, string>
 }) {
   const router = useRouter()
   const supabase = createClient()
   const [equipe, setEquipe] = useState(equipeInicial)
-  const [dialogo, setDialogo] = useState<{ aberto: boolean; inicial: Rascunho; chave: number }>({
-    aberto: false,
-    inicial: VAZIO,
-    chave: 0,
-  })
   const [removendo, setRemovendo] = useState<MembroEquipe | null>(null)
   const [excluindo, setExcluindo] = useState(false)
-
-  function abrir(inicial: Rascunho) {
-    setDialogo((d) => ({ aberto: true, inicial, chave: d.chave + 1 }))
-  }
-
-  async function salvar(r: Rascunho): Promise<string | null> {
-    const campos = {
-      nome: r.nome.trim(),
-      funcao: r.funcao.trim() || null,
-      telefone: r.telefone || null,
-    }
-    if (r.id) {
-      const { data, error } = await supabase
-        .from('equipe')
-        .update(campos)
-        .eq('id', r.id)
-        .select('*')
-        .single()
-      if (error || !data) return error?.message ?? 'Erro ao salvar.'
-      setEquipe((e) => e.map((m) => (m.id === r.id ? (data as MembroEquipe) : m)))
-      toast.success('Dados atualizados')
-    } else {
-      const { data, error } = await supabase
-        .from('equipe')
-        .insert({ empresa_id: empresaId, ...campos })
-        .select('*')
-        .single()
-      if (error || !data) return error?.message ?? 'Erro ao adicionar.'
-      setEquipe((e) => [...e, data as MembroEquipe])
-      toast.success(`${campos.nome} entrou na equipe`)
-    }
-    setDialogo((d) => ({ ...d, aberto: false }))
-    router.refresh()
-    return null
-  }
 
   async function confirmarRemocao() {
     if (!removendo) return
@@ -210,6 +70,7 @@ export function EquipeManager({
       toast.error('Não foi possível remover', { description: error.message })
       return
     }
+    if (removendo.foto_caminho) await supabase.storage.from(BUCKET_FOTOS).remove([removendo.foto_caminho])
     setEquipe((e) => e.filter((m) => m.id !== removendo.id))
     toast.success(`${removendo.nome} saiu da equipe`)
     setRemovendo(null)
@@ -225,7 +86,7 @@ export function EquipeManager({
             Pessoas que você escala como responsáveis nas etapas.
           </p>
         </div>
-        <Button type="button" onClick={() => abrir(VAZIO)}>
+        <Button nativeButton={false} render={<Link href="/equipe/novo" />}>
           <PlusIcon data-icon="inline-start" />
           Adicionar pessoa
         </Button>
@@ -255,7 +116,7 @@ export function EquipeManager({
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Button type="button" onClick={() => abrir(VAZIO)}>
+                <Button nativeButton={false} render={<Link href="/equipe/novo" />}>
                   <PlusIcon data-icon="inline-start" />
                   Adicionar pessoa
                 </Button>
@@ -264,30 +125,39 @@ export function EquipeManager({
           ) : (
             <ItemGroup>
               {equipe.map((m) => {
-                const telefone = formatarTelefone(m.telefone)
+                const detalhes = [
+                  m.funcao,
+                  formatarTelefone(m.telefone || m.telefone_pessoal),
+                  [m.cidade, m.uf].filter(Boolean).join(' / '),
+                ].filter(Boolean) as string[]
                 return (
-                  <Item key={m.id}>
+                  <Item key={m.id} className="hover:bg-muted/50 relative transition-colors">
                     <ItemMedia>
-                      <Avatar>
+                      <Avatar size="lg">
+                        {fotos[m.id] && <AvatarImage src={fotos[m.id]} alt="" />}
                         <AvatarFallback>{iniciais(m.nome)}</AvatarFallback>
                       </Avatar>
                     </ItemMedia>
                     <ItemContent className="min-w-0">
-                      <ItemTitle className="truncate">{m.nome}</ItemTitle>
-                      {(m.funcao || telefone) && (
+                      <ItemTitle className="truncate">
+                        <Link href={`/equipe/${m.id}`} className="after:absolute after:inset-0">
+                          {m.nome}
+                        </Link>
+                      </ItemTitle>
+                      {detalhes.length > 0 && (
                         <ItemDescription className="flex flex-wrap items-center gap-2">
-                          {m.funcao && <span className="truncate">{m.funcao}</span>}
-                          {m.funcao && telefone && (
-                            <span
-                              aria-hidden
-                              className="bg-muted-foreground/40 size-1 shrink-0 rounded-full"
-                            />
-                          )}
-                          {telefone && <span className="tabular-nums">{telefone}</span>}
+                          {detalhes.map((d, i) => (
+                            <span key={i} className="flex min-w-0 items-center gap-2">
+                              {i > 0 && (
+                                <span aria-hidden className="bg-muted-foreground/40 size-1 shrink-0 rounded-full" />
+                              )}
+                              <span className="truncate tabular-nums">{d}</span>
+                            </span>
+                          ))}
                         </ItemDescription>
                       )}
                     </ItemContent>
-                    <ItemActions>
+                    <ItemActions className="relative z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
@@ -302,16 +172,7 @@ export function EquipeManager({
                           <MoreHorizontalIcon />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              abrir({
-                                id: m.id,
-                                nome: m.nome,
-                                funcao: m.funcao ?? '',
-                                telefone: paraE164(m.telefone),
-                              })
-                            }
-                          >
+                          <DropdownMenuItem onClick={() => router.push(`/equipe/${m.id}`)}>
                             <PencilIcon />
                             Editar
                           </DropdownMenuItem>
@@ -330,14 +191,6 @@ export function EquipeManager({
           )}
         </FramePanel>
       </Frame>
-
-      <MembroDialog
-        key={dialogo.chave}
-        aberto={dialogo.aberto}
-        onAbertoChange={(aberto) => setDialogo((d) => ({ ...d, aberto }))}
-        inicial={dialogo.inicial}
-        onSalvar={salvar}
-      />
 
       <AlertDialog
         open={removendo !== null}

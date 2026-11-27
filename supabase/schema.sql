@@ -36,7 +36,25 @@ create table if not exists public.equipe (
   empresa_id uuid not null references public.empresas (id) on delete cascade,
   nome text not null,
   funcao text, -- o que a pessoa faz / responsabilidade
-  telefone text,
+  telefone text, -- telefone profissional
+  -- Cadastro completo (migration 20261127130000_equipe_cadastro_completo.sql)
+  foto_caminho text, -- bucket privado "arquivos": <empresa_id>/equipe/...
+  telefone_pessoal text,
+  email text,
+  cpf text,
+  data_nascimento date,
+  cep text,
+  endereco text,
+  bairro text,
+  cidade text,
+  uf text,
+  vinculo text check (vinculo is null or vinculo in ('clt', 'autonomo', 'mei', 'empreiteiro', 'diarista', 'socio', 'outro')),
+  valor_diaria numeric(14, 2) check (valor_diaria is null or valor_diaria >= 0),
+  chave_pix text,
+  data_inicio date,
+  contato_emergencia_nome text,
+  contato_emergencia_telefone text,
+  observacoes text,
   created_at timestamptz not null default now()
 );
 
