@@ -125,13 +125,19 @@ export function MembroForm({
   // Campos vazios ou preenchidos por um CEP anterior são trocados; o que a
   // pessoa digitou à mão fica. Respostas atrasadas de CEPs antigos são ignoradas.
   const ultimoCep = useRef('')
-  // Endereço já salvo conta como vindo do CEP salvo: trocar o CEP atualiza.
-  const doCep = useRef<Partial<Record<'endereco' | 'bairro' | 'cidade' | 'uf', string>>>({
-    endereco: membro?.endereco ?? '',
-    bairro: membro?.bairro ?? '',
-    cidade: membro?.cidade ?? '',
-    uf: membro?.uf ?? '',
-  })
+  // Endereço já salvo junto com um CEP válido conta como vindo desse CEP:
+  // trocar o CEP atualiza. Sem CEP salvo, o endereço foi digitado e fica.
+  const temCepSalvo = (membro?.cep ?? '').replace(/\D/g, '').length === 8
+  const doCep = useRef<Partial<Record<'endereco' | 'bairro' | 'cidade' | 'uf', string>>>(
+    temCepSalvo
+      ? {
+          endereco: membro?.endereco ?? '',
+          bairro: membro?.bairro ?? '',
+          cidade: membro?.cidade ?? '',
+          uf: membro?.uf ?? '',
+        }
+      : {}
+  )
   async function buscarCep(cep: string) {
     const d = cep.replace(/\D/g, '')
     ultimoCep.current = d
