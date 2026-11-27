@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { lerSegredo } from '@/lib/plataforma/segredos'
 
 // Cota de IA inclusa no plano (padrão Cosmos do Galaxie Sports): cada pedido
 // ao assistente reserva 1 comando antes, e depois acerta pelo custo real:
@@ -42,9 +43,14 @@ export function comandosPorCusto(custo: number) {
   return Math.max(1, Math.ceil(custo / US_POR_COMANDO - 1e-9))
 }
 
+/** Chave da IA da Galaxie (painel do admin master, senão Vercel), ou null. */
+export function chaveIAGalaxie() {
+  return lerSegredo('ANTHROPIC_API_KEY')
+}
+
 /** A chave da Galaxie está configurada no servidor? */
-export function iaGalaxieDisponivel() {
-  return !!process.env.ANTHROPIC_API_KEY
+export async function iaGalaxieDisponivel() {
+  return !!(await chaveIAGalaxie())
 }
 
 export interface Carteira {

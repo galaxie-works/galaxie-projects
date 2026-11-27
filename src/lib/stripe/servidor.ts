@@ -1,19 +1,30 @@
 import Stripe from 'stripe'
+import { lerSegredo } from '@/lib/plataforma/segredos'
 
-// Stripe só existe no servidor. Sem STRIPE_SECRET_KEY, a tela mostra os planos
-// sem botão de pagar e as rotas respondem que a cobrança ainda não está ligada.
+// Stripe só existe no servidor. A chave vem do painel do admin master (cifrada
+// no banco) ou, se lá não tiver, de STRIPE_SECRET_KEY na Vercel. Sem nenhuma,
+// a tela mostra os planos sem botão de pagar e as rotas respondem que a
+// cobrança ainda não está ligada.
 
-let cliente: Stripe | null = null
+const clientes = new Map<string, Stripe>()
 
-export function stripe(): Stripe | null {
-  const chave = process.env.STRIPE_SECRET_KEY
-  if (!chave) return null
-  cliente ??= new Stripe(chave, { maxNetworkRetries: 2, appInfo: { name: 'Galaxie Obras' } })
-  return cliente
+export function stripeCom(chave: string): Stripe {
+  let c = clientes.get(chave)
+  if (!c) {
+    c = new Stripe(chave, { maxNetworkRetries: 2, appInfo: { name: 'Galaxie Obras' } })
+    clientes.clear()
+    clientes.set(chave, c)
+  }
+  return c
 }
 
-export function cobrancaLigada() {
-  return !!process.env.STRIPE_SECRET_KEY
+export async function stripe(): Promise<Stripe | null> {
+  const chave = await lerSegredo('STRIPE_SECRET_KEY')
+  return chave ? stripeCom(chave) : null
+}
+
+export async function cobrancaLigada() {
+  return !!(await lerSegredo('STRIPE_SECRET_KEY'))
 }
 
 /** Endereço público do app, para as voltas do checkout. */

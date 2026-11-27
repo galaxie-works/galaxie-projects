@@ -22,15 +22,21 @@ import {
   ItemHeader,
   ItemTitle,
 } from '@/components/ui/item'
-import { PLANOS, reais, type Ciclo, type PlanoId } from '@/lib/planos'
+import { reais, type Ciclo, type Plano, type PlanoId } from '@/lib/planos'
 import { abrirStripe } from './abrir-stripe'
 
 export function Planos({
+  planos,
+  usuarioExtra,
   cobrancaLigada,
   planoAtual,
   cicloAtual,
   pago,
 }: {
+  /** Planos à venda, como estão no painel do admin. */
+  planos: Plano[]
+  /** Preço do usuário extra no escritório, em reais por mês. */
+  usuarioExtra: number
   cobrancaLigada: boolean
   /** Plano já pago (null no teste ou na cortesia). */
   planoAtual: PlanoId | null
@@ -40,6 +46,8 @@ export function Planos({
 }) {
   const [ciclo, setCiclo] = useState<Ciclo>(cicloAtual ?? 'mensal')
   const [abrindo, setAbrindo] = useState<PlanoId | null>(null)
+  // Quantos meses o anual economiza (os preços vêm do painel do admin).
+  const mesesGratis = Math.max(0, ...planos.map((p) => Math.floor(12 - p.anual / p.mensal + 1e-9)))
 
   async function assinar(plano: PlanoId) {
     setAbrindo(plano)
@@ -66,13 +74,17 @@ export function Planos({
           <ToggleGroupItem value="mensal">Mensal</ToggleGroupItem>
           <ToggleGroupItem value="anual" className="gap-2">
             Anual
-            <Badge variant="primary-light">2 meses grátis</Badge>
+            {mesesGratis > 0 && (
+              <Badge variant="primary-light">
+                {mesesGratis === 1 ? '1 mês grátis' : `${mesesGratis} meses grátis`}
+              </Badge>
+            )}
           </ToggleGroupItem>
         </ToggleGroup>
       </FrameHeader>
       <FramePanel>
         <ItemGroup className="grid gap-3 md:grid-cols-3">
-          {PLANOS.map((p) => {
+          {planos.map((p) => {
             const atual = planoAtual === p.id && cicloAtual === ciclo
             const preco = ciclo === 'anual' ? p.anual : p.mensal
             return (
@@ -123,7 +135,7 @@ export function Planos({
         </ItemGroup>
         <p className="text-muted-foreground mt-3 text-xs">
           {cobrancaLigada
-            ? 'Usuário extra no escritório: R$ 29 por mês. Com a sua própria chave de IA em Ajustes, o assistente não tem limite.'
+            ? `Usuário extra no escritório: ${reais(usuarioExtra)} por mês. Com a sua própria chave de IA em Ajustes, o assistente não tem limite.`
             : 'O pagamento online está sendo ligado. Até lá, seu acesso continua normalmente.'}
         </p>
       </FramePanel>

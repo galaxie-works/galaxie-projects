@@ -1,3 +1,6 @@
+// Hoje o painel do admin master (/admin → Planos → "Conferir no Stripe") faz o
+// mesmo sem terminal, usando os preços salvos no painel. Este script fica de reserva.
+//
 // Cria (ou confere) no Stripe os produtos e preços do Galaxie Obras, com as
 // lookup_keys que o app procura (src/lib/planos.ts). Pode rodar de novo: o que
 // já existe com a mesma lookup_key fica como está.

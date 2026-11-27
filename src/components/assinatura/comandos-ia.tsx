@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { PACOTE_IA, reais } from '@/lib/planos'
+import { reais } from '@/lib/planos'
 import type { Carteira, LancamentoIA } from '@/lib/ia/cota'
 import { abrirStripe } from './abrir-stripe'
 
@@ -37,7 +37,7 @@ const ROTULO_TIPO: Record<LancamentoIA['tipo'], string> = {
   uso: 'Uso',
   cota: 'Cota do mês',
   pacote: 'Pacote',
-  ajuste: 'Plano',
+  ajuste: 'Ajuste',
 }
 
 const dataCurta = (s: string) =>
@@ -49,7 +49,10 @@ export function ComandosIA({
   extrato,
   chavePropria,
   cobrancaLigada,
+  pacote,
 }: {
+  /** Pacote avulso de comandos, como está no painel do admin. */
+  pacote: { comandos: number; preco: number }
   carteira: Carteira | null
   extrato: LancamentoIA[]
   chavePropria: boolean
@@ -106,7 +109,7 @@ export function ComandosIA({
           <ItemActions>
             <Button variant="outline" disabled={!cobrancaLigada || comprando} onClick={comprar}>
               {comprando && <Spinner />}
-              {PACOTE_IA.comandos} por {reais(PACOTE_IA.preco)}
+              {pacote.comandos.toLocaleString('pt-BR')} por {reais(pacote.preco)}
             </Button>
           </ItemActions>
         </Item>
@@ -129,7 +132,7 @@ export function ComandosIA({
                     <Badge variant="secondary" className="mr-2">
                       {ROTULO_TIPO[l.tipo]}
                     </Badge>
-                    {l.tipo === 'uso' ? l.descricao : ''}
+                    {l.tipo === 'uso' || l.tipo === 'ajuste' ? l.descricao : ''}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {l.comandos > 0 ? `+${l.comandos}` : l.comandos}

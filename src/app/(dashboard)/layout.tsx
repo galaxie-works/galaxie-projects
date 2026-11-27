@@ -8,6 +8,7 @@ import { RegistroFormulariosProvider } from '@/components/assistente/formulario-
 import { configPublica } from '@/lib/ia/config-servidor'
 import { iaGalaxieDisponivel } from '@/lib/ia/cota'
 import { carregarAssinatura, situacaoAssinatura } from '@/lib/assinatura'
+import { ehAdminMaster } from '@/lib/plataforma/admin'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -44,7 +45,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('empresa_id', empresa.id)
 
   const lista = (projetos as Projeto[]) ?? []
-  const ia = await configPublica(supabase, empresa.id).catch(() => null)
+  const [ia, iaGalaxie, adminMaster] = await Promise.all([
+    configPublica(supabase, empresa.id).catch(() => null),
+    iaGalaxieDisponivel(),
+    ehAdminMaster(supabase),
+  ])
   const sidebarAberta = (await cookies()).get('sidebar_state')?.value !== 'false'
 
   return (
@@ -53,6 +58,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AppSidebar
           empresaNome={empresa.nome}
           email={user.email ?? ''}
+          adminMaster={adminMaster}
           projetos={lista}
           teste={
             assinatura.status === 'teste'
@@ -65,7 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             projetos={lista.map(({ id, nome }) => ({ id, nome }))}
             clientes={clientes ?? []}
             // Com chave própria, ou pela IA da Galaxie (cota do plano).
-            assistenteConfigurado={!!ia?.ativo || iaGalaxieDisponivel()}
+            assistenteConfigurado={!!ia?.ativo || iaGalaxie}
             empresaId={empresa.id}
           />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
