@@ -88,8 +88,6 @@ const NAVEGACAO = [
   { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
-  { href: '/empresa', rotulo: 'Empresa', icone: Building2Icon },
-  { href: '/ajustes', rotulo: 'Ajustes', icone: SettingsIcon },
 ]
 
 type Props = {
@@ -237,7 +235,14 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    isActive={pathname.startsWith('/empresa') || pathname.startsWith('/ajustes')}
+                  />
+                }
+              >
                 <Avatar className="size-8">
                   <AvatarFallback>{iniciais(empresaNome) || '?'}</AvatarFallback>
                 </Avatar>
@@ -257,7 +262,14 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                   onClick={() => isMobile && setOpenMobile(false)}
                 >
                   <Building2Icon />
-                  Dados da empresa
+                  Empresa
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={<Link href="/ajustes" />}
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
+                  <SettingsIcon />
+                  Ajustes
                 </DropdownMenuItem>
                 <MenuTema />
                 <DropdownMenuSeparator />
