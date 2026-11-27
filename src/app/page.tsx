@@ -21,5 +21,5 @@ export default async function Home() {
     redirect('/onboarding')
   }
 
-  redirect('/projetos')
+  redirect('/inicio')
 }

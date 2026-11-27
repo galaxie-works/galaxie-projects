@@ -6,6 +6,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from 
 import {
   ArrowLeftIcon,
   BriefcaseBusinessIcon,
+  CalendarDaysIcon,
+  HouseIcon,
   Building2Icon,
   FunnelIcon,
   ChevronsUpDownIcon,
@@ -80,6 +82,8 @@ const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
 ]
 
 const NAVEGACAO = [
+  { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
+  { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
   { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
@@ -122,7 +126,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/projetos" />}>
+            <SidebarMenuButton size="lg" render={<Link href="/inicio" />}>
               <IconTile variant="solid" size="sm" aria-hidden>
                 <HardHatIcon />
               </IconTile>
@@ -273,6 +277,8 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 }
 
 const SECOES: Record<string, string> = {
+  inicio: 'Início',
+  agenda: 'Agenda',
   projetos: 'Projetos',
   funil: 'Funil',
   clientes: 'Clientes',
