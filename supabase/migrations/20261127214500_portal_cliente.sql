@@ -261,6 +261,9 @@ begin
   ) then
     raise exception 'obra não encontrada';
   end if;
+  -- Trava o link: chamados simultâneos do mesmo cliente passam um de cada vez,
+  -- então o limite abaixo vale mesmo com cliques em paralelo.
+  perform 1 from public.portal_acessos where id = a.id for update;
   if (
     select count(*) from public.pos_venda
     where cliente_id = a.cliente_id and origem = 'portal' and status <> 'resolvido'
