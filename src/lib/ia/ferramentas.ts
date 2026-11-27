@@ -107,6 +107,30 @@ export const TABELAS: Record<TabelaAssistente, EspecTabela> = {
     colunaTexto: 'nome',
     descrever: (r) => `${r.nome} da equipe`,
   },
+  pos_venda: {
+    rotulo: 'item de pós-venda',
+    colunas: {
+      cliente_id: UUID,
+      projeto_id: { ...UUID, description: 'id da obra (opcional)' },
+      tipo: {
+        type: 'string',
+        enum: ['garantia', 'pesquisa', 'avaliacao', 'revisao', 'assistencia', 'indicacao'],
+        description:
+          'assistencia = chamado de problema depois da entrega; pesquisa = nota 0 a 10; avaliacao = pedido de avaliação no Google. ' +
+          'Para indicação, crie primeiro o cliente indicado (origem "Indicação") e depois este item com status resolvido.',
+      },
+      titulo: { type: 'string', description: 'Ex.: "Chamado de assistência"' },
+      texto: { type: 'string', description: 'O que aconteceu ou o comentário do cliente' },
+      vence_em: { ...DATA, description: 'Data prevista ou agendada (AAAA-MM-DD)' },
+      status: { type: 'string', enum: ['aberto', 'agendado', 'resolvido'] },
+      nota_0_10: { type: 'integer', minimum: 0, maximum: 10, description: 'Nota da pesquisa de satisfação' },
+    },
+    obrigatorias: ['cliente_id', 'tipo', 'titulo'],
+    daEmpresa: true,
+    colunaTexto: 'titulo',
+    descrever: (r) => `o pós-venda "${r.titulo}"`,
+    caminho: (r) => `/clientes/${r.cliente_id}`,
+  },
 }
 
 const NOMES_TABELAS = Object.keys(TABELAS) as TabelaAssistente[]
@@ -275,6 +299,7 @@ const PLURAL: Record<TabelaAssistente, string> = {
   etapas: 'etapas',
   compras: 'compras',
   equipe: 'equipe',
+  pos_venda: 'itens de pós-venda',
 }
 
 /** Frase curta do passo, mostrada no painel como no app do Claude. */

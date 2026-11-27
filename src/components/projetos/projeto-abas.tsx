@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { formatarMoeda } from '@/lib/formato'
-import type { Compra, Etapa, MembroEquipe, Projeto } from '@/types'
+import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto } from '@/types'
+import { pendentesPosVenda } from '@/lib/pos-venda'
+import { PosVendaPainel } from '@/components/pos-venda/pos-venda-painel'
 import { totalOrcamento, type AreaOrcamento, type TabelaPrecos } from '@/lib/orcamento'
 import { OrcamentoAba } from '@/components/orcamento/orcamento-aba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -21,6 +23,12 @@ type Props = {
   areasIniciais: AreaOrcamento[]
   servicosEmpresa: string[]
   precos: TabelaPrecos
+  posVenda: PosVenda[]
+  posVendaDisponivel: boolean
+  cliente: Cliente | null
+  linkGoogle: string | null
+  /** 'YYYY-MM-DD' no fuso de Brasília. */
+  hojeBrasil: string
   /** Aba aberta ao chegar (ex.: ?aba=orcamento vindo do funil). */
   abaInicial?: string
 }
@@ -34,8 +42,14 @@ export function ProjetoAbas({
   areasIniciais,
   servicosEmpresa,
   precos,
+  posVenda,
+  posVendaDisponivel,
+  cliente,
+  linkGoogle,
+  hojeBrasil,
   abaInicial,
 }: Props) {
+  const pendentesPv = pendentesPosVenda(posVenda)
   // Etapas e compras ficam aqui para a Visão geral refletir as mudanças na hora.
   const [etapas, setEtapas] = useState(etapasIniciais)
   const [compras, setCompras] = useState(comprasIniciais)
@@ -66,6 +80,14 @@ export function ProjetoAbas({
             Compras
             <span className="text-xs text-muted-foreground tabular-nums">{formatarMoeda(totalGasto)}</span>
           </TabsTrigger>
+          {(projeto.status === 'completo' || posVenda.length > 0) && (
+            <TabsTrigger value="pos-venda">
+              Pós-venda
+              {pendentesPv > 0 && (
+                <span className="text-xs text-muted-foreground tabular-nums">{pendentesPv}</span>
+              )}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
         </TabsList>
       </div>
@@ -100,6 +122,19 @@ export function ProjetoAbas({
           equipe={equipe}
         />
       </TabsContent>
+      {cliente && (
+        <TabsContent value="pos-venda">
+          <PosVendaPainel
+            itens={posVenda}
+            cliente={{ id: cliente.id, empresa_id: cliente.empresa_id, nome: cliente.nome, telefone: cliente.telefone }}
+            obras={[{ id: projeto.id, nome: projeto.nome }]}
+            projeto={{ id: projeto.id, status: projeto.status }}
+            linkGoogle={linkGoogle}
+            hoje={hojeBrasil}
+            disponivel={posVendaDisponivel}
+          />
+        </TabsContent>
+      )}
       <TabsContent value="arquivos">
         <Frame spacing="default" className="min-w-0">
           <FramePanel>

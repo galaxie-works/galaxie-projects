@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2Icon, HammerIcon, TagIcon } from 'lucide-react'
+import { Building2Icon, HammerIcon, HeartHandshakeIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { mascararCnpj } from '@/components/clientes/documento'
@@ -75,6 +75,10 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
   const [modoOperacao, setModoOperacao] = useState(empresa.modo_operacao ?? '')
   const [servicos, setServicos] = useState<string[]>(empresa.servicos ?? [])
   const [precos, setPrecos] = useState<TabelaPrecos>(precosIniciais)
+  // Pós-venda: só existe depois do SQL da frente D.
+  const posVendaDisponivel = 'garantia_meses' in empresa
+  const [garantiaMeses, setGarantiaMeses] = useState(String(empresa.garantia_meses ?? 12))
+  const [linkGoogle, setLinkGoogle] = useState(empresa.link_avaliacao_google ?? '')
   const [tentou, setTentou] = useState(false)
   const [salvando, setSalvando] = useState(false)
 
@@ -93,6 +97,12 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
         descricao: descricao || null,
         modo_operacao: modoOperacao || null,
         servicos,
+        ...(posVendaDisponivel
+          ? {
+              garantia_meses: Math.min(120, Math.max(0, Math.round(Number(garantiaMeses) || 0))),
+              link_avaliacao_google: linkGoogle.trim() || null,
+            }
+          : {}),
       })
       .eq('id', empresa.id)
     const linhasPreco = Object.entries(precos)
@@ -151,6 +161,12 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
             <TagIcon />
             Preços
           </TabsTrigger>
+          {posVendaDisponivel && (
+            <TabsTrigger value="pos-venda" className="flex-none md:flex-1">
+              <HeartHandshakeIcon />
+              Pós-venda
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="dados" className="min-w-0">
@@ -239,6 +255,52 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
             {rodape}
           </Frame>
         </TabsContent>
+
+        {posVendaDisponivel && (
+          <TabsContent value="pos-venda" className="min-w-0">
+            <Frame spacing="default">
+              <FrameHeader>
+                <FrameTitle>Pós-venda</FrameTitle>
+                <FrameDescription>
+                  Ao concluir uma obra, criamos a garantia, a pesquisa de satisfação e o pedido de avaliação.
+                </FrameDescription>
+              </FrameHeader>
+              <FramePanel>
+                <FieldGroup>
+                  <Field className="sm:max-w-48">
+                    <FieldLabel htmlFor="empresa-garantia">Garantia (meses)</FieldLabel>
+                    <Input
+                      id="empresa-garantia"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={120}
+                      value={garantiaMeses}
+                      onChange={(e) => setGarantiaMeses(e.target.value)}
+                      className="tabular-nums"
+                    />
+                    <FieldDescription>Vale para as próximas obras concluídas.</FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="empresa-google">Link de avaliação no Google</FieldLabel>
+                    <Input
+                      id="empresa-google"
+                      type="url"
+                      inputMode="url"
+                      value={linkGoogle}
+                      onChange={(e) => setLinkGoogle(e.target.value)}
+                      placeholder="https://g.page/r/..."
+                    />
+                    <FieldDescription>
+                      No Perfil da Empresa no Google, em Pedir avaliações. Vai junto na mensagem do WhatsApp.
+                    </FieldDescription>
+                  </Field>
+                </FieldGroup>
+              </FramePanel>
+              {rodape}
+            </Frame>
+          </TabsContent>
+        )}
       </Tabs>
     </form>
   )
