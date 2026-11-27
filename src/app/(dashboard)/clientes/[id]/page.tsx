@@ -2,9 +2,19 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ClientePainel } from '@/components/clientes/cliente-painel'
 import { agoraMs, hojeISO } from '@/lib/crm'
+import { podeVerFinanceiro } from '@/lib/financeiro'
 import { SELECT_NEGOCIO } from '@/lib/negocios'
 import { SELECT_POS_VENDA } from '@/lib/pos-venda'
-import type { Atividade, Cliente, MembroEquipe, Negocio, PosVenda, Projeto, TarefaAgenda } from '@/types'
+import type {
+  Atividade,
+  Cliente,
+  MembroEquipe,
+  Negocio,
+  PosVenda,
+  Projeto,
+  Recebimento,
+  TarefaAgenda,
+} from '@/types'
 
 export default async function ClienteDetalhePage({
   params,
@@ -64,6 +74,21 @@ export default async function ClienteDetalhePage({
 
   const c = cliente as Cliente
   const obras = (projetos as Projeto[]) ?? []
+
+  // Parcelas das obras deste cliente (pela obra, que é a fonte da verdade).
+  const verFinanceiro = podeVerFinanceiro()
+  const recebimentosRes =
+    verFinanceiro && obras.length > 0
+      ? await supabase
+          .from('recebimentos')
+          .select('*, projetos(nome, cliente_id)')
+          .in(
+            'projeto_id',
+            obras.map((o) => o.id)
+          )
+          .order('vencimento')
+      : null
+  const financeiroDisponivel = verFinanceiro && !recebimentosRes?.error
   // Antes de rodar o SQL do Cliente 360 as colunas e a tabela nova não existem:
   // a tela funciona, só sem salvar os campos novos.
   const crmDisponivel = 'fase_manual' in c && !atividadesRes.error
@@ -95,6 +120,9 @@ export default async function ClienteDetalhePage({
       posVendaDisponivel={posVendaDisponivel}
       linkGoogle={(empresa?.link_avaliacao_google as string | null | undefined) ?? null}
       hoje={hojeISO()}
+      recebimentos={financeiroDisponivel ? ((recebimentosRes?.data as Recebimento[] | null) ?? []) : []}
+      verFinanceiro={verFinanceiro}
+      financeiroDisponivel={financeiroDisponivel}
       negocios={negociosRes.error ? null : ((negociosRes.data as unknown as Negocio[]) ?? [])}
       agora={agoraMs()}
     />

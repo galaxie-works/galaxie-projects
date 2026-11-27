@@ -235,6 +235,39 @@ export type TarefaAgenda = Atividade & {
 }
 
 // ---------------------------------------------------------------------------
+// Financeiro (recebimentos): parcelas que o cliente paga por obra
+// ---------------------------------------------------------------------------
+
+export type FormaPagamento = 'pix' | 'boleto' | 'cartao' | 'dinheiro' | 'transferencia'
+
+export const FORMAS_PAGAMENTO: FormaPagamento[] = ['pix', 'transferencia', 'boleto', 'cartao', 'dinheiro']
+
+export const FORMA_PAGAMENTO_LABEL: Record<FormaPagamento, string> = {
+  pix: 'Pix',
+  boleto: 'Boleto',
+  cartao: 'Cartão',
+  dinheiro: 'Dinheiro',
+  transferencia: 'Transferência',
+}
+
+export interface Recebimento {
+  id: string
+  empresa_id: string
+  projeto_id: string
+  cliente_id: string | null
+  descricao: string
+  valor: number
+  vencimento: string
+  recebido_em: string | null
+  forma: FormaPagamento | null
+  comprovante_url: string | null
+  ordem: number
+  created_at: string
+  // Preenchido via join
+  projetos?: { nome: string; cliente_id: string; clientes?: { nome: string } | null } | null
+}
+
+// ---------------------------------------------------------------------------
 // CRM: pós-venda (garantia, pesquisa, avaliação, revisões, chamados, indicações)
 // ---------------------------------------------------------------------------
 

@@ -5,8 +5,9 @@ import { ProjetoAbas } from '@/components/projetos/projeto-abas'
 import { ProjetoCabecalho } from '@/components/projetos/projeto-cabecalho'
 import { carregarOrcamento, carregarPrecos } from '@/components/orcamento/dados'
 import { hojeISO } from '@/lib/crm'
+import { podeVerFinanceiro } from '@/lib/financeiro'
 import { SELECT_POS_VENDA } from '@/lib/pos-venda'
-import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto } from '@/types'
+import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto, Recebimento } from '@/types'
 
 export default async function ProjetoDetalhePage({
   params,
@@ -39,6 +40,7 @@ export default async function ProjetoDetalhePage({
     { data: empresa },
     areas,
     precos,
+    recebimentosRes,
     posVendaRes,
   ] = await Promise.all([
       supabase.from('etapas').select('*, equipe(nome)').eq('projeto_id', id).order('ordem'),
@@ -52,8 +54,17 @@ export default async function ProjetoDetalhePage({
       supabase.from('empresas').select('*').eq('id', projeto.empresa_id).maybeSingle(),
       carregarOrcamento(supabase, id),
       carregarPrecos(supabase, projeto.empresa_id),
+      supabase
+        .from('recebimentos')
+        .select('*')
+        .eq('projeto_id', id)
+        .order('vencimento')
+        .order('ordem'),
       supabase.from('pos_venda').select(SELECT_POS_VENDA).eq('projeto_id', id).order('vence_em'),
     ])
+  const verFinanceiro = podeVerFinanceiro()
+  // Antes de rodar o SQL do financeiro a tabela não existe: a aba avisa.
+  const financeiroDisponivel = !recebimentosRes.error
   const temItens = areas.some((a) => a.itens.length > 0)
 
   const p = projeto as Projeto
@@ -80,6 +91,9 @@ export default async function ProjetoDetalhePage({
         areasIniciais={areas}
         servicosEmpresa={(empresa?.servicos as string[]) ?? []}
         precos={precos}
+        recebimentosIniciais={financeiroDisponivel ? ((recebimentosRes.data as Recebimento[]) ?? []) : []}
+        financeiroDisponivel={financeiroDisponivel}
+        verFinanceiro={verFinanceiro}
         posVenda={posVendaRes.error ? [] : ((posVendaRes.data as PosVenda[] | null) ?? [])}
         posVendaDisponivel={!posVendaRes.error}
         cliente={(clientes as Cliente[] | null)?.find((c) => c.id === p.cliente_id) ?? null}
