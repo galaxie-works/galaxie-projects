@@ -38,6 +38,17 @@ const literal = (s) => `'${s.replaceAll("'", "''")}'`;
 
 const arquivos = (await readdir(dir)).filter((f) => /^\d{14}_.+\.sql$/.test(f)).sort();
 
+// Duas migrations com a mesma versão: a segunda seria pulada em silêncio.
+const versoes = new Map();
+for (const f of arquivos) {
+  const v = f.slice(0, 14);
+  if (versoes.has(v)) {
+    console.error(`Versão repetida ${v}: ${versoes.get(v)} e ${f}. Troque o número de uma delas.`);
+    process.exit(1);
+  }
+  versoes.set(v, f);
+}
+
 if (!dryRun) {
   await query(`
     create schema if not exists supabase_migrations;
@@ -46,9 +57,17 @@ if (!dryRun) {
     );
   `);
 }
-const aplicadas = new Set(
-  (await query("select version from supabase_migrations.schema_migrations")).map((r) => r.version),
-);
+const registradas = await query("select version, name from supabase_migrations.schema_migrations");
+const aplicadas = new Set(registradas.map((r) => r.version));
+
+// Versão já registrada com outro nome: o arquivo daqui nunca rodaria.
+for (const r of registradas) {
+  const f = versoes.get(r.version);
+  if (f && r.name && f.slice(15, -4) !== r.name) {
+    console.error(`${f}: a versão ${r.version} já está no banco como "${r.name}". Troque o número do arquivo.`);
+    process.exit(1);
+  }
+}
 
 const pendentes = arquivos.filter((f) => !aplicadas.has(f.slice(0, 14)));
 if (pendentes.length === 0) {
