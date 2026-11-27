@@ -7,6 +7,7 @@ import {
   ArrowLeftIcon,
   BriefcaseBusinessIcon,
   Building2Icon,
+  FunnelIcon,
   ChevronsUpDownIcon,
   FolderKanbanIcon,
   LogOutIcon,
@@ -81,6 +82,7 @@ const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
 
 const NAVEGACAO = [
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
+  { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
@@ -274,6 +276,7 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
 
 const SECOES: Record<string, string> = {
   projetos: 'Projetos',
+  funil: 'Funil',
   clientes: 'Clientes',
   financeiro: 'Financeiro',
   equipe: 'Equipe',
@@ -317,7 +320,7 @@ export function AppHeader({
       trilha.push({ rotulo: 'Importar planilha' })
     } else if (sub) {
       const lista = secao === 'projetos' ? projetos : secao === 'clientes' ? clientes : []
-      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? 'Detalhes' })
+      trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? (secao === 'funil' ? 'Negócio' : 'Detalhes') })
     }
   }
   const emCamada = Boolean(sub) && Boolean(SECOES[secao ?? ''])

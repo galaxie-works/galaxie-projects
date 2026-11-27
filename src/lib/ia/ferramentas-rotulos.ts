@@ -8,4 +8,5 @@ export const TABELAS: Record<TabelaAssistente, string> = {
   compras: 'compra',
   equipe: 'pessoa da equipe',
   recebimentos: 'parcela a receber',
+  pos_venda: 'item de pós-venda',
 }
