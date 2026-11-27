@@ -8,10 +8,13 @@ import type { Cliente, Compra, Etapa, MembroEquipe, Projeto } from '@/types'
 
 export default async function ProjetoDetalhePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ aba?: string }>
 }) {
   const { id } = await params
+  const { aba } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -73,6 +76,7 @@ export default async function ProjetoDetalhePage({
         areasIniciais={areas}
         servicosEmpresa={(empresa?.servicos as string[]) ?? []}
         precos={precos}
+        abaInicial={aba}
       />
     </div>
   )

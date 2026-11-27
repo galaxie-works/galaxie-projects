@@ -21,6 +21,8 @@ type Props = {
   areasIniciais: AreaOrcamento[]
   servicosEmpresa: string[]
   precos: TabelaPrecos
+  /** Aba aberta ao chegar (ex.: ?aba=orcamento vindo do funil). */
+  abaInicial?: string
 }
 
 export function ProjetoAbas({
@@ -32,6 +34,7 @@ export function ProjetoAbas({
   areasIniciais,
   servicosEmpresa,
   precos,
+  abaInicial,
 }: Props) {
   // Etapas e compras ficam aqui para a Visão geral refletir as mudanças na hora.
   const [etapas, setEtapas] = useState(etapasIniciais)
@@ -41,7 +44,7 @@ export function ProjetoAbas({
   const concluidas = etapas.filter((e) => e.status === 'concluida').length
 
   return (
-    <Tabs defaultValue="visao" className="gap-4">
+    <Tabs defaultValue={abaInicial ?? 'visao'} className="gap-4">
       <div className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
         <TabsList variant="line">
           <TabsTrigger value="visao">Visão geral</TabsTrigger>
@@ -72,7 +75,7 @@ export function ProjetoAbas({
       </TabsContent>
       <TabsContent value="orcamento">
         <OrcamentoAba
-          projetoId={projeto.id}
+          dono={{ projetoId: projeto.id }}
           empresaId={projeto.empresa_id}
           areas={areas}
           onAreasChange={setAreas}
