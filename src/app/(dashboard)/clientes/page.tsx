@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { PlusIcon, UsersIcon } from 'lucide-react'
+import { FileUpIcon, PlusIcon, UsersIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { ClientesTabela, type ClienteLinha } from '@/components/clientes/clientes-tabela'
 import { Frame, FramePanel } from '@/components/reui/frame'
@@ -66,10 +66,16 @@ export default async function ClientesPage() {
             Pessoas e empresas para quem você trabalha.
           </p>
         </div>
-        <Button nativeButton={false} render={<Link href="/clientes/novo" />}>
-          <PlusIcon data-icon="inline-start" />
-          Novo cliente
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" nativeButton={false} render={<Link href="/clientes/importar" />}>
+            <FileUpIcon data-icon="inline-start" />
+            Importar
+          </Button>
+          <Button nativeButton={false} render={<Link href="/clientes/novo" />}>
+            <PlusIcon data-icon="inline-start" />
+            Novo cliente
+          </Button>
+        </div>
       </header>
 
       {lista.length === 0 ? (
@@ -85,10 +91,14 @@ export default async function ClientesPage() {
                   Cadastre o primeiro cliente para abrir projetos para ele.
                 </EmptyDescription>
               </EmptyHeader>
-              <EmptyContent>
+              <EmptyContent className="flex-row flex-wrap justify-center">
                 <Button nativeButton={false} render={<Link href="/clientes/novo" />}>
                   <PlusIcon data-icon="inline-start" />
                   Novo cliente
+                </Button>
+                <Button variant="outline" nativeButton={false} render={<Link href="/clientes/importar" />}>
+                  <FileUpIcon data-icon="inline-start" />
+                  Importar planilha
                 </Button>
               </EmptyContent>
             </Empty>

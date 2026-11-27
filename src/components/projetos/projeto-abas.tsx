@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ComprasTabela } from '@/components/projetos/compras-tabela'
 import { EtapasQuadro } from '@/components/projetos/etapas-quadro'
 import { ProjetoVisaoGeral } from '@/components/projetos/projeto-visao-geral'
+import { ArquivosLista } from '@/components/arquivos/arquivos-lista'
+import { Frame, FramePanel } from '@/components/reui/frame'
 
 type Props = {
   projeto: Projeto
@@ -64,6 +66,7 @@ export function ProjetoAbas({
             Compras
             <span className="text-xs text-muted-foreground tabular-nums">{formatarMoeda(totalGasto)}</span>
           </TabsTrigger>
+          <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
         </TabsList>
       </div>
 
@@ -96,6 +99,17 @@ export function ProjetoAbas({
           onComprasChange={setCompras}
           equipe={equipe}
         />
+      </TabsContent>
+      <TabsContent value="arquivos">
+        <Frame spacing="default" className="min-w-0">
+          <FramePanel>
+            <ArquivosLista
+              empresaId={projeto.empresa_id}
+              clienteId={projeto.cliente_id}
+              projetoId={projeto.id}
+            />
+          </FramePanel>
+        </Frame>
       </TabsContent>
     </Tabs>
   )

@@ -1,20 +1,9 @@
-import Link from "next/link";
-import {
-  FolderKanbanIcon,
-  MessageCircleIcon,
-  PhoneIcon,
-  PlusIcon,
-} from "lucide-react";
-import { Badge } from "@/components/reui/badge";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle,
-} from "@/components/reui/frame";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link'
+import { FolderKanbanIcon, PhoneIcon, PlusIcon } from 'lucide-react'
+import { Badge } from '@/components/reui/badge'
+import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import {
   Empty,
   EmptyContent,
@@ -22,7 +11,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
+} from '@/components/ui/empty'
 import {
   Item,
   ItemActions,
@@ -30,37 +19,25 @@ import {
   ItemDescription,
   ItemGroup,
   ItemTitle,
-} from "@/components/ui/item";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatarTelefone } from "./telefone";
-import {
-  ClienteLinhaDoTempo,
-  type EventoCliente,
-} from "./cliente-linha-do-tempo";
-import { ClienteRelacionamento } from "./cliente-relacionamento";
-import { RegistrarAtividade } from "./registrar-atividade";
-import { NegociosCliente } from "@/components/negocios/negocios-cliente";
-import {
-  formatarData,
-  formatarDataHora,
-  formatarMoeda,
-  iniciais,
-} from "@/lib/formato";
-import {
-  faseDoCliente,
-  faseAutomatica,
-  linkWhatsApp,
-  numerosDoCliente,
-  situacaoFollowup,
-} from "@/lib/crm";
+} from '@/components/ui/item'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatarTelefone } from './telefone'
+import { ClienteLinhaDoTempo, type EventoCliente } from './cliente-linha-do-tempo'
+import { ClienteRelacionamento } from './cliente-relacionamento'
+import { RegistrarAtividade } from './registrar-atividade'
+import { BotaoWhatsApp } from './botao-whatsapp'
+import { ArquivosLista } from '@/components/arquivos/arquivos-lista'
+import { NegociosCliente } from '@/components/negocios/negocios-cliente'
+import { formatarData, formatarDataHora, formatarMoeda, iniciais } from '@/lib/formato'
+import { faseDoCliente, faseAutomatica, numerosDoCliente, situacaoFollowup } from '@/lib/crm'
 import {
   VARIANTE_FASE_CLIENTE,
   VARIANTE_STATUS_PROJETO,
   VARIANTE_TEMPERATURA,
   projetoAtrasado,
-} from "@/lib/status";
+} from '@/lib/status'
 import {
   FASE_CLIENTE_LABEL,
   STATUS_PROJETO_LABEL,
@@ -71,21 +48,15 @@ import {
   type MembroEquipe,
   type Negocio,
   type Projeto,
-} from "@/types";
+} from '@/types'
 
-function Dado({
-  rotulo,
-  valor,
-}: {
-  rotulo: string;
-  valor: string | null | undefined;
-}) {
+function Dado({ rotulo, valor }: { rotulo: string; valor: string | null | undefined }) {
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="text-muted-foreground text-xs">{rotulo}</dt>
-      <dd className="text-sm break-words">{valor || "—"}</dd>
+      <dd className="text-sm break-words">{valor || '—'}</dd>
     </div>
-  );
+  )
 }
 
 function Numero({
@@ -94,24 +65,22 @@ function Numero({
   detalhe,
   alerta,
 }: {
-  rotulo: string;
-  valor: string;
-  detalhe?: string;
-  alerta?: boolean;
+  rotulo: string
+  valor: string
+  detalhe?: string
+  alerta?: boolean
 }) {
   return (
     <FramePanel className="flex min-w-0 flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{rotulo}</span>
       <span
-        className={`truncate text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${alerta ? "text-destructive" : ""}`}
+        className={`truncate text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${alerta ? 'text-destructive' : ''}`}
       >
         {valor}
       </span>
-      {detalhe && (
-        <span className="text-xs text-muted-foreground">{detalhe}</span>
-      )}
+      {detalhe && <span className="text-xs text-muted-foreground">{detalhe}</span>}
     </FramePanel>
-  );
+  )
 }
 
 function ListaObras({
@@ -119,10 +88,10 @@ function ListaObras({
   novoProjeto,
   compacta,
 }: {
-  obras: Projeto[];
-  novoProjeto: string;
+  obras: Projeto[]
+  novoProjeto: string
   /** Coluna estreita: barra e status descem para baixo do nome. */
-  compacta?: boolean;
+  compacta?: boolean
 }) {
   if (obras.length === 0) {
     return (
@@ -132,9 +101,7 @@ function ListaObras({
             <FolderKanbanIcon />
           </EmptyMedia>
           <EmptyTitle>Nenhuma obra ainda</EmptyTitle>
-          <EmptyDescription>
-            Abra a primeira obra deste cliente.
-          </EmptyDescription>
+          <EmptyDescription>Abra a primeira obra deste cliente.</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button nativeButton={false} render={<Link href={novoProjeto} />}>
@@ -143,37 +110,28 @@ function ListaObras({
           </Button>
         </EmptyContent>
       </Empty>
-    );
+    )
   }
   return (
     <ItemGroup>
       {obras.map((p) => {
-        const atrasado = projetoAtrasado(p);
+        const atrasado = projetoAtrasado(p)
         return (
           <Item key={p.id} render={<Link href={`/projetos/${p.id}`} />}>
-            <ItemContent
-              className={compacta ? "min-w-0 basis-full" : "min-w-0"}
-            >
+            <ItemContent className={compacta ? 'min-w-0 basis-full' : 'min-w-0'}>
               <ItemTitle className="truncate">{p.nome}</ItemTitle>
               <ItemDescription className="flex flex-wrap items-center gap-2 text-xs tabular-nums">
-                {atrasado && (
-                  <Badge variant="destructive-light">Atrasado</Badge>
-                )}
+                {atrasado && <Badge variant="destructive-light">Atrasado</Badge>}
                 <span>Prazo {formatarData(p.data_prazo)}</span>
                 {p.orcamento_total ? (
                   <>
-                    <span
-                      aria-hidden
-                      className="bg-muted-foreground/40 size-1 shrink-0 rounded-full"
-                    />
+                    <span aria-hidden className="bg-muted-foreground/40 size-1 shrink-0 rounded-full" />
                     <span>{formatarMoeda(p.orcamento_total)}</span>
                   </>
                 ) : null}
               </ItemDescription>
             </ItemContent>
-            <ItemActions
-              className={compacta ? "w-full gap-3" : "w-full gap-3 sm:w-56"}
-            >
+            <ItemActions className={compacta ? 'w-full gap-3' : 'w-full gap-3 sm:w-56'}>
               <Progress
                 value={p.percentual_conclusao}
                 aria-label={`Conclusão de ${p.nome}`}
@@ -183,36 +141,34 @@ function ListaObras({
                   {p.percentual_conclusao}%
                 </span>
               </Progress>
-              <Badge variant={VARIANTE_STATUS_PROJETO[p.status]}>
-                {STATUS_PROJETO_LABEL[p.status]}
-              </Badge>
+              <Badge variant={VARIANTE_STATUS_PROJETO[p.status]}>{STATUS_PROJETO_LABEL[p.status]}</Badge>
             </ItemActions>
           </Item>
-        );
+        )
       })}
     </ItemGroup>
-  );
+  )
 }
 
 type Props = {
-  cliente: Cliente;
-  obras: Projeto[];
-  atividades: Atividade[];
-  equipe: Pick<MembroEquipe, "id" | "nome">[];
+  cliente: Cliente
+  obras: Projeto[]
+  atividades: Atividade[]
+  equipe: Pick<MembroEquipe, 'id' | 'nome'>[]
   /** false antes de rodar o SQL do Cliente 360 (colunas e tabela novas). */
-  crmDisponivel: boolean;
+  crmDisponivel: boolean
   /** 'YYYY-MM-DD' calculado no servidor. */
-  hoje: string;
+  hoje: string
   /** null antes de rodar o SQL do funil. */
-  negocios: Negocio[] | null;
-  agora: number;
-};
+  negocios: Negocio[] | null
+  agora: number
+}
 
 // Painel do cliente (Cliente 360): cabeçalho com fase e ações, números,
 // e abas Resumo (linha do tempo + obras), Obras e Dados.
 export function ClientePainel({
   cliente: c,
-  obras: todasObras,
+  obras,
   atividades,
   equipe,
   crmDisponivel,
@@ -220,19 +176,14 @@ export function ClientePainel({
   negocios,
   agora,
 }: Props) {
-  // Obras canceladas (proposta perdida) ficam só no histórico do negócio.
-  const obras = todasObras.filter((o) => o.status !== "cancelado");
-  const fase = faseDoCliente(
-    { fase_manual: c.fase_manual ?? null },
-    obras,
-    negocios ?? [],
-  );
-  const numeros = numerosDoCliente(obras);
-  const followup = situacaoFollowup(c.proximo_followup_em ?? null, hoje);
-  const ultimoContato = atividades[0]?.ocorreu_em ?? null;
-  const whatsapp = linkWhatsApp(c.telefone);
-  const novoProjeto = `/projetos/novo?clienteId=${c.id}`;
-  const responsavel = equipe.find((m) => m.id === c.responsavel_id);
+  const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras, negocios ?? [])
+  const numeros = numerosDoCliente(obras)
+  const followup = situacaoFollowup(c.proximo_followup_em ?? null, hoje)
+  const ultimoContato = atividades[0]?.ocorreu_em ?? null
+  const novoProjeto = `/projetos/novo?clienteId=${c.id}`
+  const responsavel = equipe.find(
+    (m) => m.id === c.responsavel_id
+  )
 
   const eventos: EventoCliente[] = [
     ...atividades.map((a) => ({
@@ -247,20 +198,13 @@ export function ClientePainel({
     ...obras.map((p) => ({
       id: `p-${p.id}`,
       quando: p.created_at,
-      tipo: "obra" as const,
+      tipo: 'obra' as const,
       titulo: `Obra aberta: ${p.nome}`,
-      texto: p.orcamento_total
-        ? `Orçamento de ${formatarMoeda(p.orcamento_total)}`
-        : undefined,
+      texto: p.orcamento_total ? `Orçamento de ${formatarMoeda(p.orcamento_total)}` : undefined,
       href: `/projetos/${p.id}`,
     })),
-    {
-      id: "cadastro",
-      quando: c.created_at,
-      tipo: "cadastro" as const,
-      titulo: "Cliente cadastrado",
-    },
-  ].sort((a, b) => b.quando.localeCompare(a.quando));
+    { id: 'cadastro', quando: c.created_at, tipo: 'cadastro' as const, titulo: 'Cliente cadastrado' },
+  ].sort((a, b) => b.quando.localeCompare(a.quando))
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -270,44 +214,23 @@ export function ClientePainel({
             <AvatarFallback>{iniciais(c.nome)}</AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="truncate text-xl font-semibold tracking-tight">
-              {c.nome}
-            </h1>
+            <h1 className="truncate text-xl font-semibold tracking-tight">{c.nome}</h1>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant={VARIANTE_FASE_CLIENTE[fase]}>
-                {FASE_CLIENTE_LABEL[fase]}
-              </Badge>
+              <Badge variant={VARIANTE_FASE_CLIENTE[fase]}>{FASE_CLIENTE_LABEL[fase]}</Badge>
               {c.temperatura && (
-                <Badge variant={VARIANTE_TEMPERATURA[c.temperatura]}>
-                  {TEMPERATURA_LABEL[c.temperatura]}
-                </Badge>
+                <Badge variant={VARIANTE_TEMPERATURA[c.temperatura]}>{TEMPERATURA_LABEL[c.temperatura]}</Badge>
               )}
               <Badge variant="outline">{c.tipo}</Badge>
               {responsavel && (
-                <span className="text-xs text-muted-foreground">
-                  Responsável: {responsavel.nome}
-                </span>
+                <span className="text-xs text-muted-foreground">Responsável: {responsavel.nome}</span>
               )}
             </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {whatsapp && (
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<a href={whatsapp} target="_blank" rel="noreferrer" />}
-            >
-              <MessageCircleIcon data-icon="inline-start" />
-              WhatsApp
-            </Button>
-          )}
+          <BotaoWhatsApp telefone={c.telefone} nome={c.nome} obra={obras[0]?.nome} />
           {c.telefone && (
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<a href={`tel:${c.telefone}`} />}
-            >
+            <Button variant="outline" nativeButton={false} render={<a href={`tel:${c.telefone}`} />}>
               <PhoneIcon data-icon="inline-start" />
               Ligar
             </Button>
@@ -323,7 +246,7 @@ export function ClientePainel({
         <Numero
           rotulo="Contratado"
           valor={formatarMoeda(numeros.contratado)}
-          detalhe={`${numeros.totalObras} ${numeros.totalObras === 1 ? "obra" : "obras"} no total`}
+          detalhe={`${numeros.totalObras} ${numeros.totalObras === 1 ? 'obra' : 'obras'} no total`}
         />
         <Numero
           rotulo="Em proposta"
@@ -338,20 +261,20 @@ export function ClientePainel({
         <Numero
           rotulo="Próximo follow-up"
           valor={
-            followup === "sem"
-              ? "Sem data"
-              : followup === "hoje"
-                ? "Hoje"
+            followup === 'sem'
+              ? 'Sem data'
+              : followup === 'hoje'
+                ? 'Hoje'
                 : formatarData(c.proximo_followup_em)
           }
           detalhe={
-            followup === "atrasado"
-              ? "Atrasado"
+            followup === 'atrasado'
+              ? 'Atrasado'
               : ultimoContato
                 ? `Último contato ${formatarDataHora(ultimoContato)}`
-                : "Nenhum contato registrado"
+                : 'Nenhum contato registrado'
           }
-          alerta={followup === "atrasado"}
+          alerta={followup === 'atrasado'}
         />
       </Frame>
 
@@ -362,18 +285,15 @@ export function ClientePainel({
             {negocios && (
               <TabsTrigger value="negocios">
                 Negócios
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {negocios.length}
-                </span>
+                <span className="text-xs text-muted-foreground tabular-nums">{negocios.length}</span>
               </TabsTrigger>
             )}
             <TabsTrigger value="obras">
               Obras
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {obras.length}
-              </span>
+              <span className="text-xs text-muted-foreground tabular-nums">{obras.length}</span>
             </TabsTrigger>
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
           </TabsList>
         </div>
 
@@ -382,16 +302,10 @@ export function ClientePainel({
             <Frame spacing="default" className="min-w-0">
               <FrameHeader>
                 <FrameTitle>Linha do tempo</FrameTitle>
-                <FrameDescription>
-                  Contatos, obras e mudanças deste cliente
-                </FrameDescription>
+                <FrameDescription>Contatos, obras e mudanças deste cliente</FrameDescription>
               </FrameHeader>
               <FramePanel className="flex flex-col gap-6">
-                <RegistrarAtividade
-                  clienteId={c.id}
-                  empresaId={c.empresa_id}
-                  disponivel={crmDisponivel}
-                />
+                <RegistrarAtividade clienteId={c.id} empresaId={c.empresa_id} disponivel={crmDisponivel} />
                 <Separator />
                 <ClienteLinhaDoTempo eventos={eventos} />
               </FramePanel>
@@ -416,22 +330,17 @@ export function ClientePainel({
                   </FramePanel>
                 </Frame>
               )}
-              <Frame spacing="default" className="min-w-0">
-                <FrameHeader>
-                  <FrameTitle>Obras</FrameTitle>
-                  <FrameDescription>
-                    {obras.length === 1 ? "1 obra" : `${obras.length} obras`}{" "}
-                    deste cliente
-                  </FrameDescription>
-                </FrameHeader>
-                <FramePanel>
-                  <ListaObras
-                    obras={obras.slice(0, 4)}
-                    novoProjeto={novoProjeto}
-                    compacta
-                  />
-                </FramePanel>
-              </Frame>
+            <Frame spacing="default" className="min-w-0">
+              <FrameHeader>
+                <FrameTitle>Obras</FrameTitle>
+                <FrameDescription>
+                  {obras.length === 1 ? '1 obra' : `${obras.length} obras`} deste cliente
+                </FrameDescription>
+              </FrameHeader>
+              <FramePanel>
+                <ListaObras obras={obras.slice(0, 4)} novoProjeto={novoProjeto} compacta />
+              </FramePanel>
+            </Frame>
             </div>
           </div>
         </TabsContent>
@@ -460,14 +369,28 @@ export function ClientePainel({
           </Frame>
         </TabsContent>
 
+        <TabsContent value="arquivos">
+          <Frame spacing="default" className="min-w-0">
+            <FrameHeader>
+              <FrameTitle>Arquivos</FrameTitle>
+              <FrameDescription>Fotos, plantas, contratos e comprovantes deste cliente e das obras dele</FrameDescription>
+            </FrameHeader>
+            <FramePanel>
+              <ArquivosLista
+                empresaId={c.empresa_id}
+                clienteId={c.id}
+                obras={obras.map(({ id, nome }) => ({ id, nome }))}
+              />
+            </FramePanel>
+          </Frame>
+        </TabsContent>
+
         <TabsContent value="dados">
           <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <Frame spacing="default" className="min-w-0">
               <FrameHeader>
                 <FrameTitle>Relacionamento</FrameTitle>
-                <FrameDescription>
-                  Fase, temperatura, origem e próximo contato
-                </FrameDescription>
+                <FrameDescription>Fase, temperatura, origem e próximo contato</FrameDescription>
               </FrameHeader>
               <FramePanel>
                 <ClienteRelacionamento
@@ -485,24 +408,13 @@ export function ClientePainel({
               </FrameHeader>
               <FramePanel>
                 <dl className="flex flex-col gap-4">
-                  {c.tipo === "PJ" && (
-                    <Dado rotulo="Razão social" valor={c.razao_social} />
-                  )}
-                  <Dado
-                    rotulo={c.tipo === "PF" ? "CPF" : "CNPJ"}
-                    valor={c.tipo === "PF" ? c.cpf : c.cnpj}
-                  />
-                  <Dado
-                    rotulo="Telefone"
-                    valor={formatarTelefone(c.telefone)}
-                  />
+                  {c.tipo === 'PJ' && <Dado rotulo="Razão social" valor={c.razao_social} />}
+                  <Dado rotulo={c.tipo === 'PF' ? 'CPF' : 'CNPJ'} valor={c.tipo === 'PF' ? c.cpf : c.cnpj} />
+                  <Dado rotulo="Telefone" valor={formatarTelefone(c.telefone)} />
                   <Dado rotulo="E-mail" valor={c.email} />
                   <Dado rotulo="Endereço" valor={c.endereco} />
                   <Dado rotulo="Origem" valor={c.origem} />
-                  <Dado
-                    rotulo="Cliente desde"
-                    valor={formatarDataHora(c.created_at)}
-                  />
+                  <Dado rotulo="Cliente desde" valor={formatarDataHora(c.created_at)} />
                 </dl>
               </FramePanel>
             </Frame>
@@ -510,5 +422,5 @@ export function ClientePainel({
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }
