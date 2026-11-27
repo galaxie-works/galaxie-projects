@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2Icon, HammerIcon, HeartHandshakeIcon, TagIcon } from 'lucide-react'
+import { Building2Icon, HammerIcon, HeartHandshakeIcon, ReceiptTextIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { mascararCnpj, mascararCpf } from '@/components/clientes/documento'
@@ -15,6 +15,7 @@ import {
   FramePanel,
   FrameTitle,
 } from '@/components/reui/frame'
+import { NotaFiscalPainel } from '@/components/fiscal/nota-fiscal-painel'
 import { PrecosServicos } from '@/components/orcamento/precos-servicos'
 import { ServicosPicker } from '@/components/servicos/servicos-picker'
 import { BotaoVoz } from '@/components/voz/botao-voz'
@@ -35,6 +36,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { CertificadoPublico, EmpresaFiscal } from '@/lib/fiscal/tipos'
 import type { TabelaPrecos } from '@/lib/orcamento'
 import type { Empresa } from '@/types'
 
@@ -77,7 +79,19 @@ function TextoComVoz({
   )
 }
 
-export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empresa; precos: TabelaPrecos }) {
+export function EmpresaForm({
+  empresa,
+  precos: precosIniciais,
+  fiscal,
+  certificado,
+  servidorPronto,
+}: {
+  empresa: Empresa
+  precos: TabelaPrecos
+  fiscal: EmpresaFiscal | null
+  certificado: CertificadoPublico | null
+  servidorPronto: boolean
+}) {
   const router = useRouter()
   const supabase = createClient()
   const [nome, setNome] = useState(empresa.nome)
@@ -154,7 +168,7 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
   )
 
   return (
-    <form onSubmit={salvar} noValidate>
+    <div>
       <Tabs defaultValue="dados" orientation="vertical" className="flex-col gap-6 md:flex-row">
         <TabsList
           variant="line"
@@ -184,10 +198,15 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
               Pós-venda
             </TabsTrigger>
           )}
+          <TabsTrigger value="nota-fiscal" className="flex-none md:flex-1">
+            <ReceiptTextIcon />
+            Nota fiscal
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados" className="min-w-0">
-          <Frame spacing="default">
+          <form onSubmit={salvar} noValidate>
+<Frame spacing="default">
             <FrameHeader>
               <FrameTitle>Dados da empresa</FrameTitle>
               <FrameDescription>Aparecem nos orçamentos e na sua página.</FrameDescription>
@@ -287,10 +306,12 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
             </FramePanel>
             {rodape}
           </Frame>
+</form>
         </TabsContent>
 
         <TabsContent value="servicos" className="min-w-0">
-          <Frame spacing="default">
+          <form onSubmit={salvar} noValidate>
+<Frame spacing="default">
             <FrameHeader>
               <FrameTitle>Serviços</FrameTitle>
               <FrameDescription>O que você oferece aos clientes.</FrameDescription>
@@ -300,10 +321,12 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
             </FramePanel>
             {rodape}
           </Frame>
+</form>
         </TabsContent>
 
         <TabsContent value="precos" className="min-w-0">
-          <Frame spacing="default">
+          <form onSubmit={salvar} noValidate>
+<Frame spacing="default">
             <FrameHeader>
               <FrameTitle>Preços dos serviços</FrameTitle>
               <FrameDescription>
@@ -315,11 +338,23 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
             </FramePanel>
             {rodape}
           </Frame>
+</form>
+        </TabsContent>
+
+        <TabsContent value="nota-fiscal" className="min-w-0">
+          <NotaFiscalPainel
+            fiscal={fiscal}
+            certificado={certificado}
+            servidorPronto={servidorPronto}
+            empresaNome={nome}
+            empresaCnpj={cnpj || null}
+          />
         </TabsContent>
 
         {posVendaDisponivel && (
           <TabsContent value="pos-venda" className="min-w-0">
-            <Frame spacing="default">
+            <form onSubmit={salvar} noValidate>
+<Frame spacing="default">
               <FrameHeader>
                 <FrameTitle>Pós-venda</FrameTitle>
                 <FrameDescription>
@@ -360,9 +395,10 @@ export function EmpresaForm({ empresa, precos: precosIniciais }: { empresa: Empr
               </FramePanel>
               {rodape}
             </Frame>
+</form>
           </TabsContent>
         )}
       </Tabs>
-    </form>
+    </div>
   )
 }
