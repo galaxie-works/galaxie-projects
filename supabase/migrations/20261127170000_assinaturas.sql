@@ -118,3 +118,31 @@ join auth.users u on u.id = e.owner_id
 where a.empresa_id = e.id
   and u.email = 'teste-claude@example.com'
   and a.status = 'cortesia';
+
+-- Bloqueio também no banco, não só nas telas: em toda tabela com empresa_id
+-- (menos empresas e assinaturas), uma política RESTRICTIVE exige assinatura
+-- vigente para ler e escrever. Ela se soma (AND) às políticas por dono que já
+-- existem. Gatilhos e o servidor com service role não passam por RLS.
+do $$
+declare
+  t text;
+begin
+  for t in
+    select c.table_name
+    from information_schema.columns c
+    join information_schema.tables tb
+      on tb.table_schema = c.table_schema and tb.table_name = c.table_name
+    where c.table_schema = 'public'
+      and c.column_name = 'empresa_id'
+      and tb.table_type = 'BASE TABLE'
+      and c.table_name not in ('empresas', 'assinaturas')
+  loop
+    execute format('drop policy if exists "assinatura_vigente" on public.%I', t);
+    execute format(
+      'create policy "assinatura_vigente" on public.%I as restrictive for all to authenticated '
+      || 'using (public.assinatura_vigente(empresa_id)) '
+      || 'with check (public.assinatura_vigente(empresa_id))',
+      t
+    );
+  end loop;
+end $$;

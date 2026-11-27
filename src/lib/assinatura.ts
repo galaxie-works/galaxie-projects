@@ -90,7 +90,13 @@ export function situacaoAssinatura(
   return { status: a.status, liberado, fim, diasRestantes, progressoTeste }
 }
 
-/** Lê a assinatura da empresa; se a tabela ainda não existe, devolve null. */
+/**
+ * Lê a assinatura da empresa. Devolve null só quando a tabela ainda não existe
+ * no banco (antes da migration), e aí vale o teste contado da criação da
+ * empresa. Empresa sem linha é tratada como bloqueada, igual a
+ * public.assinatura_vigente. Qualquer outro erro sobe, para não liberar nem
+ * bloquear ninguém por engano.
+ */
 export async function carregarAssinatura(
   supabase: SupabaseClient,
   empresaId: string
@@ -100,8 +106,21 @@ export async function carregarAssinatura(
     .select('empresa_id, plano, status, teste_inicio, teste_fim, periodo_fim')
     .eq('empresa_id', empresaId)
     .maybeSingle()
-  if (error) return null
-  return (data as Assinatura | null) ?? null
+  if (error) {
+    if (error.code === '42P01' || error.code === 'PGRST205') return null
+    throw new Error(`Não foi possível ler a assinatura: ${error.message}`)
+  }
+  if (!data) {
+    return {
+      empresa_id: empresaId,
+      plano: 'teste',
+      status: 'cancelada',
+      teste_inicio: new Date(0).toISOString(),
+      teste_fim: new Date(0).toISOString(),
+      periodo_fim: null,
+    }
+  }
+  return data as Assinatura
 }
 
 export const ROTULO_STATUS: Record<StatusAssinatura, string> = {
