@@ -125,7 +125,13 @@ export function MembroForm({
   // Campos vazios ou preenchidos por um CEP anterior são trocados; o que a
   // pessoa digitou à mão fica. Respostas atrasadas de CEPs antigos são ignoradas.
   const ultimoCep = useRef('')
-  const doCep = useRef<Partial<Record<'endereco' | 'bairro' | 'cidade' | 'uf', string>>>({})
+  // Endereço já salvo conta como vindo do CEP salvo: trocar o CEP atualiza.
+  const doCep = useRef<Partial<Record<'endereco' | 'bairro' | 'cidade' | 'uf', string>>>({
+    endereco: membro?.endereco ?? '',
+    bairro: membro?.bairro ?? '',
+    cidade: membro?.cidade ?? '',
+    uf: membro?.uf ?? '',
+  })
   async function buscarCep(cep: string) {
     const d = cep.replace(/\D/g, '')
     ultimoCep.current = d
@@ -135,14 +141,16 @@ export function MembroForm({
       const j = await r.json()
       if (j.erro || ultimoCep.current !== d) return
       const novos = { endereco: j.logradouro || '', bairro: j.bairro || '', cidade: j.localidade || '', uf: j.uf || '' }
+      // O updater do setState roda depois; guarda os valores anteriores antes.
+      const anteriores = doCep.current
+      doCep.current = novos
       setC((atual) => {
         const prox = { ...atual }
         for (const k of ['endereco', 'bairro', 'cidade', 'uf'] as const) {
-          if (!atual[k] || atual[k] === doCep.current[k]) prox[k] = novos[k]
+          if (!atual[k] || atual[k] === anteriores[k]) prox[k] = novos[k]
         }
         return prox
       })
-      doCep.current = novos
     } catch {
       // sem rede ou serviço fora: segue sem preencher
     }
