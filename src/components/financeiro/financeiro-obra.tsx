@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { CalendarRangeIcon, PlusIcon, WalletIcon } from 'lucide-react'
 import { formatarMoeda } from '@/lib/formato'
 import { resumoRecebimentos } from '@/lib/financeiro'
-import type { Projeto, Recebimento } from '@/types'
+import type { Cliente, Projeto, Recebimento } from '@/types'
+import { NotasObra } from '@/components/fiscal/notas-obra'
 import { Frame, FrameDescription, FrameHeader, FrameTitle } from '@/components/reui/frame'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,10 +30,19 @@ type Props = {
   hoje: string
   /** false antes de rodar o SQL do financeiro. */
   disponivel: boolean
+  cliente?: Cliente | null
 }
 
 // Aba Financeiro da obra: números, plano de pagamento e parcelas.
-export function FinanceiroObra({ projeto, recebimentos, onRecebimentosChange, totalGasto, hoje, disponivel }: Props) {
+export function FinanceiroObra({
+  projeto,
+  recebimentos,
+  onRecebimentosChange,
+  totalGasto,
+  hoje,
+  disponivel,
+  cliente = null,
+}: Props) {
   const router = useRouter()
   const [plano, setPlano] = useState(false)
   const [nova, setNova] = useState(false)
@@ -149,6 +159,8 @@ export function FinanceiroObra({ projeto, recebimentos, onRecebimentosChange, to
           )}
         </FrameHeader>
       </RecebimentosTabela>
+
+      <NotasObra projeto={projeto} cliente={cliente} recebimentos={recebimentos} />
 
       <PlanoPagamentoDialog
         aberto={plano}
