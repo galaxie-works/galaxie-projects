@@ -62,7 +62,7 @@ export default function CadastroPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="tracking-tight">Criar conta</CardTitle>
-          <CardDescription>Leva menos de um minuto.</CardDescription>
+          <CardDescription>30 dias grátis, sem cartão. Para empresas e profissionais autônomos.</CardDescription>
         </CardHeader>
         <CardContent>
           {aviso ? (

@@ -21,6 +21,9 @@ export interface Empresa {
   modo_operacao: string | null
   servicos: string[]
   created_at: string
+  /** PF não emite nota fiscal; PJ emite NFS-e. Opcional até a migration de assinaturas. */
+  tipo_pessoa?: TipoCliente
+  cpf?: string | null
   // Pós-venda
   garantia_meses?: number
   link_avaliacao_google?: string | null

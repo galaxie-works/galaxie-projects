@@ -17,8 +17,11 @@ import {
   UsersIcon,
   HardHatIcon,
   SettingsIcon,
+  SparklesIcon,
   WalletIcon,
 } from 'lucide-react'
+import { textoDiasRestantes } from '@/lib/assinatura'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { iniciais } from '@/lib/formato'
@@ -96,9 +99,11 @@ type Props = {
   empresaNome: string
   email: string
   projetos: Projeto[]
+  /** Teste grátis em andamento (null quando já assinou ou é cortesia). */
+  teste: { dias: number; progresso: number } | null
 }
 
-export function AppSidebar({ empresaNome, email, projetos }: Props) {
+export function AppSidebar({ empresaNome, email, projetos, teste }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -234,6 +239,22 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
       </SidebarContent>
 
       <SidebarFooter>
+        {teste && (
+          <Link
+            href="/assinatura"
+            className="flex flex-col gap-2 rounded-md border bg-card p-3 text-card-foreground transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <SparklesIcon className="size-4 text-primary" aria-hidden />
+              Teste grátis
+              <span className="ml-auto text-xs font-normal text-muted-foreground tabular-nums">
+                {textoDiasRestantes(teste.dias)}
+              </span>
+            </span>
+            <Progress value={teste.progresso} aria-label="Quanto do teste grátis já passou" />
+            <span className="text-xs text-muted-foreground">Ver planos e assinatura</span>
+          </Link>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -241,7 +262,9 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                 render={
                   <SidebarMenuButton
                     size="lg"
-                    isActive={pathname.startsWith('/empresa') || pathname.startsWith('/ajustes')}
+                    isActive={pathname.startsWith('/empresa') ||
+                      pathname.startsWith('/ajustes') ||
+                      pathname.startsWith('/assinatura')}
                   />
                 }
               >
@@ -273,6 +296,13 @@ export function AppSidebar({ empresaNome, email, projetos }: Props) {
                   <SettingsIcon />
                   Ajustes
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={<Link href="/assinatura" />}
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
+                  <SparklesIcon />
+                  Assinatura
+                </DropdownMenuItem>
                 <MenuTema />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={sair}>
@@ -300,6 +330,7 @@ const SECOES: Record<string, string> = {
   equipe: 'Equipe',
   empresa: 'Empresa',
   ajustes: 'Ajustes',
+  assinatura: 'Assinatura',
 }
 
 type Camada = { id: string; nome: string }

@@ -34,6 +34,8 @@ type Props = {
   posVendaDisponivel: boolean
   cliente: Cliente | null
   linkGoogle: string | null
+  /** Pessoa física não emite nota: esconde as notas fiscais da obra. */
+  emiteNota: boolean
   /** 'YYYY-MM-DD' no fuso de Brasília. */
   hojeBrasil: string
   /** Aba aberta ao chegar (ex.: ?aba=orcamento vindo do funil). */
@@ -56,6 +58,7 @@ export function ProjetoAbas({
   posVendaDisponivel,
   cliente,
   linkGoogle,
+  emiteNota,
   hojeBrasil,
   abaInicial,
 }: Props) {
@@ -156,6 +159,7 @@ export function ProjetoAbas({
             hoje={hoje}
             disponivel={financeiroDisponivel}
             cliente={cliente}
+            emiteNota={emiteNota}
           />
         </TabsContent>
       )}

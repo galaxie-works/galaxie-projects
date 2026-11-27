@@ -7,6 +7,7 @@ import { carregarOrcamento, carregarPrecos } from '@/components/orcamento/dados'
 import { hojeISO } from '@/lib/crm'
 import { podeVerFinanceiro } from '@/lib/financeiro'
 import { SELECT_POS_VENDA } from '@/lib/pos-venda'
+import { emiteNotaFiscal, type TipoPessoa } from '@/lib/assinatura'
 import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto, Recebimento } from '@/types'
 
 export default async function ProjetoDetalhePage({
@@ -98,6 +99,7 @@ export default async function ProjetoDetalhePage({
         posVendaDisponivel={!posVendaRes.error}
         cliente={(clientes as Cliente[] | null)?.find((c) => c.id === p.cliente_id) ?? null}
         linkGoogle={(empresa?.link_avaliacao_google as string | null | undefined) ?? null}
+        emiteNota={emiteNotaFiscal(empresa?.tipo_pessoa as TipoPessoa | undefined)}
         hojeBrasil={hojeISO()}
         abaInicial={aba}
       />

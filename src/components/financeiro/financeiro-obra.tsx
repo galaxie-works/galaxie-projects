@@ -31,6 +31,8 @@ type Props = {
   /** false antes de rodar o SQL do financeiro. */
   disponivel: boolean
   cliente?: Cliente | null
+  /** false para pessoa física, que não emite nota. */
+  emiteNota?: boolean
 }
 
 // Aba Financeiro da obra: números, plano de pagamento e parcelas.
@@ -42,6 +44,7 @@ export function FinanceiroObra({
   hoje,
   disponivel,
   cliente = null,
+  emiteNota = true,
 }: Props) {
   const router = useRouter()
   const [plano, setPlano] = useState(false)
@@ -160,7 +163,9 @@ export function FinanceiroObra({
         </FrameHeader>
       </RecebimentosTabela>
 
-      <NotasObra projeto={projeto} cliente={cliente} recebimentos={recebimentos} />
+      {emiteNota && (
+        <NotasObra projeto={projeto} cliente={cliente} recebimentos={recebimentos} />
+      )}
 
       <PlanoPagamentoDialog
         aberto={plano}

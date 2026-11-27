@@ -18,8 +18,21 @@ import {
   type MensagemSefin,
 } from './sefin'
 import type { DadosEmissao, EmpresaFiscal, Resultado } from './tipos'
+import { emiteNotaFiscal, type TipoPessoa } from '@/lib/assinatura'
 
 const so = (v: string | null | undefined) => (v ?? '').replace(/\D/g, '')
+
+const SO_PJ = 'Nota fiscal é só para pessoa jurídica. Troque o tipo de conta em Empresa > Dados.'
+
+/** Pessoa física não emite nota. Sem a coluna (antes da migration), vale PJ. */
+async function ehPessoaFisica(supabase: SupabaseClient, empresaId: string) {
+  const { data, error } = await supabase
+    .from('empresas')
+    .select('tipo_pessoa')
+    .eq('id', empresaId)
+    .maybeSingle()
+  return !error && !emiteNotaFiscal((data as { tipo_pessoa?: TipoPessoa } | null)?.tipo_pessoa)
+}
 
 function textoErro(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e)
@@ -36,6 +49,7 @@ function textoErro(e: unknown): string {
 export async function salvarDadosFiscais(dados: Partial<EmpresaFiscal>): Promise<Resultado> {
   const sessao = await sessaoEmpresa()
   if (!sessao) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
+  if (await ehPessoaFisica(sessao.supabase, sessao.empresaId)) return { ok: false, erro: SO_PJ }
   const linha = {
     ...dados,
     empresa_id: sessao.empresaId,
@@ -61,6 +75,7 @@ export async function salvarDadosFiscais(dados: Partial<EmpresaFiscal>): Promise
 export async function enviarCertificado(form: FormData): Promise<Resultado<{ titular: string; validoAte: string }>> {
   const sessao = await sessaoEmpresa()
   if (!sessao) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
+  if (await ehPessoaFisica(sessao.supabase, sessao.empresaId)) return { ok: false, erro: SO_PJ }
   if (!chaveMestraConfigurada()) {
     return { ok: false, erro: 'O servidor ainda não tem a chave mestra (IA_CHAVE_MESTRA) configurada na Vercel.' }
   }
@@ -125,6 +140,7 @@ type Contexto = {
 async function contexto(): Promise<Contexto | string> {
   const sessao = await sessaoEmpresa()
   if (!sessao) return 'Sessão expirada. Entre de novo.'
+  if (await ehPessoaFisica(sessao.supabase, sessao.empresaId)) return SO_PJ
   const [{ data: fiscal }, { data: cert }] = await Promise.all([
     sessao.supabase.from('empresa_fiscal').select('*').eq('empresa_id', sessao.empresaId).maybeSingle(),
     sessao.supabase
