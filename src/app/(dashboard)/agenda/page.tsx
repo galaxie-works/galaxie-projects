@@ -134,7 +134,7 @@ export default async function AgendaPage({
           {atrasadas.length > 0 && (
             <Frame spacing="default" className="min-w-0">
               <FrameHeader>
-                <FrameTitle className="text-destructive">Atrasadas</FrameTitle>
+                <FrameTitle className="text-destructive-foreground">Atrasadas</FrameTitle>
                 <FrameDescription>
                   {atrasadas.length === 1 ? '1 tarefa passou do dia' : `${atrasadas.length} tarefas passaram do dia`}
                 </FrameDescription>

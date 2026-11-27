@@ -95,7 +95,7 @@ export function TarefaItem({ tarefa: t, hoje, mostrarCliente, mostrarDia }: Prop
 
   return (
     <>
-      <Item variant="outline" size="sm" className={cn(situacao === 'atrasada' && 'border-destructive/40')}>
+      <Item variant="outline" size="sm" className={cn(situacao === 'atrasada' && 'border-destructive-foreground/40')}>
         <ItemMedia className="self-start pt-0.5">
           <Checkbox
             checked={situacao === 'concluida'}
@@ -115,7 +115,7 @@ export function TarefaItem({ tarefa: t, hoje, mostrarCliente, mostrarDia }: Prop
             <span className="truncate">{t.texto}</span>
           </ItemTitle>
           <ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums">
-            <span className={cn(situacao === 'atrasada' && 'font-medium text-destructive')}>{quando}</span>
+            <span className={cn(situacao === 'atrasada' && 'font-medium text-destructive-foreground')}>{quando}</span>
             {mostrarCliente && t.clientes?.nome && (
               <>
                 <span aria-hidden className="bg-muted-foreground/40 size-1 shrink-0 rounded-full" />

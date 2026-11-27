@@ -34,7 +34,7 @@ function Numero({ rotulo, valor, detalhe, alerta }: { rotulo: string; valor: num
       <span
         className={cn(
           'text-lg font-semibold tracking-tight tabular-nums sm:text-xl',
-          alerta && valor > 0 && 'text-destructive'
+          alerta && valor > 0 && 'text-destructive-foreground'
         )}
       >
         {valor}
@@ -149,7 +149,7 @@ export default async function InicioPage() {
               <>
                 {atrasadas.length > 0 && (
                   <section className="flex flex-col gap-2">
-                    <h2 className="text-xs font-medium text-destructive">Atrasados</h2>
+                    <h2 className="text-xs font-medium text-destructive-foreground">Atrasados</h2>
                     <ItemGroup className="gap-2">
                       {atrasadas.map((t) => (
                         <TarefaItem key={t.id} tarefa={t} hoje={hoje} mostrarCliente mostrarDia />

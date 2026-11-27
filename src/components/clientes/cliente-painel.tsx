@@ -75,7 +75,7 @@ function Numero({
     <FramePanel className="flex min-w-0 flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{rotulo}</span>
       <span
-        className={`truncate text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${alerta ? 'text-destructive' : ''}`}
+        className={`truncate text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${alerta ? 'text-destructive-foreground' : ''}`}
       >
         {valor}
       </span>
