@@ -1,4 +1,4 @@
-import type { FaseCliente, StatusEtapa, StatusProjeto, TemperaturaCliente } from '@/types'
+import type { FaseCliente, FaseNegocio, StatusEtapa, StatusProjeto, TemperaturaCliente } from '@/types'
 
 // Variantes do @reui/badge para cada status (estados sempre via -light).
 type VarianteBadge =
@@ -40,4 +40,15 @@ export const VARIANTE_TEMPERATURA: Record<TemperaturaCliente, VarianteBadge> = {
   frio: 'info-light',
   morno: 'warning-light',
   quente: 'destructive-light',
+}
+
+export const VARIANTE_FASE_NEGOCIO: Record<FaseNegocio, VarianteBadge> = {
+  novo: 'invert-light',
+  visita_agendada: 'info-light',
+  medicao: 'info-light',
+  orcamento_enviado: 'warning-light',
+  negociacao: 'warning-light',
+  contrato_assinado: 'primary-light',
+  ganho: 'success-light',
+  perdido: 'destructive-light',
 }

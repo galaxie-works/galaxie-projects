@@ -10,10 +10,13 @@ import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto } from '@/
 
 export default async function ProjetoDetalhePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ aba?: string }>
 }) {
   const { id } = await params
+  const { aba } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -59,7 +62,7 @@ export default async function ProjetoDetalhePage({
   const versao = [p.status, p.nome, p.percentual_conclusao, p.orcamento_total, p.data_inicio, p.data_prazo].join('|')
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       <ProjetoCabecalho
         key={`cabecalho-${versao}`}
         projeto={p}
@@ -82,6 +85,7 @@ export default async function ProjetoDetalhePage({
         cliente={(clientes as Cliente[] | null)?.find((c) => c.id === p.cliente_id) ?? null}
         linkGoogle={(empresa?.link_avaliacao_google as string | null | undefined) ?? null}
         hojeBrasil={hojeISO()}
+        abaInicial={aba}
       />
     </div>
   )

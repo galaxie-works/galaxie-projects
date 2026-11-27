@@ -1,5 +1,7 @@
 import {
+  ArrowRightLeftIcon,
   CalendarCheckIcon,
+  ListTodoIcon,
   MailIcon,
   MessageCircleIcon,
   MicIcon,
@@ -18,4 +20,6 @@ export const ICONE_ATIVIDADE: Record<TipoAtividade, typeof StickyNoteIcon> = {
   reuniao: UsersIcon,
   email: MailIcon,
   audio: MicIcon,
+  tarefa: ListTodoIcon,
+  sistema: ArrowRightLeftIcon,
 }

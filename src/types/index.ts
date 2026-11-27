@@ -187,7 +187,16 @@ export const ORIGENS_CLIENTE = [
   'Outro',
 ] as const
 
-export type TipoAtividade = 'nota' | 'ligacao' | 'whatsapp' | 'visita' | 'reuniao' | 'email' | 'audio'
+export type TipoAtividade =
+  | 'nota'
+  | 'ligacao'
+  | 'whatsapp'
+  | 'visita'
+  | 'reuniao'
+  | 'email'
+  | 'audio'
+  | 'tarefa'
+  | 'sistema'
 
 export const TIPO_ATIVIDADE_LABEL: Record<TipoAtividade, string> = {
   nota: 'Nota',
@@ -197,6 +206,8 @@ export const TIPO_ATIVIDADE_LABEL: Record<TipoAtividade, string> = {
   reuniao: 'Reunião',
   email: 'E-mail',
   audio: 'Áudio',
+  tarefa: 'Tarefa',
+  sistema: 'Mudança de fase',
 }
 
 export interface Atividade {
@@ -253,4 +264,98 @@ export interface PosVenda {
   // Joins
   projetos?: { nome: string } | null
   indicado?: { nome: string } | null
+}
+
+// ---------------------------------------------------------------------------
+// Funil de negócios (fase 2 do CRM)
+// ---------------------------------------------------------------------------
+
+export type FaseNegocio =
+  | 'novo'
+  | 'visita_agendada'
+  | 'medicao'
+  | 'orcamento_enviado'
+  | 'negociacao'
+  | 'contrato_assinado'
+  | 'ganho'
+  | 'perdido'
+
+/** Ordem das colunas do funil. */
+export const FASES_NEGOCIO: FaseNegocio[] = [
+  'novo',
+  'visita_agendada',
+  'medicao',
+  'orcamento_enviado',
+  'negociacao',
+  'contrato_assinado',
+  'ganho',
+  'perdido',
+]
+
+export const FASE_NEGOCIO_LABEL: Record<FaseNegocio, string> = {
+  novo: 'Novo',
+  visita_agendada: 'Visita agendada',
+  medicao: 'Medição',
+  orcamento_enviado: 'Orçamento enviado',
+  negociacao: 'Negociação',
+  contrato_assinado: 'Contrato assinado',
+  ganho: 'Ganho',
+  perdido: 'Perdido',
+}
+
+/** Chance de fechar sugerida por fase (%), usada no valor ponderado. */
+export const PROBABILIDADE_FASE: Record<FaseNegocio, number> = {
+  novo: 10,
+  visita_agendada: 20,
+  medicao: 35,
+  orcamento_enviado: 50,
+  negociacao: 70,
+  contrato_assinado: 90,
+  ganho: 100,
+  perdido: 0,
+}
+
+/** Dias parado na fase até o cartão ficar em alerta. */
+export const DIAS_ALERTA_FASE: Record<FaseNegocio, number | null> = {
+  novo: 1,
+  visita_agendada: 3,
+  medicao: 3,
+  orcamento_enviado: 3,
+  negociacao: 7,
+  contrato_assinado: 7,
+  ganho: null,
+  perdido: null,
+}
+
+export const MOTIVOS_PERDA = [
+  'Preço',
+  'Prazo',
+  'Fechou com concorrente',
+  'Desistiu da obra',
+  'Sem retorno',
+  'Outro',
+] as const
+
+export interface Negocio {
+  id: string
+  empresa_id: string
+  cliente_id: string
+  titulo: string
+  fase: FaseNegocio
+  valor_estimado: number | null
+  /** Soma do orçamento por área feito no negócio. */
+  orcamento_total: number
+  valor_fechado: number | null
+  probabilidade: number | null
+  previsao_fechamento: string | null
+  motivo_perda: string | null
+  responsavel_id: string | null
+  projeto_id: string | null
+  ordem: number
+  fase_alterada_em: string
+  fechado_em: string | null
+  created_at: string
+  clientes?: { nome: string; telefone: string | null } | null
+  equipe?: { nome: string } | null
+  projetos?: { nome: string; status: StatusProjeto } | null
 }

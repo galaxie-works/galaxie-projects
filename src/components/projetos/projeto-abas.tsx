@@ -29,6 +29,8 @@ type Props = {
   linkGoogle: string | null
   /** 'YYYY-MM-DD' no fuso de Brasília. */
   hojeBrasil: string
+  /** Aba aberta ao chegar (ex.: ?aba=orcamento vindo do funil). */
+  abaInicial?: string
 }
 
 export function ProjetoAbas({
@@ -45,6 +47,7 @@ export function ProjetoAbas({
   cliente,
   linkGoogle,
   hojeBrasil,
+  abaInicial,
 }: Props) {
   const pendentesPv = pendentesPosVenda(posVenda)
   // Etapas e compras ficam aqui para a Visão geral refletir as mudanças na hora.
@@ -55,7 +58,7 @@ export function ProjetoAbas({
   const concluidas = etapas.filter((e) => e.status === 'concluida').length
 
   return (
-    <Tabs defaultValue="visao" className="gap-4">
+    <Tabs defaultValue={abaInicial ?? 'visao'} className="gap-4">
       <div className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
         <TabsList variant="line">
           <TabsTrigger value="visao">Visão geral</TabsTrigger>
@@ -94,7 +97,7 @@ export function ProjetoAbas({
       </TabsContent>
       <TabsContent value="orcamento">
         <OrcamentoAba
-          projetoId={projeto.id}
+          dono={{ projetoId: projeto.id }}
           empresaId={projeto.empresa_id}
           areas={areas}
           onAreasChange={setAreas}

@@ -1,9 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ClientePainel } from '@/components/clientes/cliente-painel'
-import { hojeISO } from '@/lib/crm'
+import { agoraMs, hojeISO } from '@/lib/crm'
+import { SELECT_NEGOCIO } from '@/lib/negocios'
 import { SELECT_POS_VENDA } from '@/lib/pos-venda'
-import type { Atividade, Cliente, MembroEquipe, PosVenda, Projeto } from '@/types'
+import type { Atividade, Cliente, MembroEquipe, Negocio, PosVenda, Projeto } from '@/types'
 
 export default async function ClienteDetalhePage({
   params,
@@ -20,7 +21,7 @@ export default async function ClienteDetalhePage({
   const { data: cliente } = await supabase.from('clientes').select('*').eq('id', id).maybeSingle()
   if (!cliente) notFound()
 
-  const [{ data: projetos, error }, atividadesRes, { data: equipe }, posVendaRes, { data: empresa }] = await Promise.all([
+  const [{ data: projetos, error }, atividadesRes, { data: equipe }, negociosRes, posVendaRes, { data: empresa }] = await Promise.all([
     supabase.from('projetos').select('*').eq('cliente_id', id).order('created_at', { ascending: false }),
     supabase
       .from('atividades')
@@ -29,6 +30,7 @@ export default async function ClienteDetalhePage({
       .order('ocorreu_em', { ascending: false })
       .limit(100),
     supabase.from('equipe').select('id, nome').order('nome'),
+    supabase.from('negocios').select(SELECT_NEGOCIO).eq('cliente_id', id).order('created_at', { ascending: false }),
     supabase.from('pos_venda').select(SELECT_POS_VENDA).eq('cliente_id', id).order('vence_em'),
     supabase.from('empresas').select('*').eq('id', cliente.empresa_id).maybeSingle(),
   ])
@@ -60,6 +62,8 @@ export default async function ClienteDetalhePage({
       posVendaDisponivel={posVendaDisponivel}
       linkGoogle={(empresa?.link_avaliacao_google as string | null | undefined) ?? null}
       hoje={hojeISO()}
+      negocios={negociosRes.error ? null : ((negociosRes.data as unknown as Negocio[]) ?? [])}
+      agora={agoraMs()}
     />
   )
 }

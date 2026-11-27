@@ -1,20 +1,35 @@
-import type { Cliente, FaseCliente, Projeto } from '@/types'
+import type { Cliente, FaseCliente, FaseNegocio, Projeto } from '@/types'
 
 type ObraResumo = Pick<Projeto, 'status' | 'orcamento_total'>
+type NegocioResumo = { fase: FaseNegocio }
 
-// Fase automática enquanto não existe a tabela de negócios (fase 2 do plano):
-// obra em execução ou pausada = cliente; em planejamento = proposta;
-// só obras completas = pós-venda; sem obra = lead.
-export function faseAutomatica(obras: ObraResumo[]): FaseCliente {
+const NEGOCIO_PROSPECT: FaseNegocio[] = ['novo', 'visita_agendada', 'medicao']
+const NEGOCIO_PROPOSTA: FaseNegocio[] = ['orcamento_enviado', 'negociacao']
+const NEGOCIO_FECHADO: FaseNegocio[] = ['contrato_assinado', 'ganho']
+
+// Fase automática pelo que está mais avançado entre obras e negócios:
+// obra em execução/pausada ou contrato fechado = cliente; obra em
+// planejamento ou orçamento enviado = proposta; negócio no começo do funil =
+// prospect; só obras completas = pós-venda; nada = lead. Negócios perdidos
+// não contam.
+export function faseAutomatica(obras: ObraResumo[], negocios: NegocioResumo[] = []): FaseCliente {
+  const temNegocio = (fases: FaseNegocio[]) => negocios.some((n) => fases.includes(n.fase))
   if (obras.some((o) => o.status === 'em_execucao' || o.status === 'pausado')) return 'cliente'
-  if (obras.some((o) => o.status === 'planejamento')) return 'proposta'
+  if (temNegocio(NEGOCIO_FECHADO) && !obras.every((o) => o.status === 'completo')) return 'cliente'
+  if (obras.some((o) => o.status === 'planejamento') || temNegocio(NEGOCIO_PROPOSTA)) return 'proposta'
+  if (temNegocio(NEGOCIO_PROSPECT)) return 'prospect'
   if (obras.some((o) => o.status === 'completo')) return 'pos_venda'
+  if (temNegocio(NEGOCIO_FECHADO)) return 'cliente'
   return 'lead'
 }
 
 // O ajuste manual sempre vence a fase calculada.
-export function faseDoCliente(cliente: Pick<Cliente, 'fase_manual'>, obras: ObraResumo[]): FaseCliente {
-  return cliente.fase_manual ?? faseAutomatica(obras)
+export function faseDoCliente(
+  cliente: Pick<Cliente, 'fase_manual'>,
+  obras: ObraResumo[],
+  negocios: NegocioResumo[] = []
+): FaseCliente {
+  return cliente.fase_manual ?? faseAutomatica(obras, negocios)
 }
 
 export type NumerosCliente = {
@@ -62,4 +77,9 @@ export function linkWhatsApp(telefone: string | null, texto?: string): string | 
 export function hojeISO(): string {
   // 'YYYY-MM-DD' no fuso de Brasília, para não depender do fuso do servidor.
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
+}
+
+/** Hora do servidor em ms, para cálculos de "há quantos dias" iguais nos dois lados. */
+export function agoraMs(): number {
+  return Date.now()
 }

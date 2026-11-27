@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatarMoeda } from '@/lib/formato'
 import { totalOrcamento, type AreaOrcamento, type TabelaPrecos } from '@/lib/orcamento'
-import { salvarOrcamento } from '@/components/orcamento/dados'
+import { salvarOrcamento, type DonoOrcamento } from '@/components/orcamento/dados'
 import { OrcamentoEditor } from '@/components/orcamento/orcamento-editor'
 import { OrcamentoResumo } from '@/components/orcamento/orcamento-resumo'
 import { Frame, FramePanel } from '@/components/reui/frame'
@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
 type Props = {
-  projetoId: string
+  /** Obra ({ projetoId }) ou negócio ainda não ganho ({ negocioId }). */
+  dono: DonoOrcamento
   empresaId: string
   areas: AreaOrcamento[]
   onAreasChange: (areas: AreaOrcamento[]) => void
@@ -24,7 +25,7 @@ type Props = {
 
 // Aba Orçamento do projeto: edita áreas e medidas e salva tudo de uma vez.
 export function OrcamentoAba({
-  projetoId,
+  dono,
   empresaId,
   areas,
   onAreasChange,
@@ -38,7 +39,7 @@ export function OrcamentoAba({
 
   async function salvar() {
     setSalvando(true)
-    const { erro } = await salvarOrcamento(createClient(), { projetoId, empresaId, areas, precos })
+    const { erro } = await salvarOrcamento(createClient(), { ...dono, empresaId, areas, precos })
     setSalvando(false)
     if (erro) {
       toast.error('Não foi possível salvar o orçamento', { description: erro })

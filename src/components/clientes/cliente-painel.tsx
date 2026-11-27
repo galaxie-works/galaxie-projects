@@ -31,6 +31,7 @@ import { PosVendaPainel } from '@/components/pos-venda/pos-venda-painel'
 import { pendentesPosVenda } from '@/lib/pos-venda'
 import { BotaoWhatsApp } from './botao-whatsapp'
 import { ArquivosLista } from '@/components/arquivos/arquivos-lista'
+import { NegociosCliente } from '@/components/negocios/negocios-cliente'
 import { formatarData, formatarDataHora, formatarMoeda, iniciais } from '@/lib/formato'
 import { faseDoCliente, faseAutomatica, numerosDoCliente, situacaoFollowup } from '@/lib/crm'
 import {
@@ -48,6 +49,7 @@ import {
   type Cliente,
   type MembroEquipe,
   type PosVenda,
+  type Negocio,
   type Projeto,
 } from '@/types'
 
@@ -165,6 +167,9 @@ type Props = {
   indicadoPor: { id: string; nome: string } | null
   /** 'YYYY-MM-DD' calculado no servidor. */
   hoje: string
+  /** null antes de rodar o SQL do funil. */
+  negocios: Negocio[] | null
+  agora: number
 }
 
 // Painel do cliente (Cliente 360): cabeçalho com fase e ações, números,
@@ -180,9 +185,11 @@ export function ClientePainel({
   linkGoogle,
   indicadoPor,
   hoje,
+  negocios,
+  agora,
 }: Props) {
   const pendentesPv = pendentesPosVenda(posVenda)
-  const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras)
+  const fase = faseDoCliente({ fase_manual: c.fase_manual ?? null }, obras, negocios ?? [])
   const numeros = numerosDoCliente(obras)
   const followup = situacaoFollowup(c.proximo_followup_em ?? null, hoje)
   const ultimoContato = atividades[0]?.ocorreu_em ?? null
@@ -288,6 +295,12 @@ export function ClientePainel({
         <div className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
           <TabsList variant="line">
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
+            {negocios && (
+              <TabsTrigger value="negocios">
+                Negócios
+                <span className="text-xs text-muted-foreground tabular-nums">{negocios.length}</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="obras">
               Obras
               <span className="text-xs text-muted-foreground tabular-nums">{obras.length}</span>
@@ -317,7 +330,26 @@ export function ClientePainel({
               </FramePanel>
             </Frame>
 
-            <Frame spacing="default" className="min-w-0 self-start">
+            <div className="flex min-w-0 flex-col gap-6 self-start">
+              {negocios && (
+                <Frame spacing="default" className="min-w-0">
+                  <FrameHeader>
+                    <FrameTitle>Negócios abertos</FrameTitle>
+                    <FrameDescription>No funil agora</FrameDescription>
+                  </FrameHeader>
+                  <FramePanel>
+                    <NegociosCliente
+                      negocios={negocios}
+                      empresaId={c.empresa_id}
+                      clienteId={c.id}
+                      equipe={equipe}
+                      agora={agora}
+                      compacta
+                    />
+                  </FramePanel>
+                </Frame>
+              )}
+            <Frame spacing="default" className="min-w-0">
               <FrameHeader>
                 <FrameTitle>Obras</FrameTitle>
                 <FrameDescription>
@@ -328,8 +360,25 @@ export function ClientePainel({
                 <ListaObras obras={obras.slice(0, 4)} novoProjeto={novoProjeto} compacta />
               </FramePanel>
             </Frame>
+            </div>
           </div>
         </TabsContent>
+
+        {negocios && (
+          <TabsContent value="negocios">
+            <Frame spacing="default" className="min-w-0">
+              <FramePanel>
+                <NegociosCliente
+                  negocios={negocios}
+                  empresaId={c.empresa_id}
+                  clienteId={c.id}
+                  equipe={equipe}
+                  agora={agora}
+                />
+              </FramePanel>
+            </Frame>
+          </TabsContent>
+        )}
 
         <TabsContent value="obras">
           <Frame spacing="default" className="min-w-0">
@@ -376,7 +425,7 @@ export function ClientePainel({
               <FramePanel>
                 <ClienteRelacionamento
                   cliente={c}
-                  faseCalculada={faseAutomatica(obras)}
+                  faseCalculada={faseAutomatica(obras, negocios ?? [])}
                   equipe={equipe}
                   disponivel={crmDisponivel}
                 />
