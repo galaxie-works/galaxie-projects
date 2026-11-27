@@ -65,6 +65,8 @@ export type ContextoDiario = {
 /** Registro pronto para mostrar: do servidor e/ou ainda no aparelho. */
 export type RegistroTela = RegistroDiario & {
   pendente: boolean
+  /** Já existe no servidor (mesmo que tenha uma edição na fila). */
+  noServidor: boolean
   erro?: string | null
   fotos: { id: string; url: string; pendente: boolean; caminho?: string }[]
 }

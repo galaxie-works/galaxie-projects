@@ -82,7 +82,8 @@ export function useFilaDiario() {
 /** Registros de uma obra: do servidor (ou da cópia offline) + os da fila. */
 export function useRegistrosObra(projetoId: string | null) {
   const online = useOnline()
-  const [registros, setRegistros] = useState<RegistroTela[] | null>(null)
+  // Guardado junto com a obra: ao trocar de obra, a lista anterior some na hora.
+  const [carregados, setCarregados] = useState<{ projetoId: string; lista: RegistroTela[] } | null>(null)
   const [deCopia, setDeCopia] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [versao, setVersao] = useState(0)
@@ -162,6 +163,7 @@ export function useRegistrosObra(projetoId: string | null) {
           ...s,
           equipe_presente: s.equipe_presente ?? [],
           pendente: false,
+          noServidor: true,
           fotos: fotosServidor
             .filter((x) => x.diario_id === s.id)
             .map((x) => ({ id: x.id, url: x.url ?? '', pendente: false, caminho: x.caminho })),
@@ -169,7 +171,13 @@ export function useRegistrosObra(projetoId: string | null) {
       }
       for (const l of locais) {
         const anterior = porId.get(l.id)
-        porId.set(l.id, { ...l, pendente: true, erro: l.erro, fotos: anterior?.fotos ?? [] })
+        porId.set(l.id, {
+          ...l,
+          pendente: true,
+          noServidor: Boolean(anterior),
+          erro: l.erro,
+          fotos: anterior?.fotos ?? [],
+        })
       }
       for (const f of fotosFila) {
         const alvo = porId.get(f.registro_id)
@@ -183,7 +191,7 @@ export function useRegistrosObra(projetoId: string | null) {
         (a, b) => b.data.localeCompare(a.data) || b.registrado_em.localeCompare(a.registrado_em)
       )
       if (cancelado) return
-      setRegistros(lista)
+      setCarregados({ projetoId: id, lista })
       setDeCopia(copia)
       setErro(falha && !copia ? falha : null)
     }
@@ -195,5 +203,6 @@ export function useRegistrosObra(projetoId: string | null) {
     }
   }, [projetoId, online, versao])
 
-  return { registros: projetoId ? registros : [], deCopia, erro, recarregar }
+  const registros = !projetoId ? [] : carregados?.projetoId === projetoId ? carregados.lista : null
+  return { registros, deCopia, erro, recarregar }
 }

@@ -105,23 +105,30 @@ export function DiarioLista({ registros, contexto, onNovo, onEditar, onExcluido 
   async function confirmarExclusao(): Promise<boolean> {
     if (!excluir) return false
     const r = excluir
-    const soNoAparelho = r.pendente && r.fotos.every((f) => f.pendente)
-    if (!navigator.onLine && !soNoAparelho) {
-      toast.error('Sem internet: a exclusão de um registro já enviado precisa de conexão.')
-      return false
-    }
-    // Sai da fila do aparelho e, com internet, do servidor também.
-    await removerRegistroLocal(r.id)
-    if (navigator.onLine) {
+    // Sem cópia no servidor (nem foto enviada): pode sair só do aparelho.
+    const soNoAparelho = !r.noServidor && r.fotos.every((f) => f.pendente)
+    if (!soNoAparelho) {
+      if (!navigator.onLine) {
+        toast.error('Sem internet: a exclusão de um registro já enviado precisa de conexão.')
+        return false
+      }
       const supabase = createClient()
+      // Fotos primeiro: se o Storage falhar, nada muda e dá para tentar de novo.
       const caminhos = r.fotos.map((f) => f.caminho).filter((c): c is string => Boolean(c))
+      if (caminhos.length) {
+        const { error: erroFotos } = await supabase.storage.from(BUCKET_ARQUIVOS).remove(caminhos)
+        if (erroFotos) {
+          toast.error('Não foi possível apagar as fotos', { description: erroFotos.message })
+          return false
+        }
+      }
       const { error } = await supabase.from('diario_obra').delete().eq('id', r.id)
       if (error) {
         toast.error('Não foi possível excluir', { description: error.message })
         return false
       }
-      if (caminhos.length) await supabase.storage.from(BUCKET_ARQUIVOS).remove(caminhos)
     }
+    await removerRegistroLocal(r.id)
     toast.success('Registro excluído')
     window.dispatchEvent(new CustomEvent(EVENTO_LOCAL))
     onExcluido()

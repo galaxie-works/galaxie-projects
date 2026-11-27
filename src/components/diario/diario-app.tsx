@@ -97,7 +97,7 @@ export function DiarioApp({ contexto: contextoServidor, obraInicial, obraFixa }:
     return (
       <DiarioForm
         contexto={contexto}
-        projetoId={projetoId}
+        projetoId={tela.registro?.projeto_id ?? projetoId}
         registro={tela.registro}
         onVoltar={() => {
           setTela({ modo: 'lista' })
