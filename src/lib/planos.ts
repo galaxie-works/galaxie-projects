@@ -1,6 +1,8 @@
 // Planos do Galaxie Obras (aprovados pelo Wagner em 27/11/2026).
-// No Stripe, cada preço é achado pela lookup_key abaixo: crie os produtos e
-// preços com essas chaves (scripts/stripe-criar-precos.mjs faz isso).
+// Estes são os valores de partida: o que vale é o que o admin master salva no
+// painel (/admin, tabelas plataforma_planos e plataforma_config), lido em
+// src/lib/plataforma/config.ts. No Stripe, cada preço é achado pela
+// lookup_key abaixo; o painel cria e atualiza os preços com essas chaves.
 
 export type PlanoId = 'autonomo' | 'equipe' | 'empresa'
 export type Ciclo = 'mensal' | 'anual'
@@ -73,10 +75,6 @@ export function lookupKey(plano: PlanoId, ciclo: Ciclo) {
 export function lerLookupKey(chave: string | null | undefined): { plano: PlanoId; ciclo: Ciclo } | null {
   const m = /^obras_(autonomo|equipe|empresa)_(mensal|anual)$/.exec(chave ?? '')
   return m ? { plano: m[1] as PlanoId, ciclo: m[2] as Ciclo } : null
-}
-
-export function planoPorId(id: string | null | undefined) {
-  return PLANOS.find((p) => p.id === id) ?? null
 }
 
 export const reais = (v: number) =>

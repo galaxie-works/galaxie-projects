@@ -10,7 +10,7 @@ import { carregarAssinatura, situacaoAssinatura } from '@/lib/assinatura'
 import { lerCarteira, lerExtrato } from '@/lib/ia/cota'
 import { configPublica } from '@/lib/ia/config-servidor'
 import { cobrancaLigada } from '@/lib/stripe/servidor'
-import { planoPorId } from '@/lib/planos'
+import { lerConfig, lerPlanos, planoPorId } from '@/lib/plataforma/config'
 import type { Empresa } from '@/types'
 
 // Tela de quem passou do teste grátis (ou da assinatura) sem pagar. Fica fora
@@ -29,13 +29,16 @@ export default async function TesteEncerradoPage() {
   const situacao = situacaoAssinatura(assinatura, empresa.created_at)
   if (situacao.liberado) redirect('/inicio')
 
-  const [carteira, extrato, ia] = await Promise.all([
+  const [carteira, extrato, ia, ligada, planos, config] = await Promise.all([
     lerCarteira(supabase, empresa.id),
     lerExtrato(supabase, empresa.id),
     configPublica(supabase, empresa.id).catch(() => null),
+    cobrancaLigada(),
+    lerPlanos(),
+    lerConfig(),
   ])
-  const ligada = cobrancaLigada()
   const pago = !!assinatura?.gateway_assinatura_id && ['ativa', 'atrasada'].includes(assinatura.status)
+  const planoPago = pago ? await planoPorId(assinatura?.plano) : null
 
   return (
     <div className="flex min-h-svh flex-col gap-6 p-4 md:p-6">
@@ -59,11 +62,14 @@ export default async function TesteEncerradoPage() {
           extrato={extrato}
           chavePropria={!!ia?.ativo}
           cobrancaLigada={ligada}
+          pacote={config.pacoteIA}
         />
       </div>
       <Planos
         cobrancaLigada={ligada}
-        planoAtual={pago ? (planoPorId(assinatura?.plano)?.id ?? null) : null}
+        planos={planos}
+        usuarioExtra={config.usuarioExtra.preco}
+        planoAtual={planoPago?.id ?? null}
         cicloAtual={pago ? (assinatura?.ciclo ?? null) : null}
         pago={pago}
       />

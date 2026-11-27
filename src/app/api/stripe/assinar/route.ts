@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { lookupKey, planoPorId, type Ciclo } from '@/lib/planos'
+import { lookupKey, type Ciclo } from '@/lib/planos'
+import { lerPlanos } from '@/lib/plataforma/config'
 import { precoPorChave, stripe, urlApp } from '@/lib/stripe/servidor'
 import { empresaLogada, garantirClienteStripe } from '@/lib/stripe/cliente-empresa'
 
@@ -8,14 +9,15 @@ const DOIS_DIAS = 2 * 24 * 60 * 60 * 1000
 // Abre o checkout do Stripe para assinar um plano. Quem já tem assinatura
 // paga vai para o portal (trocar de plano lá não duplica a cobrança).
 export async function POST(request: Request) {
-  const s = stripe()
+  const s = await stripe()
   if (!s) return NextResponse.json({ erro: 'A cobrança online ainda não está ligada.' }, { status: 503 })
 
   const dados = await empresaLogada()
   if (!dados) return NextResponse.json({ erro: 'Entre na sua conta.' }, { status: 401 })
 
   const corpo = (await request.json().catch(() => ({}))) as { plano?: string; ciclo?: string }
-  const plano = planoPorId(corpo.plano)
+  // Só planos à venda (o admin pode tirar um da venda no painel).
+  const plano = (await lerPlanos()).find((p) => p.id === corpo.plano) ?? null
   const ciclo: Ciclo = corpo.ciclo === 'anual' ? 'anual' : 'mensal'
   if (!plano) return NextResponse.json({ erro: 'Plano inválido.' }, { status: 400 })
 
