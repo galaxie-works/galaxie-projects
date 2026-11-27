@@ -18,6 +18,11 @@ export type Assinatura = {
   teste_inicio: string
   teste_fim: string
   periodo_fim: string | null
+  /** Preenchidos pela cobrança do Stripe (migration 20261127180000). */
+  ciclo?: 'mensal' | 'anual' | null
+  cancela_no_fim?: boolean
+  gateway_cliente_id?: string | null
+  gateway_assinatura_id?: string | null
 }
 
 export type Situacao = {
@@ -103,7 +108,7 @@ export async function carregarAssinatura(
 ): Promise<Assinatura | null> {
   const { data, error } = await supabase
     .from('assinaturas')
-    .select('empresa_id, plano, status, teste_inicio, teste_fim, periodo_fim')
+    .select('*')
     .eq('empresa_id', empresaId)
     .maybeSingle()
   if (error) {

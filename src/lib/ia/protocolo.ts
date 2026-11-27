@@ -97,6 +97,8 @@ export interface ErroAssistente {
   erro: string
   /** true quando falta configurar a chave em /ajustes. */
   semConfiguracao?: boolean
+  /** A cota de IA do plano acabou (e não há pacote nem chave própria). */
+  semCota?: boolean
   /** Ações que já deram certo antes do erro (ex.: registro criado). */
   acoes?: AcaoAssistente[]
   passos?: string[]
