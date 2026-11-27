@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FolderKanbanIcon, MessageCircleIcon, PhoneIcon, PlusIcon } from 'lucide-react'
+import { FolderKanbanIcon, PhoneIcon, PlusIcon } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -29,8 +29,10 @@ import { ClienteRelacionamento } from './cliente-relacionamento'
 import { RegistrarAtividade } from './registrar-atividade'
 import { NovaTarefa } from '@/components/agenda/nova-tarefa'
 import { TarefaItem } from '@/components/agenda/tarefa-item'
+import { BotaoWhatsApp } from './botao-whatsapp'
+import { ArquivosLista } from '@/components/arquivos/arquivos-lista'
 import { formatarData, formatarDataHora, formatarMoeda, iniciais } from '@/lib/formato'
-import { faseDoCliente, faseAutomatica, linkWhatsApp, numerosDoCliente, situacaoFollowup } from '@/lib/crm'
+import { faseDoCliente, faseAutomatica, numerosDoCliente, situacaoFollowup } from '@/lib/crm'
 import {
   VARIANTE_FASE_CLIENTE,
   VARIANTE_STATUS_PROJETO,
@@ -183,7 +185,6 @@ export function ClientePainel({
   // tarefas abertas ficam em "Próximos passos".
   const feitas = atividades.filter((a) => !a.previsto_para || a.concluida_em)
   const ultimoContato = feitas.find((a) => !a.previsto_para)?.ocorreu_em ?? null
-  const whatsapp = linkWhatsApp(c.telefone)
   const novoProjeto = `/projetos/novo?clienteId=${c.id}`
   const responsavel = equipe.find(
     (m) => m.id === c.responsavel_id
@@ -233,16 +234,7 @@ export function ClientePainel({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {whatsapp && (
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<a href={whatsapp} target="_blank" rel="noreferrer" />}
-            >
-              <MessageCircleIcon data-icon="inline-start" />
-              WhatsApp
-            </Button>
-          )}
+          <BotaoWhatsApp telefone={c.telefone} nome={c.nome} obra={obras[0]?.nome} />
           {c.telefone && (
             <Button variant="outline" nativeButton={false} render={<a href={`tel:${c.telefone}`} />}>
               <PhoneIcon data-icon="inline-start" />
@@ -301,6 +293,7 @@ export function ClientePainel({
               <span className="text-xs text-muted-foreground tabular-nums">{obras.length}</span>
             </TabsTrigger>
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
           </TabsList>
         </div>
 
@@ -378,6 +371,22 @@ export function ClientePainel({
           <Frame spacing="default" className="min-w-0">
             <FramePanel>
               <ListaObras obras={obras} novoProjeto={novoProjeto} />
+            </FramePanel>
+          </Frame>
+        </TabsContent>
+
+        <TabsContent value="arquivos">
+          <Frame spacing="default" className="min-w-0">
+            <FrameHeader>
+              <FrameTitle>Arquivos</FrameTitle>
+              <FrameDescription>Fotos, plantas, contratos e comprovantes deste cliente e das obras dele</FrameDescription>
+            </FrameHeader>
+            <FramePanel>
+              <ArquivosLista
+                empresaId={c.empresa_id}
+                clienteId={c.id}
+                obras={obras.map(({ id, nome }) => ({ id, nome }))}
+              />
             </FramePanel>
           </Frame>
         </TabsContent>

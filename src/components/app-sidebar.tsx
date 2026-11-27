@@ -22,6 +22,7 @@ import { createClient } from '@/lib/supabase/client'
 import { iniciais } from '@/lib/formato'
 import { STATUS_PROJETO_LABEL, type Projeto, type StatusProjeto } from '@/types'
 import { AssistenteVoz } from '@/components/assistente/assistente-voz'
+import { BuscaGlobal } from '@/components/busca/busca-global'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -315,6 +316,8 @@ export function AppHeader({
     trilha.push({ rotulo: SECOES[secao], href: sub ? `/${secao}` : undefined })
     if (sub === 'novo') {
       trilha.push({ rotulo: secao === 'projetos' ? 'Novo projeto' : 'Novo cadastro' })
+    } else if (sub === 'importar') {
+      trilha.push({ rotulo: 'Importar planilha' })
     } else if (sub) {
       const lista = secao === 'projetos' ? projetos : secao === 'clientes' ? clientes : []
       trilha.push({ rotulo: lista.find((p) => p.id === sub)?.nome ?? 'Detalhes' })
@@ -356,7 +359,10 @@ export function AppHeader({
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-      <AssistenteVoz configurado={assistenteConfigurado} empresaId={empresaId} />
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        <BuscaGlobal empresaId={empresaId} />
+        <AssistenteVoz configurado={assistenteConfigurado} empresaId={empresaId} />
+      </div>
     </header>
   )
 }
