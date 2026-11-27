@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Public routes: anyone can see these without being logged in.
 // O webhook do Stripe chega sem sessão; ele se autentica pela assinatura do Stripe.
-const PUBLIC_PATHS = ['/login', '/cadastro', '/auth', '/api/stripe/webhook']
+// O portal do cliente (/portal/<token>) é aberto pelo cliente final, sem conta.
+const PUBLIC_PATHS = ['/login', '/cadastro', '/auth', '/api/stripe/webhook', '/portal/']
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })

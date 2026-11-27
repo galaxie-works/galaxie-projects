@@ -23,6 +23,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PortalAcessoDialog } from '@/components/portal/portal-acesso-dialog'
 import { formatarTelefone } from './telefone'
 import { ClienteLinhaDoTempo, type EventoCliente } from './cliente-linha-do-tempo'
 import { ClienteRelacionamento } from './cliente-relacionamento'
@@ -185,6 +186,8 @@ type Props = {
   financeiroDisponivel: boolean
   /** null antes de rodar o SQL do funil. */
   negocios: Negocio[] | null
+  /** Nome da empresa, para a mensagem do portal do cliente. */
+  empresaNome: string
   agora: number
 }
 
@@ -208,6 +211,7 @@ export function ClientePainel({
   recebimentos,
   verFinanceiro,
   financeiroDisponivel,
+  empresaNome,
 }: Props) {
   const financeiro = resumoRecebimentos(recebimentos, hoje)
   const mostrarFinanceiro = verFinanceiro && financeiroDisponivel
@@ -269,6 +273,10 @@ export function ClientePainel({
         </div>
         <div className="flex flex-wrap gap-2">
           <BotaoWhatsApp telefone={c.telefone} nome={c.nome} obra={obras[0]?.nome} />
+          <PortalAcessoDialog
+            cliente={{ id: c.id, nome: c.nome, telefone: c.telefone }}
+            empresaNome={empresaNome}
+          />
           {c.telefone && (
             <Button variant="outline" nativeButton={false} render={<a href={`tel:${c.telefone}`} />}>
               <PhoneIcon data-icon="inline-start" />

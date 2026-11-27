@@ -357,6 +357,7 @@ export function PosVendaPainel({ itens, cliente, obras, projeto, linkGoogle, hoj
                     <ItemTitle className="flex flex-wrap items-center gap-1.5">
                       <span className="truncate">{tituloPosVenda(item)}</span>
                       <Badge variant={situacao.variante}>{situacao.rotulo}</Badge>
+                      {item.origem === 'portal' && <Badge variant="info-light">Pelo portal</Badge>}
                       {item.nota_0_10 != null && (
                         <Badge variant={item.nota_0_10 >= 9 ? 'success-light' : item.nota_0_10 >= 7 ? 'warning-light' : 'destructive-light'}>
                           Nota {item.nota_0_10}

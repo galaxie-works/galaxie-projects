@@ -8,6 +8,7 @@ import {
   FileSpreadsheetIcon,
   FileTextIcon,
   FolderOpenIcon,
+  GlobeIcon,
   PaperclipIcon,
   Trash2Icon,
   UploadIcon,
@@ -36,6 +37,8 @@ import {
   ItemTitle,
 } from '@/components/ui/item'
 import { Progress } from '@/components/ui/progress'
+import { Toggle } from '@/components/ui/toggle'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmarExclusao } from '@/components/projetos/confirmar-exclusao'
 
@@ -49,6 +52,8 @@ export type Arquivo = {
   tamanho: number
   tipo_mime: string | null
   created_at: string
+  /** Aparece no portal do cliente. */
+  no_portal?: boolean
 }
 
 const BUCKET = 'arquivos'
@@ -193,6 +198,18 @@ export function ArquivosLista({ empresaId, clienteId, projetoId, obras = [] }: P
     window.open(data.signedUrl, '_blank', 'noopener')
   }
 
+  // Liga/desliga o arquivo no portal do cliente (fotos da obra, contrato...).
+  async function alternarPortal(a: Arquivo, ligar: boolean) {
+    setArquivos((lista) => lista?.map((x) => (x.id === a.id ? { ...x, no_portal: ligar } : x)) ?? null)
+    const { error } = await createClient().from('arquivos').update({ no_portal: ligar }).eq('id', a.id)
+    if (error) {
+      setArquivos((lista) => lista?.map((x) => (x.id === a.id ? { ...x, no_portal: !ligar } : x)) ?? null)
+      toast.error('Não foi possível mudar o portal', { description: error.message })
+      return
+    }
+    toast.success(ligar ? 'Aparece no portal do cliente' : 'Saiu do portal do cliente')
+  }
+
   async function apagar(a: Arquivo): Promise<boolean> {
     const supabase = createClient()
     const { error } = await supabase.from('arquivos').delete().eq('id', a.id)
@@ -301,9 +318,27 @@ export function ArquivosLista({ empresaId, clienteId, projetoId, obras = [] }: P
                     <span aria-hidden className="bg-muted-foreground/40 size-1 shrink-0 rounded-full" />
                     <span>{formatarDataHora(a.created_at)}</span>
                     {obra && <Badge variant="outline">{obra}</Badge>}
+                    {a.no_portal && <Badge variant="info-light">No portal</Badge>}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
+                  {a.no_portal !== undefined && (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Toggle
+                            size="sm"
+                            pressed={a.no_portal}
+                            onPressedChange={(v) => void alternarPortal(a, v)}
+                            aria-label={a.no_portal ? `Tirar ${a.nome} do portal` : `Mostrar ${a.nome} no portal`}
+                          />
+                        }
+                      >
+                        <GlobeIcon />
+                      </TooltipTrigger>
+                      <TooltipContent>{a.no_portal ? 'Tirar do portal do cliente' : 'Mostrar no portal do cliente'}</TooltipContent>
+                    </Tooltip>
+                  )}
                   <Button variant="ghost" size="icon-sm" onClick={() => baixar(a)} aria-label={`Baixar ${a.nome}`}>
                     <DownloadIcon />
                   </Button>
