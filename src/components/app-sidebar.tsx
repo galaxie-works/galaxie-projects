@@ -13,6 +13,7 @@ import {
   ChevronsUpDownIcon,
   FolderKanbanIcon,
   LogOutIcon,
+  NotebookPenIcon,
   PlusIcon,
   UsersIcon,
   HardHatIcon,
@@ -22,6 +23,7 @@ import {
   WalletIcon,
 } from 'lucide-react'
 import { textoDiasRestantes } from '@/lib/assinatura'
+import { limparPaginasOffline } from '@/components/pwa/registrar-sw'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -90,6 +92,7 @@ const NAVEGACAO = [
   { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
   { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
   { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
+  { href: '/diario', rotulo: 'Diário de obra', icone: NotebookPenIcon },
   { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
   { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
   { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
@@ -123,6 +126,7 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
   )
 
   async function sair() {
+    limparPaginasOffline()
     await createClient().auth.signOut()
     router.push('/login')
     router.refresh()
@@ -336,6 +340,7 @@ const SECOES: Record<string, string> = {
   inicio: 'Início',
   agenda: 'Agenda',
   projetos: 'Projetos',
+  diario: 'Diário de obra',
   funil: 'Funil',
   clientes: 'Clientes',
   financeiro: 'Financeiro',
