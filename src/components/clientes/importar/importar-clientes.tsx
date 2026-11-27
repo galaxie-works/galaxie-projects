@@ -134,7 +134,7 @@ export function ImportarClientes({ empresaId }: { empresaId: string }) {
     onFilesAdded: (novos) => {
       const f = novos[0]?.file
       if (f instanceof File) void abrirArquivo(f)
-      upload.clearFiles()
+      setTimeout(upload.clearFiles, 0)
     },
   })
 
