@@ -158,7 +158,7 @@ function FormPlano({ onOpenChange, obra, totalObra, jaTemParcelas, proximaOrdem,
 
       <ol className="flex flex-col gap-4">
         {parcelas.map((p, i) => (
-          <li key={i} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_10rem] sm:items-end">
+          <li key={i} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8.5rem_12.5rem] sm:items-end">
             <Field>
               <FieldLabel htmlFor={`plano-desc-${i}`} className="text-xs">
                 {i + 1}ª parcela · {p.percentual}%

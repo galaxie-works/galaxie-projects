@@ -198,8 +198,8 @@ export function ClientePainel({
       quando: a.ocorreu_em,
       tipo: a.tipo,
       titulo: a.equipe?.nome
-        ? `${TIPO_ATIVIDADE_LABEL[a.tipo]} · ${a.equipe.nome}`
-        : TIPO_ATIVIDADE_LABEL[a.tipo],
+        ? `${TIPO_ATIVIDADE_LABEL[a.tipo] ?? 'Registro'} · ${a.equipe.nome}`
+        : (TIPO_ATIVIDADE_LABEL[a.tipo] ?? 'Registro'),
       texto: a.texto,
     })),
     ...obras.map((p) => ({

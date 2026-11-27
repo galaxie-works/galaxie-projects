@@ -32,7 +32,12 @@ export type EventoCliente = {
 
 function Icone({ tipo }: { tipo: EventoCliente['tipo'] }) {
   const Comp =
-    tipo === 'cadastro' ? UserPlusIcon : tipo === 'obra' ? FolderKanbanIcon : ICONE_ATIVIDADE[tipo]
+    tipo === 'cadastro'
+      ? UserPlusIcon
+      : tipo === 'obra'
+        ? FolderKanbanIcon
+        : // Tipos novos do banco (tarefa, sistema) antes de o app ter ícone: não derruba a tela.
+          (ICONE_ATIVIDADE[tipo] ?? HistoryIcon)
   return <Comp className="size-3" />
 }
 
