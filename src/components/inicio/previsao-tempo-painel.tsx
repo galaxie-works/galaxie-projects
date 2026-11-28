@@ -65,7 +65,7 @@ function DiaColuna({ dia, hoje }: { dia: DiaPrevisao; hoje: string }) {
         'flex min-w-0 flex-col items-center gap-1 rounded-md px-0.5 py-1.5',
         dia.risco === 'chuva' && 'bg-info/8'
       )}
-      title={`${dia.descricao}, ${dia.chanceChuva}% de chance de chuva${dia.chuvaMm ? `, ${dia.chuvaMm} mm` : ''}`}
+      title={[dia.descricao, dia.chanceChuva !== null && `${dia.chanceChuva}% de chance de chuva`, dia.chuvaMm > 0 && `${dia.chuvaMm} mm`].filter(Boolean).join(', ')}
     >
       <span className={cn('text-xs text-muted-foreground', dia.data === hoje && 'font-medium text-foreground')}>
         {rotuloDiaCurto(dia.data, hoje)}
@@ -84,7 +84,7 @@ function DiaColuna({ dia, hoje }: { dia: DiaPrevisao; hoje: string }) {
         )}
       >
         <UmbrellaIcon className="hidden size-3 sm:block" aria-hidden />
-        {dia.chanceChuva}%
+        {dia.chanceChuva !== null ? `${dia.chanceChuva}%` : `${String(dia.chuvaMm).replace('.', ',')} mm`}
       </span>
     </li>
   )
@@ -94,7 +94,7 @@ function DiaColuna({ dia, hoje }: { dia: DiaPrevisao; hoje: string }) {
 export function PrevisaoTempoPainel({ cidade, previsao, hoje, obras, className }: Props) {
   if (!cidade) {
     return (
-      <Frame spacing="sm" className={cn('min-w-0', className)}>
+      <Frame spacing="default" className={cn('min-w-0', className)}>
         <FramePanel className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <CloudSunIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -114,7 +114,7 @@ export function PrevisaoTempoPainel({ cidade, previsao, hoje, obras, className }
   const inicios = obras.filter((o) => o.motivo === 'inicio')
 
   return (
-    <Frame spacing="sm" className={cn('min-w-0', className)}>
+    <Frame spacing="default" className={cn('min-w-0', className)}>
       <FramePanel className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-baseline gap-2">
