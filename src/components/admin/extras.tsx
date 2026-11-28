@@ -16,6 +16,10 @@ import { salvarExtrasAcao, type DadosExtras } from '@/app/(dashboard)/admin/acti
 import type { ConfigPlataforma } from '@/lib/plataforma/config'
 import { CampoNumero, useAcaoAdmin } from './comum'
 
+/** Teto do usuário extra: o Microsoft 365 Business Basic no Brasil (anual, jul/2026). Regra do Wagner. */
+const LIMITE_USUARIO_EXTRA = 33.4
+const reaisCentavos = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
 export function Extras({ config }: { config: ConfigPlataforma }) {
   const [d, setD] = useState<DadosExtras>({
     comandosTeste: config.comandosTeste,
@@ -80,7 +84,18 @@ export function Extras({ config }: { config: ConfigPlataforma }) {
             </FieldSet>
             <Field className="sm:max-w-[calc(50%-0.5rem)]">
               <FieldLabel htmlFor="x-usuario">Usuário extra no escritório (por mês)</FieldLabel>
-              <CampoNumero id="x-usuario" formato="reais" valor={d.usuarioExtraPreco} onChange={set('usuarioExtraPreco')} />
+              <CampoNumero
+                id="x-usuario"
+                formato="reais"
+                valor={d.usuarioExtraPreco}
+                onChange={set('usuarioExtraPreco')}
+                invalido={(d.usuarioExtraPreco ?? 0) > LIMITE_USUARIO_EXTRA}
+              />
+              <FieldDescription>
+                {(d.usuarioExtraPreco ?? 0) > LIMITE_USUARIO_EXTRA
+                  ? `Acima do Microsoft 365 Business Basic (${reaisCentavos(LIMITE_USUARIO_EXTRA)} por usuário/mês). A regra é ficar abaixo dele.`
+                  : `Referência: Microsoft 365 Business Basic custa ${reaisCentavos(LIMITE_USUARIO_EXTRA)} por usuário/mês (anual, desde jul/2026). Fique abaixo dele.`}
+              </FieldDescription>
             </Field>
           </FieldGroup>
         </FramePanel>

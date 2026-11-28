@@ -27,6 +27,16 @@ export interface Empresa {
   // Pós-venda
   garantia_meses?: number
   link_avaliacao_google?: string | null
+  /** Logo no bucket "arquivos" (<empresa_id>/marca/...). */
+  logo_caminho?: string | null
+}
+
+/** Nome e foto de quem usa o app (um por login). */
+export interface Perfil {
+  user_id: string
+  nome: string | null
+  foto_caminho: string | null
+  updated_at: string
 }
 
 export interface MembroEquipe {

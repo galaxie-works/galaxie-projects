@@ -9,6 +9,7 @@ import { podeVerFinanceiro } from '@/lib/financeiro'
 import { SELECT_POS_VENDA } from '@/lib/pos-venda'
 import { emiteNotaFiscal, type TipoPessoa } from '@/lib/assinatura'
 import type { Cliente, Compra, Etapa, MembroEquipe, PosVenda, Projeto, Recebimento } from '@/types'
+import { exigirAcesso } from '@/lib/acesso'
 
 export default async function ProjetoDetalhePage({
   params,
@@ -24,6 +25,7 @@ export default async function ProjetoDetalhePage({
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('obras')
 
   const { data: projeto } = await supabase
     .from('projetos')

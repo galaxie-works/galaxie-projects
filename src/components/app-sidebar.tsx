@@ -11,6 +11,8 @@ import {
   Building2Icon,
   FunnelIcon,
   ChevronsUpDownIcon,
+  KeyRoundIcon,
+  CircleUserRoundIcon,
   FolderKanbanIcon,
   LogOutIcon,
   NotebookPenIcon,
@@ -33,7 +35,7 @@ import { AssistenteVoz } from '@/components/assistente/assistente-voz'
 import { BuscaGlobal } from '@/components/busca/busca-global'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   Breadcrumb,
@@ -99,6 +101,25 @@ const NAVEGACAO = [
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
 ]
 
+/** O que quem está logado pode abrir (vem das permissões; o dono vê tudo). */
+export type MenuPermitido = {
+  modulos: string[]
+  empresa: boolean
+  assinatura: boolean
+  acessos: boolean
+}
+
+// Rota do menu → módulo de permissão. Rotas fora da lista aparecem para todos.
+const MODULO_DA_ROTA: Record<string, string> = {
+  '/agenda': 'agenda',
+  '/projetos': 'obras',
+  '/diario': 'diario',
+  '/funil': 'negocios',
+  '/clientes': 'clientes',
+  '/financeiro': 'financeiro',
+  '/equipe': 'equipe',
+}
+
 type Props = {
   empresaNome: string
   email: string
@@ -107,9 +128,28 @@ type Props = {
   teste: { dias: number; progresso: number } | null
   /** Dono da plataforma: vê o painel do admin master. */
   adminMaster?: boolean
+  /** URL assinada do logo da empresa (no topo do menu). */
+  logoUrl?: string | null
+  /** Quem está logado: nome e foto de Minha conta. */
+  usuario?: { nome: string | null; fotoUrl: string | null }
+  /** Sem isto, mostra tudo (dono). */
+  permitido?: MenuPermitido
 }
 
-export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = false }: Props) {
+export function AppSidebar({
+  empresaNome,
+  email,
+  projetos,
+  teste,
+  adminMaster = false,
+  logoUrl = null,
+  usuario,
+  permitido,
+}: Props) {
+  const rotaVisivel = (href: string) => {
+    const modulo = MODULO_DA_ROTA[href]
+    return !permitido || !modulo || permitido.modulos.includes(modulo)
+  }
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -139,9 +179,16 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/inicio" />}>
-              <IconTile variant="solid" size="sm" aria-hidden>
-                <HardHatIcon />
-              </IconTile>
+              {logoUrl ? (
+                <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logoUrl} alt="" className="size-full object-contain" />
+                </span>
+              ) : (
+                <IconTile variant="solid" size="sm" aria-hidden>
+                  <HardHatIcon />
+                </IconTile>
+              )}
               <span className="flex min-w-0 flex-col gap-0.5 leading-none">
                 <span className="truncate font-semibold tracking-tight">{empresaNome}</span>
                 <span className="truncate text-xs text-muted-foreground">Galaxie Obras</span>
@@ -155,7 +202,7 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAVEGACAO.map(({ href, rotulo, icone: Icone }) => {
+              {NAVEGACAO.filter((n) => rotaVisivel(n.href)).map(({ href, rotulo, icone: Icone }) => {
                 const ativo =
                   href === '/projetos' ? pathname === '/projetos' : pathname.startsWith(href)
                 return (
@@ -174,6 +221,7 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {rotaVisivel('/projetos') && (
         <SidebarGroup className="min-h-0 flex-1">
           <SidebarGroupLabel>Obras</SidebarGroupLabel>
           <SidebarGroupAction
@@ -243,10 +291,11 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
             )}
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
-        {teste && (
+        {teste && (!permitido || permitido.assinatura) && (
           <Link
             href="/assinatura"
             className="flex flex-col gap-2 rounded-md border bg-card p-3 text-card-foreground transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
@@ -270,16 +319,19 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
                   <SidebarMenuButton
                     size="lg"
                     isActive={pathname.startsWith('/empresa') ||
+                      pathname.startsWith('/conta') ||
+                      pathname.startsWith('/acessos') ||
                       pathname.startsWith('/ajustes') ||
                       pathname.startsWith('/assinatura')}
                   />
                 }
               >
                 <Avatar className="size-8">
-                  <AvatarFallback>{iniciais(empresaNome) || '?'}</AvatarFallback>
+                  {usuario?.fotoUrl && <AvatarImage src={usuario.fotoUrl} alt="" />}
+                  <AvatarFallback>{iniciais(usuario?.nome || empresaNome) || '?'}</AvatarFallback>
                 </Avatar>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-none">
-                  <span className="truncate font-medium">{empresaNome}</span>
+                  <span className="truncate font-medium">{usuario?.nome || empresaNome}</span>
                   <span className="truncate text-xs text-muted-foreground">{email}</span>
                 </span>
                 <ChevronsUpDownIcon className="ml-auto" />
@@ -290,26 +342,48 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  render={<Link href="/empresa" />}
+                  render={<Link href="/conta" />}
                   onClick={() => isMobile && setOpenMobile(false)}
                 >
-                  <Building2Icon />
-                  Empresa
+                  <CircleUserRoundIcon />
+                  Minha conta
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link href="/ajustes" />}
-                  onClick={() => isMobile && setOpenMobile(false)}
-                >
-                  <SettingsIcon />
-                  Ajustes
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link href="/assinatura" />}
-                  onClick={() => isMobile && setOpenMobile(false)}
-                >
-                  <SparklesIcon />
-                  Assinatura
-                </DropdownMenuItem>
+                {(!permitido || permitido.empresa) && (
+                  <DropdownMenuItem
+                    render={<Link href="/empresa" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <Building2Icon />
+                    Empresa
+                  </DropdownMenuItem>
+                )}
+                {(!permitido || permitido.acessos) && (
+                  <DropdownMenuItem
+                    render={<Link href="/acessos" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <KeyRoundIcon />
+                    Acessos da equipe
+                  </DropdownMenuItem>
+                )}
+                {(!permitido || permitido.empresa) && (
+                  <DropdownMenuItem
+                    render={<Link href="/ajustes" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <SettingsIcon />
+                    Ajustes
+                  </DropdownMenuItem>
+                )}
+                {(!permitido || permitido.assinatura) && (
+                  <DropdownMenuItem
+                    render={<Link href="/assinatura" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <SparklesIcon />
+                    Assinatura
+                  </DropdownMenuItem>
+                )}
                 {adminMaster && (
                   <DropdownMenuItem
                     render={<Link href="/admin" />}
@@ -346,6 +420,8 @@ const SECOES: Record<string, string> = {
   financeiro: 'Financeiro',
   equipe: 'Equipe',
   empresa: 'Empresa',
+  conta: 'Minha conta',
+  acessos: 'Acessos',
   ajustes: 'Ajustes',
   assinatura: 'Assinatura',
   admin: 'Admin master',

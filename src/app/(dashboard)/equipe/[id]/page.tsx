@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { MembroForm } from '@/components/equipe/membro-form'
 import { urlsDasFotos } from '@/lib/equipe'
 import type { MembroEquipe } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function EditarPessoaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -11,11 +12,12 @@ export default async function EditarPessoaPage({ params }: { params: Promise<{ i
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('equipe')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 

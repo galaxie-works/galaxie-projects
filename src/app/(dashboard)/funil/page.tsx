@@ -20,6 +20,7 @@ import {
   valorDoNegocio,
 } from '@/lib/negocios'
 import type { Negocio } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 function Numero({ rotulo, valor, detalhe, alerta }: { rotulo: string; valor: string; detalhe: string; alerta?: boolean }) {
   return (
@@ -41,11 +42,12 @@ export default async function FunilPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('negocios')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
