@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CheckIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -41,14 +41,17 @@ export function NomeUsuario({ userId, nomeAtual, email }: { userId: string; nome
           id="conta-nome"
           value={nome}
           autoComplete="name"
-          placeholder="Como você quer ser chamado"
+          placeholder="Seu nome"
           onChange={(e) => {
             setNome(e.target.value)
             setSalvo(false)
           }}
         />
-        <FieldDescription>Entra com o e-mail {email}.</FieldDescription>
         {erro && <FieldError>{erro}</FieldError>}
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="conta-email">E-mail de acesso</FieldLabel>
+        <Input id="conta-email" value={email} readOnly disabled />
       </Field>
       <div className="flex justify-end">
         <Button type="submit" disabled={salvando || nome.trim() === nomeAtual.trim()}>

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { CircleAlertIcon, EllipsisIcon } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Badge } from '@/components/reui/badge'
-import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -115,9 +115,6 @@ export function Assinantes({ assinantes }: { assinantes: Assinante[] | null }) {
     <Frame spacing="default">
       <FrameHeader>
         <FrameTitle>Assinantes</FrameTitle>
-        <FrameDescription>
-          Todas as empresas da plataforma. Dê comandos de IA, estenda o teste ou transforme em cortesia.
-        </FrameDescription>
       </FrameHeader>
       <FramePanel className={assinantes?.length ? 'p-0' : undefined}>
         {!assinantes ? (

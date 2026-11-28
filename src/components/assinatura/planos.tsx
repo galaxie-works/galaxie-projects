@@ -61,8 +61,7 @@ export function Planos({
         <div className="flex flex-col gap-0.5">
           <FrameTitle>Planos</FrameTitle>
           <FrameDescription>
-            Pagamento no cartão, com renovação automática e cancelamento quando quiser. Assinando no
-            teste, os dias grátis que faltam continuam valendo.
+            Cartão, renovação automática, cancele quando quiser. Os dias grátis restantes continuam valendo.
           </FrameDescription>
         </div>
         <ToggleGroup

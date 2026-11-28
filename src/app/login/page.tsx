@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -62,7 +61,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="tracking-tight">Entrar</CardTitle>
-          <CardDescription>Acompanhe suas obras, clientes e equipe.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>

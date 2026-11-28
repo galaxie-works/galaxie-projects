@@ -291,7 +291,7 @@ export function MembroForm({
     <form ref={formRef} onSubmit={enviar} noValidate className="flex flex-col gap-6">
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
-          <Secao titulo="Identificação" descricao="Só nome e profissão são obrigatórios.">
+          <Secao titulo="Identificação" descricao="Nome e profissão são obrigatórios.">
             <FotoMembro
               fotoAtual={fotoMostrada}
               onArquivo={setFotoNova}
@@ -383,7 +383,7 @@ export function MembroForm({
             </Field>
           </Secao>
 
-          <Secao titulo="Contato de emergência" descricao="Quem avisar se acontecer algo na obra.">
+          <Secao titulo="Contato de emergência">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="membro-emergencia-nome">Nome</FieldLabel>
@@ -464,7 +464,7 @@ export function MembroForm({
             </div>
           </Secao>
 
-          <Secao titulo="Trabalho" descricao="Como a pessoa trabalha com você e como recebe.">
+          <Secao titulo="Trabalho">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="membro-vinculo">Vínculo</FieldLabel>

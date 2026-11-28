@@ -40,7 +40,6 @@ import { aplicarFiltroSelect } from '@/components/projetos/filtro-select'
 export type LinhaProjeto = Projeto & { gasto: number; atrasado: boolean }
 
 type Props = {
-  empresaNome: string
   projetos: LinhaProjeto[]
   erro?: string | null
 }
@@ -50,7 +49,7 @@ const COLUNA_NUMERICA = {
   cellClassName: 'text-end tabular-nums',
 }
 
-export function ProjetosPainel({ empresaNome, projetos, erro }: Props) {
+export function ProjetosPainel({ projetos, erro }: Props) {
   const router = useRouter()
   const [query, setQuery] = useState<FilterQuery>(() => createFilterQuery())
   const [sorting, setSorting] = useState<SortingState>([])
@@ -225,7 +224,6 @@ export function ProjetosPainel({ empresaNome, projetos, erro }: Props) {
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="flex flex-col gap-0.5">
         <h1 className="text-xl font-semibold tracking-tight">Projetos</h1>
-        <p className="text-sm text-muted-foreground">Obras de {empresaNome}</p>
       </div>
       <Button nativeButton={false} render={<Link href="/projetos/novo" />}>
         <PlusIcon data-icon="inline-start" />

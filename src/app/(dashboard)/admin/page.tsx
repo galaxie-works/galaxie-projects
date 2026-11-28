@@ -87,9 +87,6 @@ export default async function AdminPage() {
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <header className="flex flex-col gap-0.5">
         <h1 className="text-xl font-semibold tracking-tight">Admin master</h1>
-        <p className="text-muted-foreground text-sm">
-          Chaves, planos, preços, cupons e cotas de IA da plataforma. Vale para todas as empresas.
-        </p>
       </header>
       <PainelAdmin
         segredos={segredos}

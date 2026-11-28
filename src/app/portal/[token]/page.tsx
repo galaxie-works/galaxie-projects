@@ -55,8 +55,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
             </EmptyMedia>
             <EmptyTitle>Link indisponível</EmptyTitle>
             <EmptyDescription>
-              Este link de acompanhamento não existe ou foi desativado. Peça um novo link à empresa responsável pela
-              sua obra.
+              Este link não existe ou foi desativado. Peça um novo à empresa responsável pela obra.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

@@ -101,7 +101,7 @@ export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponiv
             </SelectContent>
           </Select>
           <FieldDescription>
-            Automática segue as obras do cliente. Escolha outra fase só para corrigir.
+            Automática segue as obras. Mude só para corrigir.
           </FieldDescription>
         </Field>
 
@@ -164,7 +164,7 @@ export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponiv
               <p id="cliente-followup" className="text-sm">
                 {cliente.proximo_followup_em ? formatarData(cliente.proximo_followup_em) : 'Sem data'}
               </p>
-              <FieldDescription>Segue a tarefa aberta mais próxima. Agende em Próximos passos.</FieldDescription>
+              <FieldDescription>Vem da próxima tarefa aberta.</FieldDescription>
             </>
           ) : (
             <CampoData id="cliente-followup" valor={followup} onChange={setFollowup} placeholder="Sem data" />
@@ -207,7 +207,7 @@ export function ClienteRelacionamento({ cliente, faseCalculada, equipe, disponiv
       </div>
       {!disponivel && (
         <p className="text-xs text-muted-foreground">
-          Para salvar estes campos, rode o SQL do Cliente 360 no Supabase.
+          Indisponível no momento. Tente de novo mais tarde.
         </p>
       )}
     </FieldGroup>

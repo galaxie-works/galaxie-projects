@@ -262,7 +262,6 @@ export function DiarioForm({ contexto, projetoId, registro, onVoltar }: Props) {
       <Frame spacing="default" className="min-w-0">
         <FrameHeader>
           <FrameTitle>Dia e clima</FrameTitle>
-          <FrameDescription>Como estava o tempo para trabalhar.</FrameDescription>
         </FrameHeader>
         <FramePanel>
           <FieldGroup>
@@ -338,7 +337,7 @@ export function DiarioForm({ contexto, projetoId, registro, onVoltar }: Props) {
       <Frame spacing="default" className="min-w-0">
         <FrameHeader>
           <FrameTitle>O que aconteceu</FrameTitle>
-          <FrameDescription>Pode falar em vez de digitar.</FrameDescription>
+          <FrameDescription>Digite ou use o microfone.</FrameDescription>
         </FrameHeader>
         <FramePanel>
           <FieldGroup>
@@ -367,11 +366,11 @@ export function DiarioForm({ contexto, projetoId, registro, onVoltar }: Props) {
       <Frame spacing="default" className="min-w-0">
         <FrameHeader>
           <FrameTitle>Fotos</FrameTitle>
-          <FrameDescription>
-            {novas.length > 0
-              ? `${novas.length} nova${novas.length > 1 ? 's' : ''} · ${formatarKB(tamanhoNovas)} em WebP`
-              : 'Compactadas no aparelho antes de enviar.'}
-          </FrameDescription>
+          {novas.length > 0 && (
+            <FrameDescription>
+              {`${novas.length} nova${novas.length > 1 ? 's' : ''} · ${formatarKB(tamanhoNovas)}`}
+            </FrameDescription>
+          )}
         </FrameHeader>
         <FramePanel>
           <div className="flex flex-col gap-4">

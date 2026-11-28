@@ -140,7 +140,7 @@ function CertificadoFrame({
       <FrameHeader>
         <FrameTitle>Certificado digital A1</FrameTitle>
         <FrameDescription>
-          É ele que assina a nota. O arquivo e a senha ficam cifrados e só são usados no servidor.
+          Arquivo e senha ficam cifrados no servidor.
         </FrameDescription>
       </FrameHeader>
       <FramePanel>
@@ -303,7 +303,7 @@ export function NotaFiscalPainel({
           <FrameHeader>
             <FrameTitle>Dados fiscais</FrameTitle>
             <FrameDescription>
-              A nota sai pelo emissor nacional da NFS-e (gov.br), sem custo por nota.
+              Emissor nacional da NFS-e (gov.br), sem custo por nota.
             </FrameDescription>
           </FrameHeader>
           <FramePanel>
@@ -568,8 +568,7 @@ export function NotaFiscalPainel({
                   <CircleAlertIcon />
                   <AlertTitle>Modo teste</AlertTitle>
                   <AlertDescription>
-                    As notas vão para a produção restrita do gov.br e não têm valor fiscal. Use para conferir tudo
-                    antes de ligar a produção.
+                    Notas de teste, sem valor fiscal. Confira tudo antes de ligar a produção.
                   </AlertDescription>
                 </Alert>
               ) : (

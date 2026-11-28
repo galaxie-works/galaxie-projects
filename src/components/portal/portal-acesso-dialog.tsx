@@ -131,8 +131,7 @@ function PortalAcessoConteudo({ cliente, empresaNome }: Props) {
       <DialogHeader>
         <DialogTitle>Portal do cliente</DialogTitle>
         <DialogDescription>
-          {cliente.nome} acompanha por um link: andamento, etapas, fotos e arquivos que você marcar, parcelas, notas
-          fiscais e garantia. Também pode abrir chamados de assistência.
+          {cliente.nome} acompanha a obra por um link, sem senha.
         </DialogDescription>
       </DialogHeader>
 
@@ -153,7 +152,7 @@ function PortalAcessoConteudo({ cliente, empresaNome }: Props) {
               <LinkIcon />
             </EmptyMedia>
             <EmptyTitle>Nenhum link ativo</EmptyTitle>
-            <EmptyDescription>Crie o link e mande para o cliente. Ele não precisa de senha nem de cadastro.</EmptyDescription>
+            <EmptyDescription>Crie o link e envie ao cliente. Sem senha nem cadastro.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={gerar} disabled={!!salvando}>
@@ -199,8 +198,7 @@ function PortalAcessoConteudo({ cliente, empresaNome }: Props) {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Fotos e documentos só aparecem no portal quando você marca &quot;Mostrar no portal&quot; na aba Arquivos.
-            Custos, compras e anotações internas nunca aparecem.
+            Só aparecem os arquivos marcados com &quot;Mostrar no portal&quot;. Custos e anotações internas nunca aparecem.
           </p>
         </div>
       )}

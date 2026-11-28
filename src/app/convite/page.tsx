@@ -88,8 +88,8 @@ export default function ConvitePage() {
           </CardTitle>
           <CardDescription>
             {estado === 'invalido'
-              ? 'Peça para quem convidou reenviar o convite, ou entre se já criou a senha.'
-              : 'Crie a sua senha para entrar no Galaxie Obras.'}
+              ? 'Peça um novo convite ou entre, se já criou a senha.'
+              : 'Crie sua senha para entrar.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -128,7 +128,7 @@ export default function ConvitePage() {
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                   />
-                  <FieldDescription>Pelo menos 8 caracteres.</FieldDescription>
+                  <FieldDescription>Mínimo de 8 caracteres.</FieldDescription>
                 </Field>
                 {erro && (
                   <Alert variant="destructive">

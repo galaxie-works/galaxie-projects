@@ -113,9 +113,7 @@ function FormTarefa({
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>Nova tarefa</DialogTitle>
-        <DialogDescription>
-          {cliente ? `Próximo passo com ${cliente.nome}.` : 'Ligação, visita ou retorno agendado com um cliente.'}
-        </DialogDescription>
+        {cliente && <DialogDescription>Com {cliente.nome}</DialogDescription>}
       </DialogHeader>
 
       <FieldGroup>

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -74,7 +73,7 @@ export function AcessoDialog({
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  const itensEquipe = [{ value: SEM_PESSOA, label: 'Ninguém' }, ...equipe.map((e) => ({ value: e.id, label: e.nome }))]
+  const itensEquipe = [{ value: SEM_PESSOA, label: 'Sem vínculo' }, ...equipe.map((e) => ({ value: e.id, label: e.nome }))]
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault()
@@ -96,11 +95,6 @@ export function AcessoDialog({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{membro ? membro.email : 'Convidar pessoa'}</DialogTitle>
-          <DialogDescription>
-            {membro
-              ? 'Mude o papel e o que essa pessoa vê e edita no app.'
-              : 'A pessoa recebe um e-mail para criar a senha e entra direto na sua empresa.'}
-          </DialogDescription>
         </DialogHeader>
         <form id="form-acesso" onSubmit={salvar}>
           <FieldGroup className="max-h-[60svh] overflow-y-auto">
@@ -142,9 +136,9 @@ export function AcessoDialog({
 
             {papel === 'membro' && (
               <FieldSet>
-                <FieldLegend variant="label">O que pode fazer</FieldLegend>
+                <FieldLegend variant="label">Permissões</FieldLegend>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-muted-foreground text-xs">Começar de:</span>
+                  <span className="text-muted-foreground text-xs">Modelos:</span>
                   {MODELOS_PERMISSAO.map((m) => (
                     <Button key={m.id} type="button" variant="outline" size="xs" onClick={() => setPermissoes(m.permissoes)}>
                       {m.rotulo}
@@ -177,15 +171,12 @@ export function AcessoDialog({
                     </div>
                   ))}
                 </div>
-                <FieldDescription>
-                  Sem Financeiro, a pessoa não vê recebimentos, compras, margem nem nota fiscal.
-                </FieldDescription>
               </FieldSet>
             )}
 
             {equipe.length > 0 && (
               <Field>
-                <FieldLabel htmlFor="acesso-equipe">É alguém da equipe?</FieldLabel>
+                <FieldLabel htmlFor="acesso-equipe">Cadastro na equipe</FieldLabel>
                 <Select items={itensEquipe} value={equipeId} onValueChange={(v) => setEquipeId((v as string) ?? SEM_PESSOA)}>
                   <SelectTrigger id="acesso-equipe" className="w-full sm:w-72">
                     <SelectValue />
@@ -198,14 +189,13 @@ export function AcessoDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldDescription>Liga o login ao cadastro da pessoa em Equipe.</FieldDescription>
               </Field>
             )}
 
             {membro && (
               <Field orientation="horizontal">
                 <Switch id="acesso-suspenso" checked={suspenso} onCheckedChange={setSuspenso} />
-                <FieldLabel htmlFor="acesso-suspenso">Suspender acesso (a pessoa não entra até você reativar)</FieldLabel>
+                <FieldLabel htmlFor="acesso-suspenso">Suspender acesso</FieldLabel>
               </Field>
             )}
 

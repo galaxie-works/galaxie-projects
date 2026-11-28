@@ -153,7 +153,7 @@ export function RegistrarAtividade({
       </div>
       {!disponivel && (
         <p className="text-xs text-muted-foreground">
-          Para registrar contatos, rode o SQL do Cliente 360 no Supabase.
+          Indisponível no momento. Tente de novo mais tarde.
         </p>
       )}
     </div>

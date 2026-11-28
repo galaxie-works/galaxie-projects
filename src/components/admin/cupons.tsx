@@ -6,7 +6,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Badge } from '@/components/reui/badge'
 import {
   Frame,
-  FrameDescription,
   FrameHeader,
   FramePanel,
   FrameTitle,
@@ -15,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -60,7 +58,6 @@ function NovoCupom({ aberto, onOpenChange }: { aberto: boolean; onOpenChange: (v
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Novo cupom</DialogTitle>
-          <DialogDescription>O cliente digita o código na tela de pagamento do Stripe.</DialogDescription>
         </DialogHeader>
         <form
           id="novo-cupom"
@@ -165,7 +162,6 @@ export function Cupons({
       <FrameHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <FrameTitle>Cupons</FrameTitle>
-          <FrameDescription>Ficam no Stripe e valem no pagamento dos planos.</FrameDescription>
         </div>
         <Button disabled={!stripeLigado} onClick={() => setNovo(true)}>
           <PlusIcon />
@@ -196,7 +192,7 @@ export function Cupons({
                 <TicketPercentIcon />
               </EmptyMedia>
               <EmptyTitle>Nenhum cupom ainda</EmptyTitle>
-              <EmptyDescription>Crie o FUNDADOR com 30% para sempre, limitado a 50 usos.</EmptyDescription>
+              <EmptyDescription>Nenhum cupom criado.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button variant="outline" onClick={() => setNovo(true)}>

@@ -36,7 +36,7 @@ export function FinanceiroCliente({ recebimentos: iniciais, hoje, temObras }: Pr
             <EmptyDescription>
               {temObras
                 ? 'Monte o plano de pagamento na aba Financeiro de cada obra.'
-                : 'As parcelas aparecem aqui depois que o cliente tiver uma obra.'}
+                : 'Nenhuma parcela ainda.'}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

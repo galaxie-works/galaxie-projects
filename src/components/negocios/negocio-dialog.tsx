@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -116,7 +115,6 @@ function FormNegocio({
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>{negocio ? 'Editar negócio' : 'Novo negócio'}</DialogTitle>
-        <DialogDescription>Uma oportunidade de obra: o que, para quem e quanto deve valer.</DialogDescription>
       </DialogHeader>
 
       <FieldGroup>

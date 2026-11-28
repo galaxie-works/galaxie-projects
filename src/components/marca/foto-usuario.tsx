@@ -45,7 +45,6 @@ export function FotoUsuario({
   return (
     <EnviarImagem
       titulo="Sua foto"
-      descricao="Aparece no menu e, com a equipe no app, para os colegas. Até 5 MB."
       urlAtual={urlAtual}
       iconeVazio={<UserIcon />}
       onSalvar={salvar}

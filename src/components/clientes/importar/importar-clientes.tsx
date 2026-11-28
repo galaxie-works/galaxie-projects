@@ -288,7 +288,7 @@ export function ImportarClientes({ empresaId }: { empresaId: string }) {
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium">Arraste a planilha aqui ou toque para escolher</p>
               <p className="text-xs text-muted-foreground">
-                Arquivo CSV (no Excel ou Google Planilhas: Arquivo › Salvar como › CSV). Até 5 MB.
+                CSV até 5 MB. No Excel ou Google Planilhas: Arquivo › Salvar como › CSV.
               </p>
             </div>
           </div>

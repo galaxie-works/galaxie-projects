@@ -61,13 +61,8 @@ export default async function ClientesPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-muted-foreground text-sm">
-            Pessoas e empresas para quem você trabalha.
-          </p>
-        </div>
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-xl font-semibold tracking-tight">Clientes</h1>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" nativeButton={false} render={<Link href="/clientes/importar" />}>
             <FileUpIcon data-icon="inline-start" />
@@ -90,7 +85,7 @@ export default async function ClientesPage() {
                 </EmptyMedia>
                 <EmptyTitle>Nenhum cliente ainda</EmptyTitle>
                 <EmptyDescription>
-                  Cadastre o primeiro cliente para abrir projetos para ele.
+                  Cadastre o primeiro cliente para começar.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent className="flex-row flex-wrap justify-center">

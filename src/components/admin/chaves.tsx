@@ -166,8 +166,7 @@ export function Chaves({
       <FrameHeader>
         <FrameTitle>Chaves do servidor</FrameTitle>
         <FrameDescription>
-          Guardadas cifradas no banco. Depois de salvas, ninguém vê de novo: só os 4 últimos caracteres. O que
-          está no painel vale antes do que está na Vercel e entra em até 30 segundos, sem novo deploy.
+          Cifradas no banco. Depois de salvas, só os 4 últimos caracteres ficam visíveis. Valem antes das da Vercel, em até 30 segundos.
         </FrameDescription>
       </FrameHeader>
       {(!servidorPronto.serviceRole || !servidorPronto.chaveMestra) && (
@@ -188,8 +187,7 @@ export function Chaves({
       ))}
       <FrameFooter>
         <p className="text-muted-foreground text-xs">
-          A chave mestra que cifra tudo (IA_CHAVE_MESTRA) e a chave do Supabase continuam só na Vercel: sem elas
-          o servidor não abre o cofre.
+          IA_CHAVE_MESTRA e a chave do Supabase ficam só na Vercel.
         </p>
       </FrameFooter>
     </Frame>

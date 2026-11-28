@@ -18,7 +18,7 @@ export function AgendaIndisponivel() {
         </EmptyMedia>
         <EmptyTitle>Agenda ainda não ativada</EmptyTitle>
         <EmptyDescription>
-          Rode o SQL da agenda no Supabase para agendar e concluir tarefas.
+          Agenda indisponível no momento. Tente de novo mais tarde.
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

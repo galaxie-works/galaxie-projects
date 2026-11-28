@@ -51,7 +51,7 @@ export default async function ProjetosPage() {
 
   return (
     <div className="flex flex-col p-4 md:p-6">
-      <ProjetosPainel empresaNome={empresa.nome} projetos={linhas} erro={error?.message ?? null} />
+      <ProjetosPainel projetos={linhas} erro={error?.message ?? null} />
     </div>
   )
 }

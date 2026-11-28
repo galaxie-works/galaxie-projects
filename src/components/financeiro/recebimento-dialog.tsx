@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -126,7 +125,6 @@ function FormRecebimento({ onOpenChange, obra, recebimento: r, proximaOrdem, hoj
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>{r ? 'Editar parcela' : 'Nova parcela'}</DialogTitle>
-        <DialogDescription>Valor que o cliente paga por esta obra.</DialogDescription>
       </DialogHeader>
 
       <FieldGroup>

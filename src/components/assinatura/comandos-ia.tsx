@@ -75,8 +75,7 @@ export function ComandosIA({
       <FrameHeader>
         <FrameTitle>Comandos de IA</FrameTitle>
         <FrameDescription>
-          Cada pedido ao assistente usa 1 comando; pedidos longos podem usar mais. A cota renova todo
-          mês e os pacotes não vencem.
+          A cota renova todo mês. Pacotes avulsos não vencem.
         </FrameDescription>
       </FrameHeader>
       <FramePanel className="flex flex-col gap-4">
@@ -100,7 +99,7 @@ export function ComandosIA({
             <ItemDescription>
               {carteira
                 ? `Cota de ${carteira.cota_mensal.toLocaleString('pt-BR')} por mês: restam ${carteira.saldo_plano.toLocaleString('pt-BR')} até ${new Date(carteira.renova_em).toLocaleDateString('pt-BR')}. Pacotes: ${carteira.saldo_extra.toLocaleString('pt-BR')}.`
-                : 'A cota aparece aqui assim que a conta for atualizada.'}
+                : 'A cota aparece em instantes.'}
             </ItemDescription>
             {carteira && !chavePropria && (
               <Progress value={usadoPct} aria-label="Quanto da cota do mês já foi usado" className="mt-2" />

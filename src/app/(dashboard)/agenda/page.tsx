@@ -111,7 +111,6 @@ export default async function AgendaPage({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-semibold tracking-tight">Agenda</h1>
-          <p className="text-muted-foreground text-sm">Ligações, visitas e retornos combinados com clientes.</p>
         </div>
         <NovaTarefa
           empresaId={empresa.id}

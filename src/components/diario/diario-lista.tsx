@@ -93,7 +93,7 @@ export function DiarioLista({ registros, contexto, onNovo, onEditar, onExcluido 
             <NotebookPenIcon />
           </EmptyMedia>
           <EmptyTitle>Nenhum registro nesta obra</EmptyTitle>
-          <EmptyDescription>Anote o dia: o que foi feito, o clima, quem veio e as fotos. Funciona sem internet.</EmptyDescription>
+          <EmptyDescription>Registre o primeiro dia de obra. Funciona sem internet.</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button onClick={onNovo}>Registrar o dia</Button>

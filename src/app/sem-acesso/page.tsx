@@ -21,7 +21,7 @@ export default async function SemAcessoPage() {
           </EmptyMedia>
           <EmptyTitle>Seu acesso está suspenso</EmptyTitle>
           <EmptyDescription>
-            O dono da empresa pausou o seu acesso ao app. Fale com ele para voltar a entrar.
+            Seu acesso está pausado. Fale com o responsável pela empresa para reativar.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>

@@ -153,9 +153,6 @@ export function DiarioApp({ contexto: contextoServidor, obraInicial, obraFixa }:
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl font-semibold tracking-tight">Diário de obra</h1>
-            <p className="text-sm text-muted-foreground">
-              O dia na obra: atividades, clima, equipe, ocorrências e fotos. Funciona sem internet.
-            </p>
           </div>
           {botaoNovo}
         </header>
@@ -188,7 +185,7 @@ export function DiarioApp({ contexto: contextoServidor, obraInicial, obraFixa }:
           <CloudOffIcon />
           <AlertTitle>Mostrando a última cópia guardada</AlertTitle>
           <AlertDescription>
-            Sem internet agora. O que você registrar fica no aparelho e é enviado quando a conexão voltar.
+            Sem internet. Os registros ficam no aparelho e são enviados quando a conexão voltar.
           </AlertDescription>
         </Alert>
       )}

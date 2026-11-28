@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -99,7 +98,6 @@ function FormPlano({ onOpenChange, obra, totalObra, jaTemParcelas, proximaOrdem,
     <div className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>Plano de pagamento</DialogTitle>
-        <DialogDescription>Escolha como o cliente vai pagar. As parcelas podem ser ajustadas antes de criar.</DialogDescription>
       </DialogHeader>
 
       <FieldGroup>

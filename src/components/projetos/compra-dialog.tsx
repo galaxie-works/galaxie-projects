@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -86,7 +85,6 @@ function FormCompra({ onOpenChange, projetoId, equipe, onSalva }: Props) {
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>Nova compra</DialogTitle>
-        <DialogDescription>Material ou serviço pago para esta obra.</DialogDescription>
       </DialogHeader>
 
       <FieldGroup>

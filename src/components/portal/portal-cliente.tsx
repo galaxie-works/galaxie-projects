@@ -109,7 +109,6 @@ export function PortalCliente({ token, dados, hoje }: Props) {
         <Frame spacing="default" className="min-w-0">
           <FrameHeader>
             <FrameTitle>Documentos</FrameTitle>
-            <FrameDescription>Arquivos que a empresa compartilhou com você</FrameDescription>
           </FrameHeader>
           <FramePanel>
             <ListaArquivos arquivos={arquivosSemObra} />
@@ -166,7 +165,6 @@ function ObraPortal({ obra, arquivos, hoje }: { obra: PortalObra; arquivos: Port
         <Frame spacing="default" className="min-w-0">
           <FrameHeader>
             <FrameTitle>Etapas</FrameTitle>
-            <FrameDescription>O que já foi feito e o que vem a seguir</FrameDescription>
           </FrameHeader>
           <FramePanel>
             <Timeline defaultValue={concluidas}>
@@ -193,7 +191,7 @@ function ObraPortal({ obra, arquivos, hoje }: { obra: PortalObra; arquivos: Port
           <FrameHeader>
             <FrameTitle>Fotos</FrameTitle>
             <FrameDescription>
-              {fotos.length === 1 ? '1 foto' : `${fotos.length} fotos`} da obra, das mais novas para as mais antigas
+              {fotos.length === 1 ? '1 foto' : `${fotos.length} fotos`}
             </FrameDescription>
           </FrameHeader>
           <FramePanel>
@@ -234,7 +232,6 @@ function ObraPortal({ obra, arquivos, hoje }: { obra: PortalObra; arquivos: Port
         <Frame spacing="default" className="min-w-0">
           <FrameHeader>
             <FrameTitle>Documentos da obra</FrameTitle>
-            <FrameDescription>Contrato, projeto e outros arquivos compartilhados</FrameDescription>
           </FrameHeader>
           <FramePanel>
             <ListaArquivos arquivos={documentos} />
@@ -285,7 +282,7 @@ function ObraPortal({ obra, arquivos, hoje }: { obra: PortalObra; arquivos: Port
         <Frame spacing="default" className="min-w-0">
           <FrameHeader>
             <FrameTitle>Notas fiscais</FrameTitle>
-            <FrameDescription>Confira cada nota na consulta pública da NFS-e pela chave de acesso</FrameDescription>
+            <FrameDescription>Consulte pela chave de acesso no portal da NFS-e</FrameDescription>
           </FrameHeader>
           <FramePanel>
             <ItemGroup className="gap-1">

@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner'
 import { CampoData } from '@/components/projetos/campo-data'
 import { CampoMoeda } from '@/components/projetos/campo-moeda'
-import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
 import { OrcamentoEditor } from '@/components/orcamento/orcamento-editor'
 import { OrcamentoResumo } from '@/components/orcamento/orcamento-resumo'
 import { salvarOrcamento } from '@/components/orcamento/dados'
@@ -467,7 +467,6 @@ export function ProjetoForm({
       <Frame spacing="default">
         <FrameHeader>
           <FrameTitle>Dados do projeto</FrameTitle>
-          <FrameDescription>Cliente, status e prazos da obra.</FrameDescription>
         </FrameHeader>
         <FramePanel>{camposForm}</FramePanel>
       </Frame>

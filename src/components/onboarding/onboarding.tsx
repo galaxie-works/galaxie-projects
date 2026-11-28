@@ -50,7 +50,7 @@ const ETAPAS = [
   { rotulo: 'Áreas', titulo: 'Áreas de atuação', descricao: 'Marque tudo o que você atende.' },
   { rotulo: 'Serviços', titulo: 'Serviços', descricao: 'Escolha o que você faz em cada área.' },
   { rotulo: 'Equipe', titulo: 'Como você trabalha', descricao: 'Sua equipe e seu jeito de tocar a obra.' },
-  { rotulo: 'Revisão', titulo: 'Revisão', descricao: 'Confira e ajuste antes de concluir.' },
+  { rotulo: 'Revisão', titulo: 'Revisão', descricao: 'Confira antes de concluir.' },
 ]
 
 export function Onboarding({ userId }: { userId: string }) {
@@ -273,8 +273,7 @@ export function Onboarding({ userId }: { userId: string }) {
                       <GiftIcon />
                       <AlertTitle>{DIAS_TESTE} dias grátis, sem cartão</AlertTitle>
                       <AlertDescription>
-                        Ao concluir, sua conta própria é criada e o teste começa hoje. Você
-                        escolhe o plano só no fim do teste.
+                        Seu teste de 30 dias começa ao concluir. O plano você escolhe no fim.
                       </AlertDescription>
                     </Alert>
                     {erroSalvar && (

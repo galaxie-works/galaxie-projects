@@ -237,7 +237,7 @@ function ConcluirTarefa({
           rows={3}
           autoFocus
         />
-        <FieldDescription>Opcional. Fica na linha do tempo do cliente.</FieldDescription>
+        <FieldDescription>Opcional</FieldDescription>
       </Field>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancelar} disabled={salvando}>
