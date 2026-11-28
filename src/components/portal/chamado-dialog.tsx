@@ -84,7 +84,7 @@ function ChamadoForm({
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>Abrir chamado</DialogTitle>
-        <DialogDescription>Conte o que precisa de reparo. A empresa recebe na hora.</DialogDescription>
+        <DialogDescription>A empresa recebe na hora.</DialogDescription>
       </DialogHeader>
       <FieldGroup>
         {obras.length > 0 && (

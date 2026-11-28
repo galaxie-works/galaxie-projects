@@ -92,7 +92,7 @@ export function EtapaEmpresa({ rascunho, atualizar, mostrarErros }: Props) {
           <FieldError>{pf ? 'Informe o seu nome.' : 'Informe o nome da empresa.'}</FieldError>
         ) : (
           <FieldDescription>
-            {pf ? 'Como seus clientes conhecem você.' : 'O nome que aparece nos orçamentos.'}
+            {pf ? 'Como seus clientes conhecem você' : 'Nome usado nos orçamentos'}
           </FieldDescription>
         )}
       </Field>

@@ -214,7 +214,6 @@ export function EmpresaForm({
 <Frame spacing="default">
             <FrameHeader>
               <FrameTitle>Dados da empresa</FrameTitle>
-              <FrameDescription>Aparecem nos orçamentos e na sua página.</FrameDescription>
             </FrameHeader>
             <FramePanel>
               <FieldGroup>
@@ -304,7 +303,7 @@ export function EmpresaForm({
                     placeholder="Faço a visita técnica, mando o orçamento em 48 h e acompanho a obra toda semana."
                   />
                   <FieldDescription>
-                    Ajuda o assistente a organizar etapas e prazos do seu jeito.
+                    Usado pelo assistente para montar etapas e prazos.
                   </FieldDescription>
                 </Field>
               </FieldGroup>
@@ -319,7 +318,6 @@ export function EmpresaForm({
 <Frame spacing="default">
             <FrameHeader>
               <FrameTitle>Serviços</FrameTitle>
-              <FrameDescription>O que você oferece aos clientes.</FrameDescription>
             </FrameHeader>
             <FramePanel>
               <ServicosPicker value={servicos} onChange={setServicos} />
@@ -335,7 +333,7 @@ export function EmpresaForm({
             <FrameHeader>
               <FrameTitle>Preços dos serviços</FrameTitle>
               <FrameDescription>
-                Como você cobra cada serviço. Vem preenchido em todo orçamento novo.
+                Preenchidos automaticamente em cada orçamento novo.
               </FrameDescription>
             </FrameHeader>
             <FramePanel className={servicos.length > 0 ? 'p-0' : undefined}>
@@ -365,7 +363,7 @@ export function EmpresaForm({
               <FrameHeader>
                 <FrameTitle>Pós-venda</FrameTitle>
                 <FrameDescription>
-                  Ao concluir uma obra, criamos a garantia, a pesquisa de satisfação e o pedido de avaliação.
+                  Garantia, pesquisa de satisfação e pedido de avaliação, criados ao concluir cada obra.
                 </FrameDescription>
               </FrameHeader>
               <FramePanel>
@@ -395,7 +393,7 @@ export function EmpresaForm({
                       placeholder="https://g.page/r/..."
                     />
                     <FieldDescription>
-                      No Perfil da Empresa no Google, em Pedir avaliações. Vai junto na mensagem do WhatsApp.
+                      Em Perfil da Empresa no Google › Pedir avaliações.
                     </FieldDescription>
                   </Field>
                 </FieldGroup>

@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -98,7 +97,6 @@ function FormEtapa({ onOpenChange, projetoId, equipe, etapa, statusInicial, orde
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>{etapa ? 'Editar etapa' : 'Nova etapa'}</DialogTitle>
-        <DialogDescription>O que precisa ser feito, por quem e até quando.</DialogDescription>
       </DialogHeader>
 
       <FieldGroup>

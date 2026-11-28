@@ -70,13 +70,10 @@ export default async function AcessosPage() {
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <header className="flex flex-col gap-0.5">
         <h1 className="text-xl font-semibold tracking-tight">Acessos</h1>
-        <p className="text-muted-foreground text-sm">
-          Quem da sua empresa entra no app e o que cada pessoa vê e edita.
-        </p>
       </header>
       {error ? (
         <p className="text-muted-foreground text-sm">
-          Os acessos ainda estão sendo preparados no servidor. Tente de novo em alguns minutos.
+          Acessos indisponíveis no momento. Tente de novo em alguns minutos.
         </p>
       ) : (
         <AcessosPainel

@@ -72,7 +72,7 @@ export function EtapaEquipe({ rascunho, atualizar }: Props) {
       {modo === 'equipe' && (
         <FieldSet>
           <FieldLegend variant="label">Quem trabalha com você</FieldLegend>
-          <FieldDescription>Nome e o que cada pessoa faz na obra.</FieldDescription>
+          <FieldDescription>Nome e função de cada pessoa</FieldDescription>
           <ul className="flex flex-col gap-2">
             {equipe.map((m, i) => (
               <li key={m.id} className="flex items-start gap-2">

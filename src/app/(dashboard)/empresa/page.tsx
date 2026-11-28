@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { EmpresaForm } from '@/components/empresa/empresa-form'
 import { LogoEmpresa } from '@/components/marca/logo-empresa'
-import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
 import { urlAssinada } from '@/lib/marca'
 import { carregarPrecos } from '@/components/orcamento/dados'
 import { chaveMestraConfigurada } from '@/lib/ia/cripto'
@@ -38,14 +38,10 @@ export default async function EmpresaPage() {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-6">
-        <header className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-semibold tracking-tight">Empresa</h1>
-          <p className="text-muted-foreground text-sm">Seus dados, os serviços que você faz, quanto cobra e a nota fiscal.</p>
-        </header>
+        <h1 className="text-xl font-semibold tracking-tight">Empresa</h1>
         <Frame spacing="default">
           <FrameHeader>
             <FrameTitle>Marca</FrameTitle>
-            <FrameDescription>O logo da empresa no topo do menu.</FrameDescription>
           </FrameHeader>
           <FramePanel>
             <LogoEmpresa empresaId={empresa.id} caminhoAtual={empresa.logo_caminho ?? null} urlAtual={logoUrl} />

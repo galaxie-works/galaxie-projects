@@ -293,7 +293,7 @@ export function PosVendaPainel({ itens, cliente, obras, projeto, linkGoogle, hoj
                 <HeartHandshakeIcon />
               </EmptyMedia>
               <EmptyTitle>Pós-venda ainda não ligado</EmptyTitle>
-              <EmptyDescription>Rode o SQL do pós-venda no Supabase para ativar esta aba.</EmptyDescription>
+              <EmptyDescription>Pós-venda indisponível no momento. Tente de novo mais tarde.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : lista.length === 0 ? (

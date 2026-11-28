@@ -241,7 +241,7 @@ export function ArquivosLista({ empresaId, clienteId, projetoId, obras = [] }: P
           </EmptyMedia>
           <EmptyTitle>Arquivos ainda não ativados</EmptyTitle>
           <EmptyDescription>
-            Falta rodar o SQL de arquivos no Supabase. Depois disso, fotos, plantas e contratos ficam guardados aqui.
+            Arquivos indisponíveis no momento. Tente de novo mais tarde.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -283,7 +283,7 @@ export function ArquivosLista({ empresaId, clienteId, projetoId, obras = [] }: P
         ) : (
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-medium">Arraste arquivos aqui ou toque para enviar</p>
-            <p className="text-xs text-muted-foreground">Fotos, plantas, contratos e comprovantes. Até 20 MB cada.</p>
+            <p className="text-xs text-muted-foreground">Até 20 MB por arquivo</p>
           </div>
         )}
       </div>
@@ -301,7 +301,7 @@ export function ArquivosLista({ empresaId, clienteId, projetoId, obras = [] }: P
             </EmptyMedia>
             <EmptyTitle>Nenhum arquivo ainda</EmptyTitle>
             <EmptyDescription>
-              {projetoId ? 'Os arquivos desta obra aparecem aqui.' : 'Os arquivos deste cliente e das obras dele aparecem aqui.'}
+              Fotos, plantas e contratos ficam aqui.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

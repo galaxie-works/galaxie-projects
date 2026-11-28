@@ -60,8 +60,7 @@ function EditarPlano({
         <DialogHeader>
           <DialogTitle>Plano {plano.nome}</DialogTitle>
           <DialogDescription>
-            Preço novo vale para quem assinar daqui para frente. Quem já assina continua no preço antigo até
-            trocar de plano.
+            Preço novo só vale para novas assinaturas.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -166,8 +165,7 @@ export function PlanosAdmin({ planos, stripeLigado }: { planos: PlanoPainel[]; s
         <div className="flex flex-col gap-0.5">
           <FrameTitle>Planos e preços</FrameTitle>
           <FrameDescription>
-            O que aparece em Assinatura para todas as empresas. Ao salvar, o preço sobe para o Stripe e a cota
-            de IA nova vale na hora para quem já está no plano.
+            Ao salvar, o preço vai para o Stripe e a cota nova vale na hora.
           </FrameDescription>
         </div>
         <Button variant="outline" disabled={!stripeLigado || rodando} onClick={() => rodar(() => sincronizarStripeAcao())}>

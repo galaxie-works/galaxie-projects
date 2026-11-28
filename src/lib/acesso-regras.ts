@@ -4,14 +4,14 @@
 // esconder aqui é só para não mostrar o que daria erro.
 
 export const MODULOS = [
-  { id: 'clientes', rotulo: 'Clientes', descricao: 'Clientes, contatos, pós-venda e portal' },
-  { id: 'negocios', rotulo: 'Negócios', descricao: 'Funil de vendas e orçamentos em negociação' },
-  { id: 'obras', rotulo: 'Obras', descricao: 'Obras, etapas e orçamento das obras' },
-  { id: 'agenda', rotulo: 'Agenda', descricao: 'Tarefas e próximos passos' },
-  { id: 'diario', rotulo: 'Diário de obra', descricao: 'Registro do dia, com fotos' },
-  { id: 'financeiro', rotulo: 'Financeiro', descricao: 'Recebimentos, compras, margem e nota fiscal' },
-  { id: 'equipe', rotulo: 'Equipe', descricao: 'Cadastro das pessoas da equipe' },
-  { id: 'empresa', rotulo: 'Empresa', descricao: 'Dados da empresa, serviços, preços e assistente' },
+  { id: 'clientes', rotulo: 'Clientes', descricao: 'Contatos, pós-venda e portal' },
+  { id: 'negocios', rotulo: 'Negócios', descricao: 'Funil e propostas' },
+  { id: 'obras', rotulo: 'Obras', descricao: 'Etapas e orçamentos' },
+  { id: 'agenda', rotulo: 'Agenda', descricao: 'Tarefas e retornos' },
+  { id: 'diario', rotulo: 'Diário de obra', descricao: 'Registros e fotos' },
+  { id: 'financeiro', rotulo: 'Financeiro', descricao: 'Recebimentos, compras, margem e notas' },
+  { id: 'equipe', rotulo: 'Equipe', descricao: 'Cadastro da equipe' },
+  { id: 'empresa', rotulo: 'Empresa', descricao: 'Dados, serviços, preços e assistente' },
 ] as const
 
 export type Modulo = (typeof MODULOS)[number]['id']
@@ -26,9 +26,9 @@ export const ROTULO_PAPEL: Record<Papel, string> = {
 }
 
 export const DESCRICAO_PAPEL: Record<Papel, string> = {
-  dono: 'Pode tudo, inclusive assinatura e acessos.',
-  gestor: 'Pode tudo, menos assinatura e acessos.',
-  membro: 'Só o que você liberar em cada módulo.',
+  dono: 'Acesso total',
+  gestor: 'Tudo, exceto assinatura e acessos',
+  membro: 'Só os módulos que você liberar',
 }
 
 export const ROTULO_NIVEL: Record<Nivel, string> = { nenhum: 'Não vê', ver: 'Vê', editar: 'Edita' }

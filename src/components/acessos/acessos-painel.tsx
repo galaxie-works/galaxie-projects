@@ -67,7 +67,7 @@ export function AcessosPainel({
   const [removendo, setRemovendo] = useState<LinhaAcesso | null>(null)
   const [pendente, iniciar] = useTransition()
 
-  const limite = (n: number | null) => (n == null ? 'ilimitado' : String(n))
+  const contagem = (usados: number, max: number | null) => (max == null ? `${usados}` : `${usados} de ${max}`)
 
   return (
     <>
@@ -76,8 +76,7 @@ export function AcessosPainel({
           <div className="flex flex-col gap-0.5">
             <FrameTitle>Pessoas com acesso</FrameTitle>
             <FrameDescription>
-              Plano {uso.plano}: escritório {uso.escritorio[0]} de {limite(uso.escritorio[1])} · campo {uso.campo[0]} de{' '}
-              {limite(uso.campo[1])}
+              Plano {uso.plano} · escritório {contagem(uso.escritorio[0], uso.escritorio[1])} · campo {contagem(uso.campo[0], uso.campo[1])}
             </FrameDescription>
           </div>
           <Button onClick={() => setConvidando(true)}>
@@ -94,7 +93,7 @@ export function AcessosPainel({
                 </EmptyMedia>
                 <EmptyTitle>Só você por enquanto</EmptyTitle>
                 <EmptyDescription>
-                  Convide quem trabalha com você e escolha o que cada um vê e edita.
+                  Convide sua equipe e defina o que cada um acessa.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -181,8 +180,7 @@ export function AcessosPainel({
           <AlertDialogHeader>
             <AlertDialogTitle>Tirar o acesso de {removendo?.nome || removendo?.email}?</AlertDialogTitle>
             <AlertDialogDescription>
-              A pessoa deixa de entrar na sua empresa. O que ela cadastrou continua no app. Para só pausar, use
-              Mudar acesso e suspenda.
+              Perde o acesso à empresa. O que foi cadastrado continua no app.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

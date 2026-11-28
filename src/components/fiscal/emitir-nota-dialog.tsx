@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -336,7 +335,6 @@ export function EmitirNotaDialog({
       <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Emitir nota fiscal</DialogTitle>
-          <DialogDescription>NFS-e pelo emissor nacional, assinada com o certificado da empresa.</DialogDescription>
         </DialogHeader>
         {aberto && <Formulario prefill={prefill} onEmitida={onEmitida} onCancelar={() => onOpenChange(false)} />}
       </DialogContent>

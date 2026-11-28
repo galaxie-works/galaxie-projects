@@ -73,7 +73,7 @@ export function FinanceiroObra({
             </EmptyMedia>
             <EmptyTitle>Financeiro ainda não ativado</EmptyTitle>
             <EmptyDescription>
-              Falta rodar o SQL do financeiro no Supabase (supabase/migracoes/2026-11-27-financeiro.sql).
+              Financeiro indisponível no momento. Tente de novo mais tarde.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

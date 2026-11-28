@@ -222,10 +222,7 @@ export function NotasObra({
       <FrameHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <FrameTitle>Notas fiscais</FrameTitle>
-          <FrameDescription>
-            NFS-e pelo emissor nacional, sem custo por nota.
-            {config && !config.producao ? ' Modo teste ligado.' : ''}
-          </FrameDescription>
+          {config && !config.producao && <FrameDescription>Modo teste ligado</FrameDescription>}
         </div>
         {config?.pronto && (
           <Button type="button" size="sm" onClick={() => setEmitir(true)}>

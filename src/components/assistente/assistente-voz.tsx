@@ -418,7 +418,7 @@ export function AssistenteVoz({ configurado, empresaId }: { configurado: boolean
                   <MessageSquareIcon />
                 </EmptyMedia>
                 <EmptyTitle>Nenhuma conversa ainda</EmptyTitle>
-                <EmptyDescription>As conversas com o assistente ficam aqui, neste aparelho.</EmptyDescription>
+                <EmptyDescription>Nenhuma conversa ainda.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
@@ -763,7 +763,7 @@ export function AssistenteVoz({ configurado, empresaId }: { configurado: boolean
             if (!v) setApagando(null)
           }}
           titulo="Apagar conversa?"
-          descricao={`“${apagando.titulo}” sai da lista deste aparelho. Os dados da empresa não mudam.`}
+          descricao={`“${apagando.titulo}” sai deste aparelho. Os dados da empresa não mudam.`}
           rotulo="Apagar"
           onConfirmar={async () => {
             apagarConversa(apagando.id)

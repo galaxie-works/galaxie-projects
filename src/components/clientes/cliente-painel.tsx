@@ -384,7 +384,6 @@ export function ClientePainel({
             <Frame spacing="default" className="min-w-0">
               <FrameHeader>
                 <FrameTitle>Linha do tempo</FrameTitle>
-                <FrameDescription>Contatos, obras e mudanças deste cliente</FrameDescription>
               </FrameHeader>
               <FramePanel className="flex flex-col gap-6">
                 <RegistrarAtividade
@@ -438,7 +437,6 @@ export function ClientePainel({
                 <Frame spacing="default" className="min-w-0">
                   <FrameHeader>
                     <FrameTitle>Negócios abertos</FrameTitle>
-                    <FrameDescription>Negócios em aberto</FrameDescription>
                   </FrameHeader>
                   <FramePanel>
                     <NegociosCliente
@@ -456,7 +454,7 @@ export function ClientePainel({
               <FrameHeader>
                 <FrameTitle>Obras</FrameTitle>
                 <FrameDescription>
-                  {obras.length === 1 ? '1 obra' : `${obras.length} obras`} deste cliente
+                  {obras.length === 1 ? '1 obra' : `${obras.length} obras`}
                 </FrameDescription>
               </FrameHeader>
               <FramePanel>
@@ -511,7 +509,6 @@ export function ClientePainel({
           <Frame spacing="default" className="min-w-0">
             <FrameHeader>
               <FrameTitle>Arquivos</FrameTitle>
-              <FrameDescription>Fotos, plantas, contratos e comprovantes deste cliente e das obras dele</FrameDescription>
             </FrameHeader>
             <FramePanel>
               <ArquivosLista
@@ -528,7 +525,6 @@ export function ClientePainel({
             <Frame spacing="default" className="min-w-0">
               <FrameHeader>
                 <FrameTitle>Relacionamento</FrameTitle>
-                <FrameDescription>Fase, temperatura, origem e próximo contato</FrameDescription>
               </FrameHeader>
               <FramePanel>
                 <ClienteRelacionamento

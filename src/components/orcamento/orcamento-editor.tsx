@@ -25,7 +25,6 @@ import { useDitado } from '@/hooks/use-ditado'
 import { Badge } from '@/components/reui/badge'
 import {
   Frame,
-  FrameDescription,
   FrameFooter,
   FrameHeader,
   FramePanel,
@@ -81,7 +80,7 @@ export function OrcamentoEditor({ areas, onChange, servicosEmpresa, precos }: Pr
               </EmptyMedia>
               <EmptyTitle>Escolha os serviços que você faz</EmptyTitle>
               <EmptyDescription>
-                O orçamento por área usa os serviços e preços da sua empresa.
+                O orçamento usa os serviços e preços da empresa.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
@@ -100,9 +99,6 @@ export function OrcamentoEditor({ areas, onChange, servicosEmpresa, precos }: Pr
       <FrameHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <FrameTitle>Áreas e medidas</FrameTitle>
-          <FrameDescription>
-            Separe a obra por área e informe as medidas de cada serviço.
-          </FrameDescription>
         </div>
         {areas.length > 0 && (
           <span className="text-sm font-semibold tabular-nums">{formatarMoeda(total)}</span>

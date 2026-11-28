@@ -57,7 +57,7 @@ export function ResumoAssinatura({
     <Frame spacing="default">
       <FrameHeader>
         <FrameTitle>Sua assinatura</FrameTitle>
-        <FrameDescription>A conta é da empresa: todo mundo da equipe usa o mesmo plano.</FrameDescription>
+        <FrameDescription>Um plano para toda a equipe.</FrameDescription>
       </FrameHeader>
       <FramePanel>
         <ItemGroup className="gap-3">
@@ -99,7 +99,7 @@ export function ResumoAssinatura({
               </ItemTitle>
               <ItemDescription>
                 {emite
-                  ? 'A NFS-e é configurada em Empresa, na aba Nota fiscal.'
+                  ? 'Configure em Empresa › Nota fiscal.'
                   : 'Pessoa física não emite nota pelo app. Se abrir CNPJ, troque em Empresa.'}
               </ItemDescription>
             </ItemContent>

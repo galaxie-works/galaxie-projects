@@ -26,7 +26,6 @@ import {
 } from '@/components/reui/data-grid/data-grid-table'
 import {
   Frame,
-  FrameDescription,
   FrameHeader,
   FramePanel,
   FrameTitle,
@@ -147,7 +146,6 @@ export function OrcamentoResumo({ areas }: { areas: AreaOrcamento[] }) {
       <Frame spacing="default" className="min-w-0 self-start">
         <FrameHeader>
           <FrameTitle>Resumo do orçamento</FrameTitle>
-          <FrameDescription>Calculado pelas medidas e preços de cada área.</FrameDescription>
         </FrameHeader>
         <FramePanel className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">

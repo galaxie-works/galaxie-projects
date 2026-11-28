@@ -118,9 +118,7 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
                 Assistente de IA
               </FrameTitle>
               <FrameDescription>
-                Opcional. Sem chave, o assistente usa os comandos de IA do seu plano. Com a sua própria
-                chave da Anthropic, OpenAI ou DeepSeek, o uso é ilimitado e cobrado pelo provedor na sua
-                conta.
+                Opcional. Com chave própria, o uso é ilimitado e cobrado pelo provedor.
               </FrameDescription>
             </div>
             {config ? (
@@ -151,9 +149,6 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
               <Field orientation="horizontal">
                 <FieldContent>
                   <FieldLabel htmlFor="ia-ativo">Assistente ligado</FieldLabel>
-                  <FieldDescription>
-                    Desligado, o microfone do topo some e nada é enviado à IA.
-                  </FieldDescription>
                 </FieldContent>
                 <Switch
                   id="ia-ativo"
@@ -246,7 +241,7 @@ export function AjustesIAForm({ config, servidorPronto }: Props) {
                 <FieldError>{erro}</FieldError>
               ) : (
                 <FieldDescription>
-                  A chave é testada, cifrada e guardada só no servidor. Ela nunca volta para o navegador.{' '}
+                  Guardada cifrada no servidor.{' '}
                   <a
                     href={info.linkChave}
                     target="_blank"

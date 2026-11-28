@@ -236,7 +236,6 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold tracking-tight">Financeiro</h1>
-        <p className="text-sm text-muted-foreground">Parcelas a receber dos clientes e margem das obras.</p>
       </header>
 
       <Frame spacing="default" className="grid grid-cols-2 lg:grid-cols-4">
@@ -314,7 +313,7 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
             <FrameHeader>
               <FrameTitle>Parcelas em aberto</FrameTitle>
               <FrameDescription className="tabular-nums">
-                {formatarMoeda(resumo.aReceber)} no total, ordenado por vencimento
+                {formatarMoeda(resumo.aReceber)} a receber
               </FrameDescription>
             </FrameHeader>
           </RecebimentosTabela>
@@ -324,7 +323,7 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
           <Frame spacing="default">
             <FrameHeader>
               <FrameTitle>Atrasados por cliente</FrameTitle>
-              <FrameDescription>Quem cobrar primeiro, do maior valor para o menor</FrameDescription>
+              <FrameDescription>Do maior para o menor valor</FrameDescription>
             </FrameHeader>
             <FramePanel>
               {atrasadosPorCliente.length === 0 ? (
@@ -370,7 +369,7 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
             mostrarCliente
             mostrarObra
             tamanhoPagina={25}
-            vazio={<Vazio icone={WalletIcon} titulo="Nada recebido este mês" texto="As baixas do mês aparecem aqui." />}
+            vazio={<Vazio icone={WalletIcon} titulo="Nada recebido este mês" texto="Nenhum recebimento este mês." />}
           >
             <FrameHeader>
               <FrameTitle>Recebido no mês</FrameTitle>
@@ -398,7 +397,7 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
             <Frame spacing="sm" stacked dense>
               <FrameHeader>
                 <FrameTitle>Margem por obra</FrameTitle>
-                <FrameDescription>Recebido até agora menos as compras lançadas</FrameDescription>
+                <FrameDescription>Recebido menos compras</FrameDescription>
               </FrameHeader>
               <FramePanel className="p-0">
                 <DataGridScrollArea>

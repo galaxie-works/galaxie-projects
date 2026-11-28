@@ -219,7 +219,6 @@ function AgendarForm({ item, onFechar, onSalvo }: { item: PosVenda; onFechar: ()
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>Agendar visita</DialogTitle>
-        <DialogDescription>Quando a equipe vai ao cliente.</DialogDescription>
       </DialogHeader>
       <Field>
         <FieldLabel htmlFor="agendar-data">Data</FieldLabel>
@@ -321,7 +320,7 @@ function ChamadoForm({
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6">
       <DialogHeader>
         <DialogTitle>Abrir chamado</DialogTitle>
-        <DialogDescription>Problema relatado por {cliente.nome} depois da entrega.</DialogDescription>
+        <DialogDescription>Relatado por {cliente.nome}</DialogDescription>
       </DialogHeader>
       <FieldGroup>
         {!projetoInicial && obras.length > 0 && (
@@ -449,7 +448,7 @@ function IndicacaoForm({
       <DialogHeader>
         <DialogTitle>Registrar indicação</DialogTitle>
         <DialogDescription>
-          Quem {cliente.nome.split(' ')[0]} indicou entra como cliente novo, com origem Indicação.
+          Entra como cliente novo, com origem Indicação.
         </DialogDescription>
       </DialogHeader>
       <FieldGroup>

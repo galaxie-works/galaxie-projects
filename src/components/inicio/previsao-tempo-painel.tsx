@@ -100,7 +100,7 @@ export function PrevisaoTempoPainel({ cidade, previsao, hoje, obras, className }
             <CloudSunIcon className="size-4 shrink-0 text-muted-foreground" />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-sm font-medium">Previsão do tempo</span>
-              <span className="text-xs text-muted-foreground">Avisa se a chuva for atrasar obra.</span>
+              <span className="text-xs text-muted-foreground">Alertas de chuva para as obras</span>
             </div>
           </div>
           <EscolherCidade rotulo="Escolher cidade" variante="outline" />

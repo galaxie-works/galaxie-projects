@@ -437,7 +437,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
             <FrameHeader>
               <FrameTitle>Pede atenção</FrameTitle>
               <FrameDescription>
-                {vista === 'hoje' ? 'O que está atrasado ou vence hoje' : 'O que está atrasado ou vence em 7 dias'}
+                {vista === 'hoje' ? 'Atrasado ou vence hoje' : 'Atrasado ou vence em 7 dias'}
               </FrameDescription>
             </FrameHeader>
             <FramePanel className="flex flex-col gap-4">
@@ -482,7 +482,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
           <Frame spacing="default" className="min-w-0">
             <FrameHeader>
               <FrameTitle>Fila de espera</FrameTitle>
-              <FrameDescription>Obras em planejamento, pela data de início</FrameDescription>
+              <FrameDescription>Por data de início</FrameDescription>
             </FrameHeader>
             <FramePanel>
               {fila.length === 0 ? (

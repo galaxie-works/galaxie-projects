@@ -42,7 +42,6 @@ export default async function AssinaturaPage() {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-semibold tracking-tight">Assinatura</h1>
-          <p className="text-muted-foreground text-sm">Seu plano, os comandos de IA e o tipo de conta.</p>
         </div>
         {ligada && assinatura?.gateway_cliente_id && <BotaoPortal />}
       </header>

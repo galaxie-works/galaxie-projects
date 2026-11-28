@@ -20,14 +20,15 @@ function traduzirErro(erro: string): string {
 // (avatar upload). A imagem é compactada em WebP no aparelho antes de subir.
 export function EnviarImagem({
   titulo,
-  descricao,
+  descricao = `JPG, PNG ou WebP · até ${IMAGEM_TAMANHO_MAXIMO / 1024 / 1024} MB`,
   urlAtual,
   formato = 'redondo',
   iconeVazio,
   onSalvar,
 }: {
   titulo: string
-  descricao: string
+  /** Dica curta sobre o arquivo. Padrão: formatos e tamanho máximo. */
+  descricao?: string
   /** URL assinada da imagem salva (ou null). */
   urlAtual: string | null
   formato?: 'redondo' | 'quadrado'

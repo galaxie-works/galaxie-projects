@@ -85,9 +85,6 @@ export function EquipeManager({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-semibold tracking-tight">Equipe</h1>
-          <p className="text-muted-foreground text-sm">
-            Pessoas que você escala como responsáveis nas etapas.
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {podeDarAcesso && (
@@ -108,7 +105,7 @@ export function EquipeManager({
           <FrameTitle>Pessoas</FrameTitle>
           <FrameDescription>
             {equipe.length === 0
-              ? 'Você está trabalhando sozinho'
+              ? 'Ninguém na equipe ainda'
               : equipe.length === 1
                 ? '1 pessoa na equipe'
                 : `${equipe.length} pessoas na equipe`}
@@ -123,7 +120,7 @@ export function EquipeManager({
                 </EmptyMedia>
                 <EmptyTitle>Nenhuma pessoa cadastrada</EmptyTitle>
                 <EmptyDescription>
-                  Adicione quem trabalha com você para atribuir etapas e compras.
+                  Adicione sua equipe para atribuir etapas e compras.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>

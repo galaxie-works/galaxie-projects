@@ -41,7 +41,7 @@ export function LogoEmpresa({
   return (
     <EnviarImagem
       titulo="Logo"
-      descricao="Aparece no topo do menu. PNG com fundo transparente fica melhor. Até 5 MB."
+      descricao="PNG com fundo transparente · até 5 MB"
       urlAtual={urlAtual}
       formato="quadrado"
       iconeVazio={<Building2Icon />}

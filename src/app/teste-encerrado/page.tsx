@@ -53,7 +53,7 @@ export default async function TesteEncerradoPage() {
       <div className="flex flex-col gap-0.5">
         <h1 className="text-xl font-semibold tracking-tight">Seu teste grátis terminou</h1>
         <p className="text-muted-foreground text-sm">
-          {empresa.nome}: clientes, obras e orçamentos continuam guardados. Assine para voltar a usar.
+          Clientes, obras e orçamentos de {empresa.nome} continuam salvos. Assine para continuar.
         </p>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">

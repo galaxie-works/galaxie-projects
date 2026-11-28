@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -136,7 +135,6 @@ export function ProjetoCabecalho({ projeto, clientes, atrasado, totalCalculado =
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Editar projeto</DialogTitle>
-            <DialogDescription>Nome, cliente, prazos e orçamento.</DialogDescription>
           </DialogHeader>
           <ProjetoForm
             key={editando ? 'aberto' : 'fechado'}

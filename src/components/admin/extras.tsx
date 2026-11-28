@@ -43,8 +43,7 @@ export function Extras({ config }: { config: ConfigPlataforma }) {
         <FrameHeader>
           <FrameTitle>IA e extras</FrameTitle>
           <FrameDescription>
-            Cota de IA de quem não tem plano pago, pacote avulso de comandos e usuário extra. A cota de cada plano
-            fica em Planos.
+            A cota de cada plano fica em Planos.
           </FrameDescription>
         </FrameHeader>
         <FramePanel>
