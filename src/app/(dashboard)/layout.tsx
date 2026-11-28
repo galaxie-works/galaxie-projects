@@ -9,6 +9,7 @@ import { configPublica } from '@/lib/ia/config-servidor'
 import { iaGalaxieDisponivel } from '@/lib/ia/cota'
 import { carregarAssinatura, situacaoAssinatura } from '@/lib/assinatura'
 import { ehAdminMaster } from '@/lib/plataforma/admin'
+import { urlAssinada } from '@/lib/marca'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: empresa } = await supabase
     .from('empresas')
-    .select('id, nome, created_at')
+    .select('id, nome, created_at, logo_caminho')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -45,10 +46,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('empresa_id', empresa.id)
 
   const lista = (projetos as Projeto[]) ?? []
-  const [ia, iaGalaxie, adminMaster] = await Promise.all([
+  const { data: perfil } = await supabase
+    .from('perfis')
+    .select('nome, foto_caminho')
+    .eq('user_id', user.id)
+    .maybeSingle()
+  const [ia, iaGalaxie, adminMaster, logoUrl, fotoUrl] = await Promise.all([
     configPublica(supabase, empresa.id).catch(() => null),
     iaGalaxieDisponivel(),
     ehAdminMaster(supabase),
+    urlAssinada(supabase, empresa.logo_caminho),
+    urlAssinada(supabase, perfil?.foto_caminho),
   ])
   const sidebarAberta = (await cookies()).get('sidebar_state')?.value !== 'false'
 
@@ -59,6 +67,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           empresaNome={empresa.nome}
           email={user.email ?? ''}
           adminMaster={adminMaster}
+          logoUrl={logoUrl}
+          usuario={{ nome: perfil?.nome ?? null, fotoUrl }}
           projetos={lista}
           teste={
             assinatura.status === 'teste'
