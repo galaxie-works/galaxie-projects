@@ -13,6 +13,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { AgendaIndisponivel } from '@/components/agenda/agenda-indisponivel'
 import { NovaTarefa } from '@/components/agenda/nova-tarefa'
+import { PrevisaoTempo } from '@/components/inicio/previsao-tempo'
 import { TarefaItem } from '@/components/agenda/tarefa-item'
 import { VistaInicioToggle, type VistaInicio } from '@/components/inicio/vista-inicio'
 import { Badge } from '@/components/reui/badge'
@@ -315,6 +316,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
           <h1 className="text-xl font-semibold tracking-tight">{saudacao()}</h1>
           <p className="text-muted-foreground text-sm first-letter:uppercase">{rotuloDiaLongo(hoje)}</p>
         </div>
+        <PrevisaoTempo empresaId={empresa.id} className="order-last w-full lg:order-none lg:w-[26rem]" />
         <div className="flex flex-wrap items-center gap-2">
           <VistaInicioToggle vista={vista} />
           <NovaTarefa
