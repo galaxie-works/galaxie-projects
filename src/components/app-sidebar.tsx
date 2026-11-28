@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { Fragment, useEffect, useMemo, useRef, type MouseEvent } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import {
   ArrowLeftIcon,
   BriefcaseBusinessIcon,
@@ -34,6 +34,7 @@ import { AssistenteVoz } from '@/components/assistente/assistente-voz'
 import { BuscaGlobal } from '@/components/busca/busca-global'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -64,8 +65,12 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
@@ -81,22 +86,40 @@ const PONTO_STATUS: Record<StatusProjeto, string> = {
 }
 
 // Menu agrupado pela jornada do cliente: o dia a dia no topo, depois
-// vender (funil e clientes), executar (obras e diário) e gerir a empresa.
-type ItemNav = { href: string; rotulo: string; icone: typeof HouseIcon }
+// vender (negócios e clientes), executar (obras e diário) e gerir a empresa.
+// Itens com abas na tela abrem as abas como subitens no próprio menu.
+type SubItem = { rotulo: string; href: string; param: string; valor: string; padrao?: boolean }
+type ItemNav = { href: string; rotulo: string; icone: typeof HouseIcon; subitens?: SubItem[] }
 
 const SECOES_MENU: { id: string; rotulo?: string; itens: ItemNav[] }[] = [
   {
     id: 'dia',
     itens: [
       { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
-      { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
+      {
+        href: '/agenda',
+        rotulo: 'Agenda',
+        icone: CalendarDaysIcon,
+        subitens: [
+          { rotulo: 'Dia', href: '/agenda', param: 'modo', valor: 'dia', padrao: true },
+          { rotulo: 'Semana', href: '/agenda?modo=semana', param: 'modo', valor: 'semana' },
+        ],
+      },
     ],
   },
   {
     id: 'vendas',
     rotulo: 'Vendas',
     itens: [
-      { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
+      {
+        href: '/funil',
+        rotulo: 'Negócios',
+        icone: FunnelIcon,
+        subitens: [
+          { rotulo: 'Quadro', href: '/funil', param: 'vista', valor: 'quadro', padrao: true },
+          { rotulo: 'Lista', href: '/funil?vista=lista', param: 'vista', valor: 'lista' },
+        ],
+      },
       { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
     ],
   },
@@ -112,11 +135,84 @@ const SECOES_MENU: { id: string; rotulo?: string; itens: ItemNav[] }[] = [
     id: 'gestao',
     rotulo: 'Gestão',
     itens: [
-      { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
+      {
+        href: '/financeiro',
+        rotulo: 'Financeiro',
+        icone: WalletIcon,
+        subitens: [
+          { rotulo: 'A receber', href: '/financeiro?aba=receber', param: 'aba', valor: 'receber' },
+          { rotulo: 'Atrasados', href: '/financeiro?aba=atrasados', param: 'aba', valor: 'atrasados' },
+          { rotulo: 'Recebido no mês', href: '/financeiro?aba=mes', param: 'aba', valor: 'mes' },
+          { rotulo: 'Margem por obra', href: '/financeiro?aba=margem', param: 'aba', valor: 'margem' },
+        ],
+      },
       { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
     ],
   },
 ]
+
+function rotaAtiva(href: string, pathname: string) {
+  if (href === '/projetos') return pathname === '/projetos' || pathname === '/projetos/novo'
+  return pathname.startsWith(href)
+}
+
+// Item do menu. Com subitens, abre sozinho quando a tela dele está aberta
+// (ao clicar, a tela abre e as abas aparecem logo abaixo); a seta abre e
+// fecha à mão.
+function ItemMenu({ item }: { item: ItemNav }) {
+  const pathname = usePathname()
+  const busca = useSearchParams()
+  const ativo = rotaAtiva(item.href, pathname)
+  const [manual, setManual] = useState<boolean | null>(null)
+  const aberto = manual ?? ativo
+  const Icone = item.icone
+
+  const botao = (
+    <SidebarMenuButton
+      isActive={ativo}
+      tooltip={item.rotulo}
+      render={<Link href={item.href} aria-current={ativo ? 'page' : undefined} />}
+      onClick={() => setManual(null)}
+    >
+      <Icone />
+      <span>{item.rotulo}</span>
+    </SidebarMenuButton>
+  )
+
+  if (!item.subitens) return <SidebarMenuItem>{botao}</SidebarMenuItem>
+
+  // Na tela do item (não em camadas abaixo dela), marca a aba aberta.
+  const naTela = pathname === item.href
+  return (
+    <Collapsible open={aberto} onOpenChange={(v) => setManual(v)} render={<SidebarMenuItem />}>
+      {botao}
+      <CollapsibleTrigger
+        render={<SidebarMenuAction />}
+        aria-label={aberto ? `Fechar opções de ${item.rotulo}` : `Abrir opções de ${item.rotulo}`}
+      >
+        <ChevronRightIcon className={cn('transition-transform duration-200', aberto && 'rotate-90')} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub>
+          {item.subitens.map((sub) => {
+            const valor = busca.get(sub.param)
+            const subAtivo = naTela && (valor === sub.valor || (!valor && !!sub.padrao))
+            return (
+              <SidebarMenuSubItem key={sub.href}>
+                <SidebarMenuSubButton
+                  isActive={subAtivo}
+                  render={<Link href={sub.href} aria-current={subAtivo ? 'page' : undefined} />}
+                >
+                  <span>{sub.rotulo}</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            )
+          })}
+        </SidebarMenuSub>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
 
 // Atalhos no menu: só as obras ativas (planejamento e em execução), as mais
 // recentes primeiro. A lista completa, com filtro, fica na tela de Obras.
@@ -181,22 +277,9 @@ export function AppSidebar({ empresaNome, email, projetos, teste, adminMaster = 
             {secao.rotulo && <SidebarGroupLabel>{secao.rotulo}</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
-                {secao.itens.map(({ href, rotulo, icone: Icone }) => {
-                  const ativo =
-                    href === '/projetos' ? pathname === '/projetos' || pathname === '/projetos/novo' : pathname.startsWith(href)
-                  return (
-                    <SidebarMenuItem key={href}>
-                      <SidebarMenuButton
-                        isActive={ativo}
-                        tooltip={rotulo}
-                        render={<Link href={href} aria-current={ativo ? 'page' : undefined} />}
-                      >
-                        <Icone />
-                        <span>{rotulo}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
+                {secao.itens.map((item) => (
+                  <ItemMenu key={item.href} item={item} />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -359,7 +442,7 @@ const SECOES: Record<string, string> = {
   agenda: 'Agenda',
   projetos: 'Obras',
   diario: 'Diário de obra',
-  funil: 'Funil',
+  funil: 'Negócios',
   clientes: 'Clientes',
   financeiro: 'Financeiro',
   equipe: 'Equipe',

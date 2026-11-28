@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { KanbanSquareIcon, ListIcon, PlusIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -44,7 +45,11 @@ type Props = {
 
 export function FunilQuadro({ negocios, empresaId, equipe, clientes, agora }: Props) {
   const [arrasto, setArrasto] = useState<Quadro | null>(null)
-  const [vista, setVista] = useState<'quadro' | 'lista'>('quadro')
+  // Quadro ou lista vem da URL (?vista=lista), para o menu lateral abrir direto.
+  const router = useRouter()
+  const vista: 'quadro' | 'lista' = useSearchParams().get('vista') === 'lista' ? 'lista' : 'quadro'
+  const setVista = (v: 'quadro' | 'lista') =>
+    router.replace(v === 'lista' ? '/funil?vista=lista' : '/funil', { scroll: false })
   const proximaOrdem = negocios.reduce((max, n) => Math.max(max, n.ordem + 1), 0)
   const { acoes, dialogos } = useAcoesNegocio({ empresaId, equipe, clientes, proximaOrdem })
 

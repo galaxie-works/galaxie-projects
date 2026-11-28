@@ -57,7 +57,7 @@ export default async function FunilPage() {
 
   const cabecalho = (
     <header className="flex flex-col gap-0.5">
-      <h1 className="text-xl font-semibold tracking-tight">Funil</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Negócios</h1>
       <p className="text-sm text-muted-foreground">
         Cada negócio da primeira visita até o contrato. Arraste para mudar de fase.
       </p>
@@ -75,7 +75,7 @@ export default async function FunilPage() {
                 <EmptyMedia variant="icon">
                   <FunnelIcon />
                 </EmptyMedia>
-                <EmptyTitle>Funil ainda não ativado</EmptyTitle>
+                <EmptyTitle>Negócios ainda não ativados</EmptyTitle>
                 <EmptyDescription>Rode o SQL do funil no Supabase para começar a usar.</EmptyDescription>
               </EmptyHeader>
             </Empty>
