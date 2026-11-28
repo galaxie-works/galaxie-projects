@@ -8,6 +8,7 @@ import { carregarPrecos } from '@/components/orcamento/dados'
 import { chaveMestraConfigurada } from '@/lib/ia/cripto'
 import type { CertificadoPublico, EmpresaFiscal } from '@/lib/fiscal/tipos'
 import type { Empresa } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function EmpresaPage() {
   const supabase = await createClient()
@@ -15,11 +16,12 @@ export default async function EmpresaPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('empresa')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('*')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
   const [precos, { data: fiscal }, { data: certificado }, logoUrl] = await Promise.all([

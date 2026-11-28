@@ -11,6 +11,7 @@ import {
   Building2Icon,
   FunnelIcon,
   ChevronsUpDownIcon,
+  KeyRoundIcon,
   CircleUserRoundIcon,
   FolderKanbanIcon,
   LogOutIcon,
@@ -100,6 +101,25 @@ const NAVEGACAO = [
   { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
 ]
 
+/** O que quem está logado pode abrir (vem das permissões; o dono vê tudo). */
+export type MenuPermitido = {
+  modulos: string[]
+  empresa: boolean
+  assinatura: boolean
+  acessos: boolean
+}
+
+// Rota do menu → módulo de permissão. Rotas fora da lista aparecem para todos.
+const MODULO_DA_ROTA: Record<string, string> = {
+  '/agenda': 'agenda',
+  '/projetos': 'obras',
+  '/diario': 'diario',
+  '/funil': 'negocios',
+  '/clientes': 'clientes',
+  '/financeiro': 'financeiro',
+  '/equipe': 'equipe',
+}
+
 type Props = {
   empresaNome: string
   email: string
@@ -112,6 +132,8 @@ type Props = {
   logoUrl?: string | null
   /** Quem está logado: nome e foto de Minha conta. */
   usuario?: { nome: string | null; fotoUrl: string | null }
+  /** Sem isto, mostra tudo (dono). */
+  permitido?: MenuPermitido
 }
 
 export function AppSidebar({
@@ -122,7 +144,12 @@ export function AppSidebar({
   adminMaster = false,
   logoUrl = null,
   usuario,
+  permitido,
 }: Props) {
+  const rotaVisivel = (href: string) => {
+    const modulo = MODULO_DA_ROTA[href]
+    return !permitido || !modulo || permitido.modulos.includes(modulo)
+  }
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -175,7 +202,7 @@ export function AppSidebar({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAVEGACAO.map(({ href, rotulo, icone: Icone }) => {
+              {NAVEGACAO.filter((n) => rotaVisivel(n.href)).map(({ href, rotulo, icone: Icone }) => {
                 const ativo =
                   href === '/projetos' ? pathname === '/projetos' : pathname.startsWith(href)
                 return (
@@ -194,6 +221,7 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {rotaVisivel('/projetos') && (
         <SidebarGroup className="min-h-0 flex-1">
           <SidebarGroupLabel>Obras</SidebarGroupLabel>
           <SidebarGroupAction
@@ -263,10 +291,11 @@ export function AppSidebar({
             )}
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
-        {teste && (
+        {teste && (!permitido || permitido.assinatura) && (
           <Link
             href="/assinatura"
             className="flex flex-col gap-2 rounded-md border bg-card p-3 text-card-foreground transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
@@ -291,6 +320,7 @@ export function AppSidebar({
                     size="lg"
                     isActive={pathname.startsWith('/empresa') ||
                       pathname.startsWith('/conta') ||
+                      pathname.startsWith('/acessos') ||
                       pathname.startsWith('/ajustes') ||
                       pathname.startsWith('/assinatura')}
                   />
@@ -318,27 +348,42 @@ export function AppSidebar({
                   <CircleUserRoundIcon />
                   Minha conta
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link href="/empresa" />}
-                  onClick={() => isMobile && setOpenMobile(false)}
-                >
-                  <Building2Icon />
-                  Empresa
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link href="/ajustes" />}
-                  onClick={() => isMobile && setOpenMobile(false)}
-                >
-                  <SettingsIcon />
-                  Ajustes
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link href="/assinatura" />}
-                  onClick={() => isMobile && setOpenMobile(false)}
-                >
-                  <SparklesIcon />
-                  Assinatura
-                </DropdownMenuItem>
+                {(!permitido || permitido.empresa) && (
+                  <DropdownMenuItem
+                    render={<Link href="/empresa" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <Building2Icon />
+                    Empresa
+                  </DropdownMenuItem>
+                )}
+                {(!permitido || permitido.acessos) && (
+                  <DropdownMenuItem
+                    render={<Link href="/acessos" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <KeyRoundIcon />
+                    Acessos da equipe
+                  </DropdownMenuItem>
+                )}
+                {(!permitido || permitido.empresa) && (
+                  <DropdownMenuItem
+                    render={<Link href="/ajustes" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <SettingsIcon />
+                    Ajustes
+                  </DropdownMenuItem>
+                )}
+                {(!permitido || permitido.assinatura) && (
+                  <DropdownMenuItem
+                    render={<Link href="/assinatura" />}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                  >
+                    <SparklesIcon />
+                    Assinatura
+                  </DropdownMenuItem>
+                )}
                 {adminMaster && (
                   <DropdownMenuItem
                     render={<Link href="/admin" />}
@@ -376,6 +421,7 @@ const SECOES: Record<string, string> = {
   equipe: 'Equipe',
   empresa: 'Empresa',
   conta: 'Minha conta',
+  acessos: 'Acessos',
   ajustes: 'Ajustes',
   assinatura: 'Assinatura',
   admin: 'Admin master',

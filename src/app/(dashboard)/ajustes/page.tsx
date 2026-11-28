@@ -2,10 +2,12 @@ import { redirect } from 'next/navigation'
 import { chaveMestraConfigurada } from '@/lib/ia/cripto'
 import { configPublica, sessaoEmpresa } from '@/lib/ia/config-servidor'
 import { AjustesIAForm } from '@/components/ajustes/ajustes-ia-form'
+import { exigirAcesso } from '@/lib/acesso'
 
 export default async function AjustesPage() {
   const sessao = await sessaoEmpresa()
   if (!sessao) redirect('/login')
+  await exigirAcesso('empresa')
   const config = await configPublica(sessao.supabase, sessao.empresaId).catch(() => null)
 
   return (

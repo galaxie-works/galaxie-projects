@@ -51,6 +51,8 @@ interface LinhaPlano {
   campo: string
   obras: string
   comandos_ia: number
+  usuarios_escritorio?: number | null
+  usuarios_campo?: number | null
   destaque: boolean
   ativo: boolean
 }
@@ -82,6 +84,12 @@ async function carregar() {
           campo: l.campo,
           obras: l.obras,
           comandosIA: l.comandos_ia,
+          usuariosEscritorio:
+            l.usuarios_escritorio !== undefined
+              ? l.usuarios_escritorio
+              : (PLANOS.find((p) => p.id === l.id)?.usuariosEscritorio ?? null),
+          usuariosCampo:
+            l.usuarios_campo !== undefined ? l.usuarios_campo : (PLANOS.find((p) => p.id === l.id)?.usuariosCampo ?? null),
           destaque: l.destaque,
           ativo: l.ativo,
         }))

@@ -19,6 +19,10 @@ export interface Plano {
   obras: string
   /** Comandos de IA por mês. */
   comandosIA: number
+  /** Logins de escritório inclusos (com o dono). null = ilimitado. */
+  usuariosEscritorio?: number | null
+  /** Logins de campo inclusos (só diário e agenda). null = ilimitado. */
+  usuariosCampo?: number | null
   destaque?: boolean
 }
 
@@ -33,6 +37,8 @@ export const PLANOS: Plano[] = [
     campo: 'Até 2 na equipe de campo',
     obras: 'Até 5 obras ativas',
     comandosIA: 150,
+    usuariosEscritorio: 1,
+    usuariosCampo: 2,
   },
   {
     id: 'equipe',
@@ -44,6 +50,8 @@ export const PLANOS: Plano[] = [
     campo: 'Equipe de campo ilimitada',
     obras: 'Até 20 obras ativas',
     comandosIA: 600,
+    usuariosEscritorio: 5,
+    usuariosCampo: null,
     destaque: true,
   },
   {
@@ -56,6 +64,8 @@ export const PLANOS: Plano[] = [
     campo: 'Equipe de campo ilimitada',
     obras: 'Obras ativas ilimitadas',
     comandosIA: 2000,
+    usuariosEscritorio: 15,
+    usuariosCampo: null,
   },
 ]
 

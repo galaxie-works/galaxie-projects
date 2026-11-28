@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { projetoAtrasado } from '@/lib/status'
 import { ProjetosPainel, type LinhaProjeto } from '@/components/projetos/projetos-painel'
 import type { Projeto } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function ProjetosPage() {
   const supabase = await createClient()
@@ -10,11 +11,12 @@ export default async function ProjetosPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('obras')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id, nome')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 

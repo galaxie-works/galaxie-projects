@@ -8,6 +8,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS = [
   '/login',
   '/cadastro',
+  // Link do convite da equipe: a sessão chega no endereço (#access_token).
+  '/convite',
   '/auth',
   '/api/stripe/webhook',
   '/portal/',

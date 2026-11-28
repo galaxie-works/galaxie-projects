@@ -10,6 +10,7 @@ import { iaGalaxieDisponivel } from '@/lib/ia/cota'
 import { carregarAssinatura, situacaoAssinatura } from '@/lib/assinatura'
 import { ehAdminMaster } from '@/lib/plataforma/admin'
 import { urlAssinada } from '@/lib/marca'
+import { carregarSessao, idDaEmpresa, MODULOS } from '@/lib/acesso'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -18,11 +19,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+  const sessao = await carregarSessao()
+  if (sessao.situacao === 'suspenso') redirect('/sem-acesso')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id, nome, created_at, logo_caminho')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
 
   if (!empresa) redirect('/onboarding')
@@ -69,6 +72,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           adminMaster={adminMaster}
           logoUrl={logoUrl}
           usuario={{ nome: perfil?.nome ?? null, fotoUrl }}
+          permitido={
+            sessao.situacao === 'ok' && sessao.acesso.papel !== 'dono'
+              ? {
+                  modulos: MODULOS.filter((m) => sessao.acesso.pode(m.id)).map((m) => m.id),
+                  empresa: sessao.acesso.pode('empresa'),
+                  assinatura: sessao.acesso.pode('assinatura'),
+                  acessos: sessao.acesso.pode('acessos'),
+                }
+              : undefined
+          }
           projetos={lista}
           teste={
             assinatura.status === 'teste'

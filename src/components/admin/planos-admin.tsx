@@ -111,6 +111,27 @@ function EditarPlano({
                 <Input id="p-obras" value={d.obras} maxLength={60} onChange={(e) => set('obras', e.target.value)} />
               </Field>
             </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="p-usu-esc">Logins de escritório inclusos</FieldLabel>
+                <CampoNumero
+                  id="p-usu-esc"
+                  valor={d.usuariosEscritorio ?? null}
+                  min={1}
+                  onChange={(v) => set('usuariosEscritorio', v ?? null)}
+                />
+                <FieldDescription>Conta o dono. Vazio = ilimitado.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="p-usu-campo">Logins de campo inclusos</FieldLabel>
+                <CampoNumero
+                  id="p-usu-campo"
+                  valor={d.usuariosCampo ?? null}
+                  onChange={(v) => set('usuariosCampo', v ?? null)}
+                />
+                <FieldDescription>Quem só usa diário e agenda. Vazio = ilimitado.</FieldDescription>
+              </Field>
+            </div>
             <Field orientation="horizontal">
               <Switch id="p-destaque" checked={d.destaque} onCheckedChange={(v) => set('destaque', v)} />
               <FieldLabel htmlFor="p-destaque">Mostrar como &quot;Mais escolhido&quot;</FieldLabel>

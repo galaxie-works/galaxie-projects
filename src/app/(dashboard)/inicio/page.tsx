@@ -34,6 +34,7 @@ import {
   type TarefaAgenda,
   type TipoPosVenda,
 } from '@/types'
+import { carregarSessao, idDaEmpresa } from '@/lib/acesso'
 
 /** Negócio aberto sem mudar de fase há este tempo, e sem próximo passo, pede atenção. */
 const DIAS_NEGOCIO_PARADO = 14
@@ -131,7 +132,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id, nome')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
@@ -139,8 +140,9 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
   const hoje = hojeISO()
   const ultimoDia = vista === 'hoje' ? hoje : somarDias(hoje, 6)
   const limiteParado = somarDias(hoje, -DIAS_NEGOCIO_PARADO)
-  // Quem vê os valores. Hoje só o dono entra; com a equipe no app, vem das permissões.
-  const veValores = true
+  // Valores (a receber, orçamento) só para quem vê o Financeiro.
+  const sessao = await carregarSessao()
+  const veValores = sessao.situacao === 'ok' && sessao.acesso.pode('financeiro')
 
   const [
     tarefasRes,

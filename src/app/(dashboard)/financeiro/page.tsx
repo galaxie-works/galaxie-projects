@@ -4,6 +4,7 @@ import { hojeISO } from '@/lib/crm'
 import { podeVerFinanceiro } from '@/lib/financeiro'
 import { FinanceiroPainel, type ObraMargem } from '@/components/financeiro/financeiro-painel'
 import type { Recebimento } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function FinanceiroPage() {
   const supabase = await createClient()
@@ -11,9 +12,10 @@ export default async function FinanceiroPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('financeiro')
   if (!podeVerFinanceiro()) redirect('/projetos')
 
-  const { data: empresa } = await supabase.from('empresas').select('id').eq('owner_id', user.id).maybeSingle()
+  const { data: empresa } = await supabase.from('empresas').select('id').eq('id', await idDaEmpresa()).maybeSingle()
   if (!empresa) redirect('/onboarding')
 
   const [recebimentosRes, { data: projetos }, { data: compras }] = await Promise.all([

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MembroForm } from '@/components/equipe/membro-form'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function NovaPessoaPage() {
   const supabase = await createClient()
@@ -8,11 +9,12 @@ export default async function NovaPessoaPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('equipe', 'editar')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 

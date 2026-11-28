@@ -12,6 +12,7 @@ import { configPublica } from '@/lib/ia/config-servidor'
 import { cobrancaLigada } from '@/lib/stripe/servidor'
 import { lerConfig, lerPlanos, planoPorId } from '@/lib/plataforma/config'
 import type { Empresa } from '@/types'
+import { idDaEmpresa } from '@/lib/acesso'
 
 // Tela de quem passou do teste grátis (ou da assinatura) sem pagar. Fica fora
 // do layout do app, que manda para cá enquanto o acesso estiver bloqueado.
@@ -22,7 +23,7 @@ export default async function TesteEncerradoPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data } = await supabase.from('empresas').select('*').eq('owner_id', user.id).maybeSingle()
+  const { data } = await supabase.from('empresas').select('*').eq('id', await idDaEmpresa()).maybeSingle()
   if (!data) redirect('/onboarding')
   const empresa = data as Empresa
   const assinatura = await carregarAssinatura(supabase, empresa.id)

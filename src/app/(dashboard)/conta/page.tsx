@@ -5,6 +5,7 @@ import { NomeUsuario } from '@/components/marca/nome-usuario'
 import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
 import { urlAssinada } from '@/lib/marca'
 import type { Perfil } from '@/types'
+import { idDaEmpresa } from '@/lib/acesso'
 
 export default async function ContaPage() {
   const supabase = await createClient()
@@ -14,7 +15,7 @@ export default async function ContaPage() {
   if (!user) redirect('/login')
 
   const [{ data: empresa }, { data: perfil }] = await Promise.all([
-    supabase.from('empresas').select('id').eq('owner_id', user.id).maybeSingle(),
+    supabase.from('empresas').select('id').eq('id', await idDaEmpresa()).maybeSingle(),
     supabase.from('perfis').select('*').eq('user_id', user.id).maybeSingle(),
   ])
   if (!empresa) redirect('/onboarding')

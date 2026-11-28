@@ -175,6 +175,8 @@ export interface DadosPlano {
   campo: string
   obras: string
   comandosIA: number
+  usuariosEscritorio?: number | null
+  usuariosCampo?: number | null
   destaque: boolean
   ativo: boolean
 }
@@ -223,6 +225,13 @@ export async function salvarPlanoAcao(d: DadosPlano): Promise<ResultadoAdmin> {
   if (!nome) return { ok: false, erro: 'Dê um nome ao plano.' }
   if (!valorOk(d.mensal) || !valorOk(d.anual)) return { ok: false, erro: 'Preços precisam ser de pelo menos R$ 0,50.' }
   if (!inteiroOk(d.comandosIA, 0, 100_000)) return { ok: false, erro: 'Comandos de IA: um número inteiro de 0 a 100.000.' }
+  const usuarios = (v: number | null | undefined) => (v == null ? null : v)
+  if (
+    (d.usuariosEscritorio != null && !inteiroOk(d.usuariosEscritorio, 1, 10_000)) ||
+    (d.usuariosCampo != null && !inteiroOk(d.usuariosCampo, 0, 10_000))
+  ) {
+    return { ok: false, erro: 'Logins inclusos: número inteiro (escritório a partir de 1), ou vazio para ilimitado.' }
+  }
 
   const antes = (await lerTodosPlanos()).find((p) => p.id === d.id)
   if (!d.ativo && (await lerTodosPlanos()).filter((p) => p.ativo && p.id !== d.id).length === 0) {
@@ -239,6 +248,8 @@ export async function salvarPlanoAcao(d: DadosPlano): Promise<ResultadoAdmin> {
       campo: texto(d.campo, 60),
       obras: texto(d.obras, 60),
       comandos_ia: d.comandosIA,
+      usuarios_escritorio: usuarios(d.usuariosEscritorio),
+      usuarios_campo: usuarios(d.usuariosCampo),
       destaque: !!d.destaque,
       ativo: !!d.ativo,
       updated_at: new Date().toISOString(),
@@ -279,6 +290,11 @@ export async function salvarExtrasAcao(d: DadosExtras): Promise<ResultadoAdmin> 
     return { ok: false, erro: 'Comandos do teste e da cortesia: números inteiros de 0 a 100.000.' }
   }
   if (!inteiroOk(d.pacoteComandos, 1, 100_000)) return { ok: false, erro: 'O pacote precisa ter pelo menos 1 comando.' }
+  // Regra do Wagner: o usuário extra nunca passa de uma licença do Microsoft 365
+  // Business Basic (R$ 33,40 por usuário/mês no Brasil, anual, jul/2026).
+  if (typeof d.usuarioExtraPreco === 'number' && d.usuarioExtraPreco > 33.4) {
+    return { ok: false, erro: 'O usuário extra não pode passar de R$ 33,40 (preço do Microsoft 365 Business Basic).' }
+  }
   if (!valorOk(d.pacotePreco) || !valorOk(d.usuarioExtraPreco)) {
     return { ok: false, erro: 'Preços precisam ser de pelo menos R$ 0,50.' }
   }

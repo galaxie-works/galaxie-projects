@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -24,6 +24,15 @@ export default function LoginPage() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+
+  // Link de convite que caiu aqui (o Supabase manda para o endereço do site):
+  // segue para a tela de criar a senha, levando a sessão do endereço.
+  useEffect(() => {
+    const hash = window.location.hash
+    if (/access_token=/.test(hash) && /type=(invite|signup|magiclink|recovery)/.test(hash)) {
+      router.replace(`/convite${hash}`)
+    }
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

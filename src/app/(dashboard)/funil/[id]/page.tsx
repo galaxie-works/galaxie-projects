@@ -6,6 +6,7 @@ import type { EventoCliente } from '@/components/clientes/cliente-linha-do-tempo
 import { agoraMs } from '@/lib/crm'
 import { SELECT_NEGOCIO } from '@/lib/negocios'
 import { TIPO_ATIVIDADE_LABEL, type Atividade, type Negocio } from '@/types'
+import { exigirAcesso } from '@/lib/acesso'
 
 export default async function NegocioPage({
   params,
@@ -21,6 +22,7 @@ export default async function NegocioPage({
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('negocios')
 
   const { data } = await supabase.from('negocios').select(SELECT_NEGOCIO).eq('id', id).maybeSingle()
   if (!data) notFound()

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { decifrar } from './cripto'
 import { ehProvedor, type ConfigIAPublica, type ProvedorIA } from './provedores'
+import { idDaEmpresa } from '@/lib/acesso'
 
 // Leitura da configuração de IA no servidor. A chave decifrada só existe
 // dentro desta função e da chamada ao provedor; nunca é devolvida à tela.
@@ -17,7 +18,7 @@ export async function sessaoEmpresa(): Promise<
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id, nome')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) return null
   return { supabase, empresaId: empresa.id as string, empresaNome: empresa.nome as string }

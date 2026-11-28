@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ProjetoForm } from '@/components/projetos/projeto-form'
 import { carregarPrecos } from '@/components/orcamento/dados'
 import type { Cliente } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function NovoProjetoPage({
   searchParams,
@@ -15,11 +16,12 @@ export default async function NovoProjetoPage({
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('obras', 'editar')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id, servicos')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
