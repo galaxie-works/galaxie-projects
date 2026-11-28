@@ -35,11 +35,11 @@ function paraBlob(canvas: HTMLCanvasElement, tipo: string, qualidade: number): P
   return new Promise((resolve) => canvas.toBlob(resolve, tipo, qualidade))
 }
 
-export async function compactarParaWebp(arquivo: Blob): Promise<FotoCompactada> {
+export async function compactarParaWebp(arquivo: Blob, ladoMaximo = LADO_MAXIMO): Promise<FotoCompactada> {
   const imagem = await carregarImagem(arquivo)
   const w0 = 'naturalWidth' in imagem ? imagem.naturalWidth : imagem.width
   const h0 = 'naturalHeight' in imagem ? imagem.naturalHeight : imagem.height
-  const escala = Math.min(1, LADO_MAXIMO / Math.max(w0, h0))
+  const escala = Math.min(1, ladoMaximo / Math.max(w0, h0))
   const largura = Math.max(1, Math.round(w0 * escala))
   const altura = Math.max(1, Math.round(h0 * escala))
 

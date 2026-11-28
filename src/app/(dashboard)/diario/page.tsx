@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DiarioApp } from '@/components/diario/diario-app'
 import type { ContextoDiario } from '@/lib/diario/tipos'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 // Diário de obra: a equipe de campo registra o dia (atividades, clima, quem
 // veio, ocorrências e fotos). Funciona sem internet: esta página fica guardada
@@ -17,11 +18,12 @@ export default async function DiarioPage({
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('diario')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 

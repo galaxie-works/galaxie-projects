@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from 'lucide-react'
+import { KeyRoundIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatarTelefone } from '@/components/clientes/telefone'
@@ -51,9 +51,12 @@ import type { MembroEquipe } from '@/types'
 export function EquipeManager({
   equipeInicial,
   fotos,
+  podeDarAcesso = false,
 }: {
   equipeInicial: MembroEquipe[]
   fotos: Record<string, string>
+  /** Dono: mostra o atalho para os acessos ao app. */
+  podeDarAcesso?: boolean
 }) {
   const router = useRouter()
   const supabase = createClient()
@@ -86,10 +89,18 @@ export function EquipeManager({
             Pessoas que você escala como responsáveis nas etapas.
           </p>
         </div>
-        <Button nativeButton={false} render={<Link href="/equipe/novo" />}>
-          <PlusIcon data-icon="inline-start" />
-          Adicionar pessoa
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {podeDarAcesso && (
+            <Button variant="outline" nativeButton={false} render={<Link href="/acessos" />}>
+              <KeyRoundIcon data-icon="inline-start" />
+              Acessos ao app
+            </Button>
+          )}
+          <Button nativeButton={false} render={<Link href="/equipe/novo" />}>
+            <PlusIcon data-icon="inline-start" />
+            Adicionar pessoa
+          </Button>
+        </div>
       </header>
 
       <Frame spacing="default">

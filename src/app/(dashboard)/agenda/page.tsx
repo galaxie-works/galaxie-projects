@@ -25,6 +25,7 @@ import {
   somarDias,
 } from '@/lib/agenda'
 import type { MembroEquipe, TarefaAgenda } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 const SELECAO = '*, equipe(nome), clientes(nome, telefone)'
 
@@ -39,11 +40,12 @@ export default async function AgendaPage({
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('agenda')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 

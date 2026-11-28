@@ -10,6 +10,7 @@ import { configPublica } from '@/lib/ia/config-servidor'
 import { cobrancaLigada } from '@/lib/stripe/servidor'
 import { lerConfig, lerPlanos, planoPorId } from '@/lib/plataforma/config'
 import type { Empresa } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function AssinaturaPage() {
   const supabase = await createClient()
@@ -17,8 +18,9 @@ export default async function AssinaturaPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('assinatura')
 
-  const { data } = await supabase.from('empresas').select('*').eq('owner_id', user.id).maybeSingle()
+  const { data } = await supabase.from('empresas').select('*').eq('id', await idDaEmpresa()).maybeSingle()
   if (!data) redirect('/onboarding')
   const empresa = data as Empresa
   const assinatura = await carregarAssinatura(supabase, empresa.id)

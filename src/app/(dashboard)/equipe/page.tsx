@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { EquipeManager } from '@/components/equipe/equipe-manager'
 import { urlsDasFotos } from '@/lib/equipe'
 import type { MembroEquipe } from '@/types'
+import { exigirAcesso, idDaEmpresa } from '@/lib/acesso'
 
 export default async function EquipePage() {
   const supabase = await createClient()
@@ -10,11 +11,12 @@ export default async function EquipePage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  const sessao = await exigirAcesso('equipe')
 
   const { data: empresa } = await supabase
     .from('empresas')
     .select('id')
-    .eq('owner_id', user.id)
+    .eq('id', await idDaEmpresa())
     .maybeSingle()
   if (!empresa) redirect('/onboarding')
 
@@ -29,7 +31,7 @@ export default async function EquipePage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
-      <EquipeManager equipeInicial={lista} fotos={fotos} />
+      <EquipeManager equipeInicial={lista} fotos={fotos} podeDarAcesso={sessao.acesso.pode('acessos')} />
     </div>
   )
 }

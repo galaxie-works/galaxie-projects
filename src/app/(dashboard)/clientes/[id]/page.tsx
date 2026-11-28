@@ -15,6 +15,7 @@ import type {
   Recebimento,
   TarefaAgenda,
 } from '@/types'
+import { exigirAcesso } from '@/lib/acesso'
 
 export default async function ClienteDetalhePage({
   params,
@@ -27,6 +28,7 @@ export default async function ClienteDetalhePage({
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  await exigirAcesso('clientes')
 
   const { data: cliente } = await supabase.from('clientes').select('*').eq('id', id).maybeSingle()
   if (!cliente) notFound()
