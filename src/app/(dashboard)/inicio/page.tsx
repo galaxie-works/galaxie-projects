@@ -21,7 +21,7 @@ import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item'
-import { hojeISO } from '@/lib/crm'
+import { agoraMs, hojeISO } from '@/lib/crm'
 import { diaDe, inicioDoDia, rotuloDia, rotuloDiaLongo, somarDias } from '@/lib/agenda'
 import { formatarData, formatarMoeda } from '@/lib/formato'
 import { cn } from '@/lib/utils'
@@ -116,7 +116,7 @@ type NegocioInicio = {
   titulo: string
   fase: FaseNegocio
   fase_alterada_em: string
-  clientes: { nome: string; proximo_followup_em: string | null } | null
+  clientes: { nome: string } | null
 }
 
 export default async function InicioPage({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
@@ -139,7 +139,8 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
   // Hoje: até o fim de hoje. Semana: hoje e os 6 dias seguintes.
   const hoje = hojeISO()
   const ultimoDia = vista === 'hoje' ? hoje : somarDias(hoje, 6)
-  const limiteParado = somarDias(hoje, -DIAS_NEGOCIO_PARADO)
+  // Instante exato: o negócio entra assim que completa os 14 dias.
+  const limiteParado = new Date(agoraMs() - DIAS_NEGOCIO_PARADO * 86_400_000).toISOString()
   // Valores (a receber, orçamento) só para quem vê o Financeiro.
   const sessao = await carregarSessao()
   const veValores = sessao.situacao === 'ok' && sessao.acesso.pode('financeiro')
@@ -153,6 +154,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
     posVendaRes,
     negociosRes,
     diarioRes,
+    passosRes,
   ] = await Promise.all([
     supabase
       .from('atividades')
@@ -186,12 +188,20 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
       .order('vence_em', { nullsFirst: true }),
     supabase
       .from('negocios')
-      .select('id, titulo, fase, fase_alterada_em, clientes(nome, proximo_followup_em)')
+      .select('id, titulo, fase, fase_alterada_em, clientes(nome)')
       .eq('empresa_id', empresa.id)
       .not('fase', 'in', '(ganho,perdido)')
-      .lt('fase_alterada_em', inicioDoDia(limiteParado))
+      .lt('fase_alterada_em', limiteParado)
       .order('fase_alterada_em'),
     supabase.from('diario_obra').select('projeto_id').eq('empresa_id', empresa.id).eq('data', hoje),
+    // Próximos passos em aberto ligados a cada negócio.
+    supabase
+      .from('atividades')
+      .select('negocio_id')
+      .eq('empresa_id', empresa.id)
+      .is('concluida_em', null)
+      .not('previsto_para', 'is', null)
+      .not('negocio_id', 'is', null),
   ])
 
   const agendaDisponivel = !tarefasRes.error
@@ -285,13 +295,16 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
       }
     })
 
+  const negociosComPasso = new Set(
+    passosRes.error ? [] : ((passosRes.data as { negocio_id: string }[] | null) ?? []).map((a) => a.negocio_id)
+  )
   const negocios = negociosRes.error ? [] : ((negociosRes.data as unknown as NegocioInicio[]) ?? [])
   const alertasVendas: Alerta[] = negocios
-    .filter((n) => !n.clientes?.proximo_followup_em)
+    .filter((n) => !negociosComPasso.has(n.id))
     .map((n) => {
       const dias = Math.max(
         DIAS_NEGOCIO_PARADO,
-        Math.floor((Date.parse(`${hoje}T12:00:00Z`) - Date.parse(n.fase_alterada_em)) / 86_400_000)
+        Math.floor((agoraMs() - Date.parse(n.fase_alterada_em)) / 86_400_000)
       )
       return {
         id: `neg-${n.id}`,
