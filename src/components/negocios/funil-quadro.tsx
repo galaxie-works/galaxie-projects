@@ -6,7 +6,7 @@ import { KanbanSquareIcon, ListIcon, PlusIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatarMoeda } from '@/lib/formato'
-import { valorDoNegocio } from '@/lib/negocios'
+import { negocioAberto, valorDoNegocio } from '@/lib/negocios'
 import { FASE_NEGOCIO_LABEL, FASES_NEGOCIO, type FaseNegocio, type MembroEquipe, type Negocio } from '@/types'
 import { Badge } from '@/components/reui/badge'
 import { Frame, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
@@ -47,13 +47,20 @@ export function FunilQuadro({ negocios, empresaId, equipe, clientes, agora }: Pr
   const [arrasto, setArrasto] = useState<Quadro | null>(null)
   // Quadro ou lista vem da URL (?vista=lista), para o menu lateral abrir direto.
   const router = useRouter()
-  const vista: 'quadro' | 'lista' = useSearchParams().get('vista') === 'lista' ? 'lista' : 'quadro'
+  const busca = useSearchParams()
+  // Em aberto (padrão), ganhos ou perdidos: vem do menu lateral (?situacao=).
+  // Ganhos e perdidos saem do quadro e aparecem só em lista.
+  const situacao = busca.get('situacao') === 'ganhos' ? 'ganhos' : busca.get('situacao') === 'perdidos' ? 'perdidos' : 'abertos'
+  const visiveis = negocios.filter((n) =>
+    situacao === 'ganhos' ? n.fase === 'ganho' : situacao === 'perdidos' ? n.fase === 'perdido' : negocioAberto(n)
+  )
+  const vista: 'quadro' | 'lista' = situacao !== 'abertos' || busca.get('vista') === 'lista' ? 'lista' : 'quadro'
   const setVista = (v: 'quadro' | 'lista') =>
     router.replace(v === 'lista' ? '/funil?vista=lista' : '/funil', { scroll: false })
   const proximaOrdem = negocios.reduce((max, n) => Math.max(max, n.ordem + 1), 0)
   const { acoes, dialogos } = useAcoesNegocio({ empresaId, equipe, clientes, proximaOrdem })
 
-  const quadro = arrasto ?? montarQuadro(negocios)
+  const quadro = arrasto ?? montarQuadro(visiveis)
 
   async function soltar(final: Quadro, de: string, para: string) {
     setArrasto(null)
@@ -91,6 +98,7 @@ export function FunilQuadro({ negocios, empresaId, equipe, clientes, agora }: Pr
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
+        {situacao === 'abertos' ? (
         <ToggleGroup
           variant="outline"
           size="sm"
@@ -107,6 +115,11 @@ export function FunilQuadro({ negocios, empresaId, equipe, clientes, agora }: Pr
             Lista
           </ToggleGroupItem>
         </ToggleGroup>
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {situacao === 'ganhos' ? 'Negócios ganhos, que já viraram obra' : 'Negócios perdidos e o motivo'}
+          </span>
+        )}
         <Button type="button" onClick={() => acoes.novo()}>
           <PlusIcon data-icon="inline-start" />
           Novo negócio
@@ -131,11 +144,17 @@ export function FunilQuadro({ negocios, empresaId, equipe, clientes, agora }: Pr
               </ItemGroup>
             </FramePanel>
           ))}
-          {negocios.length === 0 && (
+          {visiveis.length === 0 && (
             <FramePanel>
               <Empty>
                 <EmptyHeader>
-                  <EmptyDescription>Nenhum negócio ainda.</EmptyDescription>
+                  <EmptyDescription>
+                    {situacao === 'ganhos'
+                      ? 'Nenhum negócio ganho ainda.'
+                      : situacao === 'perdidos'
+                        ? 'Nenhum negócio perdido.'
+                        : 'Nenhum negócio em aberto.'}
+                  </EmptyDescription>
                 </EmptyHeader>
               </Empty>
             </FramePanel>

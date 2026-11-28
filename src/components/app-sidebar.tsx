@@ -87,7 +87,9 @@ const PONTO_STATUS: Record<StatusProjeto, string> = {
 
 // Menu agrupado pela jornada do cliente: o dia a dia no topo, depois
 // vender (negócios e clientes), executar (obras e diário) e gerir a empresa.
-// Itens com abas na tela abrem as abas como subitens no próprio menu.
+// Itens cujo conteúdo se divide (negócios por situação, abas do financeiro)
+// abrem essas partes como subitens. Modo de ver (quadro/lista, dia/semana)
+// fica na própria tela, não no menu.
 type SubItem = { rotulo: string; href: string; param: string; valor: string; padrao?: boolean }
 type ItemNav = { href: string; rotulo: string; icone: typeof HouseIcon; subitens?: SubItem[] }
 
@@ -96,15 +98,7 @@ const SECOES_MENU: { id: string; rotulo?: string; itens: ItemNav[] }[] = [
     id: 'dia',
     itens: [
       { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
-      {
-        href: '/agenda',
-        rotulo: 'Agenda',
-        icone: CalendarDaysIcon,
-        subitens: [
-          { rotulo: 'Dia', href: '/agenda', param: 'modo', valor: 'dia', padrao: true },
-          { rotulo: 'Semana', href: '/agenda?modo=semana', param: 'modo', valor: 'semana' },
-        ],
-      },
+      { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
     ],
   },
   {
@@ -116,8 +110,9 @@ const SECOES_MENU: { id: string; rotulo?: string; itens: ItemNav[] }[] = [
         rotulo: 'Negócios',
         icone: FunnelIcon,
         subitens: [
-          { rotulo: 'Quadro', href: '/funil', param: 'vista', valor: 'quadro', padrao: true },
-          { rotulo: 'Lista', href: '/funil?vista=lista', param: 'vista', valor: 'lista' },
+          { rotulo: 'Em aberto', href: '/funil', param: 'situacao', valor: 'abertos', padrao: true },
+          { rotulo: 'Ganhos', href: '/funil?situacao=ganhos', param: 'situacao', valor: 'ganhos' },
+          { rotulo: 'Perdidos', href: '/funil?situacao=perdidos', param: 'situacao', valor: 'perdidos' },
         ],
       },
       { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
