@@ -4,6 +4,7 @@ import { ArrowRightIcon, CalendarCheckIcon, FolderClockIcon, HourglassIcon } fro
 import { createClient } from '@/lib/supabase/server'
 import { AgendaIndisponivel } from '@/components/agenda/agenda-indisponivel'
 import { NovaTarefa } from '@/components/agenda/nova-tarefa'
+import { PrevisaoTempo } from '@/components/inicio/previsao-tempo'
 import { TarefaItem } from '@/components/agenda/tarefa-item'
 import { Badge } from '@/components/reui/badge'
 import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
@@ -104,6 +105,7 @@ export default async function InicioPage() {
           <h1 className="text-xl font-semibold tracking-tight">{saudacao()}</h1>
           <p className="text-muted-foreground text-sm first-letter:uppercase">{rotuloDiaLongo(hoje)}</p>
         </div>
+        <PrevisaoTempo empresaId={empresa.id} className="order-last w-full lg:order-none lg:w-[26rem]" />
         <NovaTarefa
           empresaId={empresa.id}
           equipe={(equipe as Pick<MembroEquipe, 'id' | 'nome'>[] | null) ?? []}
