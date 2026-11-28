@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useTable, type ColumnDef, type SortingState } from '@tanstack/react-table'
 import { CircleCheckIcon, TrendingUpIcon, WalletIcon } from 'lucide-react'
@@ -70,9 +71,15 @@ function Vazio({ icone: Icone, titulo, texto }: { icone: typeof WalletIcon; titu
   )
 }
 
+const ABAS_FINANCEIRO = ['receber', 'atrasados', 'mes', 'margem'] as const
+type AbaFinanceiro = (typeof ABAS_FINANCEIRO)[number]
+
 // Tela Financeiro: a receber, atrasados por cliente, recebido no mês e
 // margem por obra (recebido menos compras).
 export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obras, hoje }: Props) {
+  // A aba vem da URL (?aba=), para o menu lateral abrir direto nela.
+  const router = useRouter()
+  const abaUrl = useSearchParams().get('aba') ?? ''
   const [recebimentos, setRecebimentos] = useState(iniciaisLista)
   const [sorting, setSorting] = useState<SortingState>([{ id: 'aReceber', desc: true }])
   const { inicio, fim } = mesDe(hoje)
@@ -201,6 +208,16 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
     onSortingChange: setSorting,
   })
 
+  const abaAtual = ABAS_FINANCEIRO.includes(abaUrl as AbaFinanceiro)
+    ? abaUrl
+    : atrasadosPorCliente.length > 0
+      ? 'atrasados'
+      : 'receber'
+  // Sem aba na URL, grava a escolhida para o menu lateral marcar a certa.
+  useEffect(() => {
+    if (disponivel && abaUrl !== abaAtual) router.replace(`/financeiro?aba=${abaAtual}`, { scroll: false })
+  }, [disponivel, abaUrl, abaAtual, router])
+
   if (!disponivel) {
     return (
       <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -251,7 +268,11 @@ export function FinanceiroPainel({ recebimentos: iniciaisLista, disponivel, obra
         />
       </Frame>
 
-      <Tabs defaultValue={atrasadosPorCliente.length > 0 ? 'atrasados' : 'receber'} className="gap-4">
+      <Tabs
+        value={abaAtual}
+        onValueChange={(v) => router.replace(`/financeiro?aba=${v}`, { scroll: false })}
+        className="gap-4"
+      >
         <div className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
           <TabsList variant="line">
             <TabsTrigger value="receber">

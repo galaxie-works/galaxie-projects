@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import {
   ArrowLeftIcon,
@@ -10,6 +10,7 @@ import {
   HouseIcon,
   Building2Icon,
   FunnelIcon,
+  ChevronRightIcon,
   ChevronsUpDownIcon,
   KeyRoundIcon,
   CircleUserRoundIcon,
@@ -35,6 +36,7 @@ import { AssistenteVoz } from '@/components/assistente/assistente-voz'
 import { BuscaGlobal } from '@/components/busca/busca-global'
 import { IconTile } from '@/components/reui/icon-tile'
 import { MenuTema } from '@/components/tema/menu-tema'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,7 +56,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import {
   Sidebar,
@@ -66,9 +67,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
+  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
@@ -81,25 +87,134 @@ const PONTO_STATUS: Record<StatusProjeto, string> = {
   completo: 'bg-success',
 }
 
-type FiltroStatus = StatusProjeto | 'todos'
+// Menu agrupado pela jornada do cliente: o dia a dia no topo, depois
+// vender (negócios e clientes), executar (obras e diário) e gerir a empresa.
+// Itens cujo conteúdo se divide (negócios por situação, abas do financeiro)
+// abrem essas partes como subitens. Modo de ver (quadro/lista, dia/semana)
+// fica na própria tela, não no menu.
+type SubItem = { rotulo: string; href: string; param: string; valor: string; padrao?: boolean }
+type ItemNav = { href: string; rotulo: string; icone: typeof HouseIcon; subitens?: SubItem[] }
 
-const ITENS_FILTRO: { value: FiltroStatus; label: string }[] = [
-  { value: 'todos', label: 'Todos os status' },
-  ...(Object.entries(STATUS_PROJETO_LABEL) as [StatusProjeto, string][]).map(
-    ([value, label]) => ({ value, label })
-  ),
+const SECOES_MENU: { id: string; rotulo?: string; itens: ItemNav[] }[] = [
+  {
+    id: 'dia',
+    itens: [
+      { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
+      { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
+    ],
+  },
+  {
+    id: 'vendas',
+    rotulo: 'Vendas',
+    itens: [
+      {
+        href: '/funil',
+        rotulo: 'Negócios',
+        icone: FunnelIcon,
+        subitens: [
+          { rotulo: 'Em aberto', href: '/funil', param: 'situacao', valor: 'abertos', padrao: true },
+          { rotulo: 'Ganhos', href: '/funil?situacao=ganhos', param: 'situacao', valor: 'ganhos' },
+          { rotulo: 'Perdidos', href: '/funil?situacao=perdidos', param: 'situacao', valor: 'perdidos' },
+        ],
+      },
+      { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
+    ],
+  },
+  {
+    id: 'obras',
+    rotulo: 'Obras',
+    itens: [
+      { href: '/projetos', rotulo: 'Todas as obras', icone: FolderKanbanIcon },
+      { href: '/diario', rotulo: 'Diário de obra', icone: NotebookPenIcon },
+    ],
+  },
+  {
+    id: 'gestao',
+    rotulo: 'Gestão',
+    itens: [
+      {
+        href: '/financeiro',
+        rotulo: 'Financeiro',
+        icone: WalletIcon,
+        subitens: [
+          { rotulo: 'A receber', href: '/financeiro?aba=receber', param: 'aba', valor: 'receber' },
+          { rotulo: 'Atrasados', href: '/financeiro?aba=atrasados', param: 'aba', valor: 'atrasados' },
+          { rotulo: 'Recebido no mês', href: '/financeiro?aba=mes', param: 'aba', valor: 'mes' },
+          { rotulo: 'Margem por obra', href: '/financeiro?aba=margem', param: 'aba', valor: 'margem' },
+        ],
+      },
+      { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
+    ],
+  },
 ]
 
-const NAVEGACAO = [
-  { href: '/inicio', rotulo: 'Início', icone: HouseIcon },
-  { href: '/agenda', rotulo: 'Agenda', icone: CalendarDaysIcon },
-  { href: '/projetos', rotulo: 'Projetos', icone: FolderKanbanIcon },
-  { href: '/diario', rotulo: 'Diário de obra', icone: NotebookPenIcon },
-  { href: '/funil', rotulo: 'Funil', icone: FunnelIcon },
-  { href: '/clientes', rotulo: 'Clientes', icone: BriefcaseBusinessIcon },
-  { href: '/financeiro', rotulo: 'Financeiro', icone: WalletIcon },
-  { href: '/equipe', rotulo: 'Equipe', icone: UsersIcon },
-]
+function rotaAtiva(href: string, pathname: string) {
+  if (href === '/projetos') return pathname === '/projetos' || pathname === '/projetos/novo'
+  return pathname.startsWith(href)
+}
+
+// Item do menu. Com subitens, abre sozinho quando a tela dele está aberta
+// (ao clicar, a tela abre e as abas aparecem logo abaixo); a seta abre e
+// fecha à mão.
+function ItemMenu({ item }: { item: ItemNav }) {
+  const pathname = usePathname()
+  const busca = useSearchParams()
+  const ativo = rotaAtiva(item.href, pathname)
+  const [manual, setManual] = useState<boolean | null>(null)
+  const aberto = manual ?? ativo
+  const Icone = item.icone
+
+  const botao = (
+    <SidebarMenuButton
+      isActive={ativo}
+      tooltip={item.rotulo}
+      render={<Link href={item.href} aria-current={ativo ? 'page' : undefined} />}
+      onClick={() => setManual(null)}
+    >
+      <Icone />
+      <span>{item.rotulo}</span>
+    </SidebarMenuButton>
+  )
+
+  if (!item.subitens) return <SidebarMenuItem>{botao}</SidebarMenuItem>
+
+  // Na tela do item (não em camadas abaixo dela), marca a aba aberta.
+  const naTela = pathname === item.href
+  return (
+    <Collapsible open={aberto} onOpenChange={(v) => setManual(v)} render={<SidebarMenuItem />}>
+      {botao}
+      <CollapsibleTrigger
+        render={<SidebarMenuAction />}
+        aria-label={aberto ? `Fechar opções de ${item.rotulo}` : `Abrir opções de ${item.rotulo}`}
+      >
+        <ChevronRightIcon className={cn('transition-transform duration-200', aberto && 'rotate-90')} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub>
+          {item.subitens.map((sub) => {
+            const valor = busca.get(sub.param)
+            const subAtivo = naTela && (valor === sub.valor || (!valor && !!sub.padrao))
+            return (
+              <SidebarMenuSubItem key={sub.href}>
+                <SidebarMenuSubButton
+                  isActive={subAtivo}
+                  render={<Link href={sub.href} aria-current={subAtivo ? 'page' : undefined} />}
+                >
+                  <span>{sub.rotulo}</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            )
+          })}
+        </SidebarMenuSub>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+// Atalhos no menu: só as obras ativas (planejamento e em execução), as mais
+// recentes primeiro. A lista completa, com filtro, fica na tela de Obras.
+const STATUS_ATIVOS: StatusProjeto[] = ['em_execucao', 'planejamento']
+const MAX_ATALHOS = 5
 
 /** O que quem está logado pode abrir (vem das permissões; o dono vê tudo). */
 export type MenuPermitido = {
@@ -155,7 +270,6 @@ export function AppSidebar({
   const nomeExibido = usuario?.nome || (permitido ? email.split('@')[0] : empresaNome)
   const pathname = usePathname()
   const router = useRouter()
-  const [filtro, setFiltro] = useState<FiltroStatus>('todos')
   const { isMobile, setOpenMobile } = useSidebar()
 
   // No celular o menu é uma gaveta: ao tocar num link, ela fecha sozinha.
@@ -163,10 +277,11 @@ export function AppSidebar({
     if (isMobile && (evento.target as HTMLElement).closest('a')) setOpenMobile(false)
   }
 
-  const projetosFiltrados = useMemo(
-    () => (filtro === 'todos' ? projetos : projetos.filter((p) => p.status === filtro)),
-    [projetos, filtro]
+  const obrasAtivas = useMemo(
+    () => projetos.filter((p) => STATUS_ATIVOS.includes(p.status)),
+    [projetos]
   )
+  const atalhos = obrasAtivas.slice(0, MAX_ATALHOS)
 
   async function sair() {
     limparPaginasOffline()
@@ -202,89 +317,61 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {NAVEGACAO.filter((n) => rotaVisivel(n.href)).map(({ href, rotulo, icone: Icone }) => {
-                const ativo =
-                  href === '/projetos' ? pathname === '/projetos' : pathname.startsWith(href)
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      isActive={ativo}
-                      render={<Link href={href} aria-current={ativo ? 'page' : undefined} />}
-                    >
-                      <Icone />
-                      <span>{rotulo}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {SECOES_MENU.map((secao) => {
+          const itens = secao.itens.filter((item) => rotaVisivel(item.href))
+          if (itens.length === 0) return null
+          return (
+            <SidebarGroup key={secao.id}>
+              {secao.rotulo && <SidebarGroupLabel>{secao.rotulo}</SidebarGroupLabel>}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {itens.map((item) => (
+                    <ItemMenu key={item.href} item={item} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )
+        })}
 
         {rotaVisivel('/projetos') && (
-        <SidebarGroup className="min-h-0 flex-1">
-          <SidebarGroupLabel>Obras</SidebarGroupLabel>
+        <>
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Obras em andamento</SidebarGroupLabel>
           <SidebarGroupAction
             render={<Link href="/projetos/novo" />}
-            aria-label="Novo projeto"
-            title="Novo projeto"
+            aria-label="Nova obra"
+            title="Nova obra"
           >
             <PlusIcon />
           </SidebarGroupAction>
-          <SidebarGroupContent className="flex min-h-0 flex-col gap-2">
-            <Select
-              items={ITENS_FILTRO}
-              value={filtro}
-              onValueChange={(v) => setFiltro((v as FiltroStatus | null) ?? 'todos')}
-            >
-              <SelectTrigger size="sm" className="w-full" aria-label="Filtrar obras por status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ITENS_FILTRO.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {projetosFiltrados.length === 0 ? (
-              <p className="px-2 py-3 text-xs text-muted-foreground">
-                {projetos.length === 0 ? 'Nenhuma obra cadastrada ainda.' : 'Nenhuma obra neste status.'}
+          <SidebarGroupContent>
+            {atalhos.length === 0 ? (
+              <p className="px-2 py-2 text-xs text-muted-foreground">
+                {projetos.length === 0 ? 'Nenhuma obra cadastrada ainda.' : 'Nenhuma obra em andamento.'}
               </p>
             ) : (
               <SidebarMenu>
-                {projetosFiltrados.map((p) => {
-                  const ativo = pathname === `/projetos/${p.id}`
+                {atalhos.map((p) => {
+                  const ativo = pathname.startsWith(`/projetos/${p.id}`)
                   return (
                     <SidebarMenuItem key={p.id}>
                       <SidebarMenuButton
-                        size="lg"
                         isActive={ativo}
                         render={
-                          <Link
-                            href={`/projetos/${p.id}`}
-                            aria-current={ativo ? 'page' : undefined}
-                          />
+                          <Link href={`/projetos/${p.id}`} aria-current={ativo ? 'page' : undefined} />
                         }
                       >
-                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span
-                              aria-hidden
-                              className={cn('size-1.5 shrink-0 rounded-full', PONTO_STATUS[p.status])}
-                            />
-                            <span className="truncate">{p.nome}</span>
-                            <span className="sr-only">{STATUS_PROJETO_LABEL[p.status]}</span>
-                          </span>
-                          <span className="flex min-w-0 items-center justify-between gap-2 pl-3.5 text-xs text-muted-foreground">
-                            <span className="truncate">{p.clientes?.nome ?? 'Sem cliente'}</span>
-                            <span className="shrink-0 tabular-nums">{p.percentual_conclusao}%</span>
-                          </span>
+                        <span
+                          aria-hidden
+                          className={cn('mx-1 size-1.5 shrink-0 rounded-full', PONTO_STATUS[p.status])}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{p.nome}</span>
+                        <span className="sr-only">{STATUS_PROJETO_LABEL[p.status]}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                          {p.percentual_conclusao}%
                         </span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -292,8 +379,23 @@ export function AppSidebar({
                 })}
               </SidebarMenu>
             )}
+            {projetos.length > atalhos.length && (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    size="sm"
+                    className="text-muted-foreground"
+                    render={<Link href="/projetos" />}
+                  >
+                    <ChevronRightIcon />
+                    <span>Ver todas as obras ({projetos.length})</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
+        </>
         )}
       </SidebarContent>
 
@@ -416,9 +518,9 @@ export function AppSidebar({
 const SECOES: Record<string, string> = {
   inicio: 'Início',
   agenda: 'Agenda',
-  projetos: 'Projetos',
+  projetos: 'Obras',
   diario: 'Diário de obra',
-  funil: 'Funil',
+  funil: 'Negócios',
   clientes: 'Clientes',
   financeiro: 'Financeiro',
   equipe: 'Equipe',
@@ -462,7 +564,7 @@ export function AppHeader({
     trilha.push({ rotulo: SECOES[secao], href: sub ? `/${secao}` : undefined })
     if (sub === 'novo') {
       trilha.push({
-        rotulo: secao === 'projetos' ? 'Novo projeto' : secao === 'equipe' ? 'Nova pessoa' : 'Novo cadastro',
+        rotulo: secao === 'projetos' ? 'Nova obra' : secao === 'equipe' ? 'Nova pessoa' : 'Novo cadastro',
       })
     } else if (sub === 'importar') {
       trilha.push({ rotulo: 'Importar planilha' })

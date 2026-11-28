@@ -438,7 +438,7 @@ export function ClientePainel({
                 <Frame spacing="default" className="min-w-0">
                   <FrameHeader>
                     <FrameTitle>Negócios abertos</FrameTitle>
-                    <FrameDescription>No funil agora</FrameDescription>
+                    <FrameDescription>Negócios em aberto</FrameDescription>
                   </FrameHeader>
                   <FramePanel>
                     <NegociosCliente
