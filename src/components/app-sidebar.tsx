@@ -150,6 +150,9 @@ export function AppSidebar({
     const modulo = MODULO_DA_ROTA[href]
     return !permitido || !modulo || permitido.modulos.includes(modulo)
   }
+  // Sem nome em Minha conta: o dono aparece como a empresa; quem foi
+  // convidado, pelo começo do e-mail.
+  const nomeExibido = usuario?.nome || (permitido ? email.split('@')[0] : empresaNome)
   const pathname = usePathname()
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroStatus>('todos')
@@ -328,10 +331,10 @@ export function AppSidebar({
               >
                 <Avatar className="size-8">
                   {usuario?.fotoUrl && <AvatarImage src={usuario.fotoUrl} alt="" />}
-                  <AvatarFallback>{iniciais(usuario?.nome || empresaNome) || '?'}</AvatarFallback>
+                  <AvatarFallback>{iniciais(nomeExibido) || '?'}</AvatarFallback>
                 </Avatar>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-none">
-                  <span className="truncate font-medium">{usuario?.nome || empresaNome}</span>
+                  <span className="truncate font-medium">{nomeExibido}</span>
                   <span className="truncate text-xs text-muted-foreground">{email}</span>
                 </span>
                 <ChevronsUpDownIcon className="ml-auto" />
