@@ -331,7 +331,6 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
           <h1 className="text-xl font-semibold tracking-tight">{saudacao()}</h1>
           <p className="text-muted-foreground text-sm first-letter:uppercase">{rotuloDiaLongo(hoje)}</p>
         </div>
-        <PrevisaoTempo empresaId={empresa.id} className="order-last w-full lg:order-none lg:w-[26rem]" />
         <div className="flex flex-wrap items-center gap-2">
           <VistaInicioToggle vista={vista} />
           <NovaTarefa
@@ -433,6 +432,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
         </Frame>
 
         <div className="flex min-w-0 flex-col gap-6 self-start">
+          <PrevisaoTempo empresaId={empresa.id} />
           <Frame spacing="default" className="min-w-0">
             <FrameHeader>
               <FrameTitle>Pede atenção</FrameTitle>
